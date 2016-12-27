@@ -18,7 +18,7 @@ fn main() {
 
 #[derive(PartialEq)]
 #[derive(Copy, Clone)]
-enum StateType {
+enum Situation {
 	Normal,
 	StringSq,
 	StringDq,
@@ -32,7 +32,7 @@ fn treatfile(path: &str) -> Result<(), std::io::Error> {
 	let mut fill    :usize = 0;
 	let mut buf = [0; BUFSIZE];
 
-	let mut state = vec!{StateType::Normal};
+	let mut state = vec!{Situation::Normal};
 
 	let mut fh = try!(File::open(path));
 	let stdout = io::stdout();
@@ -58,33 +58,33 @@ fn treatfile(path: &str) -> Result<(), std::io::Error> {
 }
 
 fn stackmachine(
-	state :&mut Vec<StateType>,
+	state :&mut Vec<Situation>,
 	out :&mut std::io::StdoutLock,
 	buf :&[u8],
 	usable :usize
 ) -> Result<(), std::io::Error> {
 	for i in 0 .. usable {
-		let curstate :StateType = *state.last().unwrap();
+		let curstate :Situation = *state.last().unwrap();
 		let mut newstate = curstate;
 		let mut pop = false;
 
 		match (curstate, buf[i]) {
-			(StateType::Normal, b'\"') => {
-				newstate = StateType::StringDq;
+			(Situation::Normal, b'\"') => {
+				newstate = Situation::StringDq;
 			}
-			(StateType::Normal, b'\'') => {
-				newstate = StateType::StringSq;
+			(Situation::Normal, b'\'') => {
+				newstate = Situation::StringSq;
 			}
-			(StateType::StringDq, b'\\') => {
-				newstate = StateType::Escape;
+			(Situation::StringDq, b'\\') => {
+				newstate = Situation::Escape;
 			}
-			(StateType::StringDq, b'\"') => {
+			(Situation::StringDq, b'\"') => {
 				pop = true;
 			}
-			(StateType::StringSq, b'\'') => {
+			(Situation::StringSq, b'\'') => {
 				pop = true;
 			}
-			(StateType::Escape, _) => {
+			(Situation::Escape, _) => {
 				pop = true;
 			}
 			(_, _) => {}
@@ -104,11 +104,11 @@ fn stackmachine(
 	Ok(())
 }
 
-fn color_by_state(state :StateType) -> &'static [u8] {
+fn color_by_state(state :Situation) -> &'static [u8] {
 	match state {
-		StateType::Normal => b"\x1b[m",
-		StateType::StringDq => b"\x1b[0;31m",
-		StateType::StringSq => b"\x1b[0;35m",
-		StateType::Escape => b"\x1b[1;35m",
+		Situation::Normal => b"\x1b[m",
+		Situation::StringDq => b"\x1b[0;31m",
+		Situation::StringSq => b"\x1b[0;35m",
+		Situation::Escape => b"\x1b[1;35m",
 	}
 }
