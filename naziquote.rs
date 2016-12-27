@@ -16,12 +16,23 @@ fn main() {
 	}
 }
 
+#[derive(PartialEq)]
+#[derive(Copy, Clone)]
+enum StateType {
+	Normal,
+	StringSq,
+	StringDq,
+	Escape,
+}
+
 fn treatfile(path: &str) -> Result<(), std::io::Error> {
 	const LOOKAHEAD :usize = 80;
 	const SLACK     :usize = 48;
 	const BUFSIZE   :usize = SLACK + LOOKAHEAD;
 	let mut fill    :usize = 0;
 	let mut buf = [0; BUFSIZE];
+
+	let mut state = vec!{StateType::Normal};
 
 	let mut fh = try!(File::open(path));
 	let stdout = io::stdout();
@@ -36,17 +47,68 @@ fn treatfile(path: &str) -> Result<(), std::io::Error> {
 			break;
 		}
 		let usable = fill - LOOKAHEAD;
-		try!(stackmachine(&mut out, &buf[0 .. fill], usable));
+		try!(stackmachine(&mut state, &mut out, &buf[0 .. fill], usable));
 		for i in 0 .. LOOKAHEAD {
 			buf[i] = buf[usable + i];
 		}
 		fill = LOOKAHEAD;
 	}
-	try!(stackmachine(&mut out, &buf[0 .. fill], fill));
+	try!(stackmachine(&mut state, &mut out, &buf[0 .. fill], fill));
 	Ok(())
 }
 
-fn stackmachine(out :&mut std::io::StdoutLock, buf :&[u8], usable :usize) -> Result<(), std::io::Error> {
-	try!(out.write(&buf[0 .. usable]));
+fn stackmachine(
+	state :&mut Vec<StateType>,
+	out :&mut std::io::StdoutLock,
+	buf :&[u8],
+	usable :usize
+) -> Result<(), std::io::Error> {
+	for i in 0 .. usable {
+		let curstate :StateType = *state.last().unwrap();
+		let mut newstate = curstate;
+		let mut pop = false;
+
+		match (curstate, buf[i]) {
+			(StateType::Normal, b'\"') => {
+				newstate = StateType::StringDq;
+			}
+			(StateType::Normal, b'\'') => {
+				newstate = StateType::StringSq;
+			}
+			(StateType::StringDq, b'\\') => {
+				newstate = StateType::Escape;
+			}
+			(StateType::StringDq, b'\"') => {
+				pop = true;
+			}
+			(StateType::StringSq, b'\'') => {
+				pop = true;
+			}
+			(StateType::Escape, _) => {
+				pop = true;
+			}
+			(_, _) => {}
+		}
+
+		if newstate != curstate {
+			state.push(newstate);
+			try!(out.write(color_by_state(newstate)));
+		}
+		try!(out.write(&buf[i .. i+1]));
+		if pop {
+			state.pop();
+			newstate = *state.last().unwrap();
+			try!(out.write(color_by_state(newstate)));
+		}
+	}
 	Ok(())
+}
+
+fn color_by_state(state :StateType) -> &'static [u8] {
+	match state {
+		StateType::Normal => b"\x1b[m",
+		StateType::StringDq => b"\x1b[0;31m",
+		StateType::StringSq => b"\x1b[0;35m",
+		StateType::Escape => b"\x1b[1;35m",
+	}
 }
