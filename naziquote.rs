@@ -3,6 +3,19 @@ use std::fs::File;
 use std::io::{self, Read, Write};
 use std::ops::Deref;
 
+macro_rules! println_stderr(
+	($($arg:tt)*) => (
+		if let Err(e) = writeln!(&mut io::stderr(), $($arg)* ) {
+			panic!("Unable to write to stderr: {}", e);
+		}
+	)
+);
+
+fn perror(blame: std::ffi::OsString, e: &std::io::Error) {
+	let printable = blame.to_string_lossy();
+	println_stderr!("{}: {}", printable, e);
+}
+
 fn main() {
 	let args: Vec<String> = env::args().collect();
 
@@ -16,23 +29,12 @@ fn main() {
 	}
 }
 
-#[derive(PartialEq)]
-#[derive(Copy, Clone)]
-enum Situation {
-	Normal,
-	StringSq,
-	StringDq,
-	Escape,
-}
-
 fn treatfile(path: &str) -> Result<(), std::io::Error> {
-	const LOOKAHEAD :usize = 80;
-	const SLACK     :usize = 48;
-	const BUFSIZE   :usize = SLACK + LOOKAHEAD;
-	let mut fill    :usize = 0;
+	const BUFSIZE :usize = 128;
+	let mut fill :usize = 0;
 	let mut buf = [0; BUFSIZE];
 
-	let mut state = vec!{Situation::Normal};
+	let mut state :Vec<Box<Situation>> = vec!{Box::new(SitCommand{})};
 
 	let mut fh = try!(File::open(path));
 	let stdout = io::stdout();
@@ -40,75 +42,117 @@ fn treatfile(path: &str) -> Result<(), std::io::Error> {
 	loop {
 		let bytes = try!(fh.read(&mut buf[fill .. BUFSIZE]));
 		fill += bytes;
-		if fill <= LOOKAHEAD {
-			if bytes != 0 {
-				continue;
-			}
+		let eof = bytes == 0;
+		let consumed = try!(stackmachine(&mut state, &mut out, &buf[0 .. fill], eof));
+		let remain = fill - consumed;
+		if eof {
+			assert!(remain == 0);
 			break;
 		}
-		let usable = fill - LOOKAHEAD;
-		try!(stackmachine(&mut state, &mut out, &buf[0 .. fill], usable));
-		for i in 0 .. LOOKAHEAD {
-			buf[i] = buf[usable + i];
+		for i in 0 .. remain {
+			buf[i] = buf[consumed + i];
 		}
-		fill = LOOKAHEAD;
+		fill = remain;
 	}
-	try!(stackmachine(&mut state, &mut out, &buf[0 .. fill], fill));
 	Ok(())
 }
 
 fn stackmachine(
-	state :&mut Vec<Situation>,
+	state :&mut Vec<Box<Situation>>,
 	out :&mut std::io::StdoutLock,
 	buf :&[u8],
-	usable :usize
-) -> Result<(), std::io::Error> {
-	for i in 0 .. usable {
-		let curstate :Situation = *state.last().unwrap();
-		let mut newstate = curstate;
-		let mut pop = false;
+	eof :bool
+) -> Result<usize, std::io::Error> {
+	let mut pos :usize = 0;
+	while pos < buf.len() {
+		let horizon :&[u8] = &buf[pos .. buf.len()];
+		let whatnow :WhatNow = state.last().unwrap().deref().whatnow(&horizon, eof);
 
-		match (curstate, buf[i]) {
-			(Situation::Normal, b'\"') => {
-				newstate = Situation::StringDq;
+		match whatnow.tr {
+			Transition::Same => {}
+			Transition::Swap(newstate) => {
+				*state.last_mut().unwrap() = newstate;
 			}
-			(Situation::Normal, b'\'') => {
-				newstate = Situation::StringSq;
+			Transition::Push(newstate) => {
+				state.push(newstate);
 			}
-			(Situation::StringDq, b'\\') => {
-				newstate = Situation::Escape;
+			Transition::Pop => {
+				if state.len() > 1 {
+					state.pop();
+				}
 			}
-			(Situation::StringDq, b'\"') => {
-				pop = true;
-			}
-			(Situation::StringSq, b'\'') => {
-				pop = true;
-			}
-			(Situation::Escape, _) => {
-				pop = true;
-			}
-			(_, _) => {}
 		}
-
-		if newstate != curstate {
-			state.push(newstate);
-			try!(out.write(color_by_state(newstate)));
-		}
-		try!(out.write(&buf[i .. i+1]));
-		if pop {
-			state.pop();
-			newstate = *state.last().unwrap();
-			try!(out.write(color_by_state(newstate)));
-		}
+		let output :&[u8] = match whatnow.repl {
+			Some(replacement) => replacement,
+			None => &horizon[.. whatnow.took],
+		};
+		try!(out.write(&output));
+		try!(write_color(out, state.last().unwrap().deref().get_color()));
+		pos += whatnow.took;
 	}
-	Ok(())
+	Ok(pos)
 }
 
-fn color_by_state(state :Situation) -> &'static [u8] {
-	match state {
-		Situation::Normal => b"\x1b[m",
-		Situation::StringDq => b"\x1b[0;31m",
-		Situation::StringSq => b"\x1b[0;35m",
-		Situation::Escape => b"\x1b[1;35m",
+fn write_color(out :&mut std::io::StdoutLock, code :u32) -> Result<(), std::io::Error> {
+	let b = code & 0xff;
+	let g = (code >> 8) & 0xff;
+	let r = (code >> 16) & 0xff;
+	let ansi = (code >> 24) & 0xff;
+	write!(out, "\x1b[{};38;2;{};{};{}m", ansi, r, g, b)
+}
+
+//------------------------------------------------------------------------------
+
+trait Situation {
+	fn whatnow(&self, horizon: &[u8], eof: bool) -> WhatNow;
+	fn get_color(&self) -> u32;
+}
+
+enum Transition {
+	Same,
+	Swap(Box<Situation>),
+	Push(Box<Situation>),
+	Pop,
+}
+
+struct WhatNow {
+	tr :Transition,
+	took :usize,
+	repl :Option<&'static [u8]>,
+}
+
+//------------------------------------------------------------------------------
+
+struct SitCommand {}
+
+impl Situation for SitCommand {
+	fn whatnow(&self, horizon: &[u8], eof: bool) -> WhatNow {
+		for i in 0 .. horizon.len() {
+			let c = horizon[i];
+			if c == b'#' {
+				return WhatNow{tr: Transition::Push(Box::new(SitComment{})), took: i, repl: None};
+			}
+		}
+		return WhatNow{tr: Transition::Same, took: horizon.len(), repl: None};
+	}
+	fn get_color(&self) -> u32 {
+		0x00a0a0a0
+	}
+}
+
+struct SitComment {}
+
+impl Situation for SitComment {
+	fn whatnow(&self, horizon: &[u8], eof: bool) -> WhatNow {
+		for i in 0 .. horizon.len() {
+			let c = horizon[i];
+			if c == b'\n' {
+				return WhatNow{tr: Transition::Pop, took: i+1, repl: None};
+			}
+		}
+		return WhatNow{tr: Transition::Same, took: horizon.len(), repl: None};
+	}
+	fn get_color(&self) -> u32{
+		0x01282828
 	}
 }
