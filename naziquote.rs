@@ -17,16 +17,24 @@ fn perror(blame: std::ffi::OsString, e: &std::io::Error) {
 }
 
 fn main() {
-	let args: Vec<String> = env::args().collect();
+	let mut args: std::env::ArgsOs = env::args_os();
+	args.next();
 
-	for arg in &args[1..] {
-		if let Err(e) = treatfile(arg) {
-			println_stderr!("{}: {}", arg, e);
+	loop {
+		match args.next() {
+			Some(arg) => {
+				if let Err(e) = treatfile(&arg) {
+					perror(arg, &e);
+				}
+			},
+			None => {
+				break;
+			}
 		}
 	}
 }
 
-fn treatfile(path: &str) -> Result<(), std::io::Error> {
+fn treatfile(path: &std::ffi::OsString) -> Result<(), std::io::Error> {
 	const BUFSIZE :usize = 128;
 	let mut fill :usize = 0;
 	let mut buf = [0; BUFSIZE];
