@@ -195,7 +195,7 @@ impl Situation for SitCommand {
 				None => {}
 			}
 		}
-		WhatNow{tri: Transition::Same, pre: horizon.len(), len: 0, alt: None}
+		flush(horizon.len())
 	}
 	fn get_color(&self) -> u32 {
 		0x00a0a0a0
@@ -223,11 +223,15 @@ impl Situation for SitStrDq {
 				None => {}
 			}
 		}
-		WhatNow{tri: Transition::Same, pre: horizon.len(), len: 0, alt: None}
+		flush(horizon.len())
 	}
 	fn get_color(&self) -> u32{
 		0x00ff0000
 	}
+}
+
+fn flush(i: usize) -> WhatNow {
+	WhatNow{tri: Transition::Same, pre: i, len: 0, alt: None}
 }
 
 fn common_str_cmd(
@@ -298,12 +302,12 @@ fn common_str_cmd(
 				let mut is_number = false;
 				if idlen == cand.len() {
 					if is_horizon_lengthenable {
-						return Some(WhatNow{tri: Transition::Same, pre: i, len: 0, alt: None});
+						return Some(flush(i));
 					}
 				} else if cand[idlen] == b'}' {
 					if idlen+1 == cand.len() {
 						if is_horizon_lengthenable {
-							return Some(WhatNow{tri: Transition::Same, pre: i, len: 0, alt: None});
+							return Some(flush(i));
 						}
 					} else {
 						rm_braces = !is_identifiertail(cand[idlen+1]);
@@ -339,9 +343,9 @@ fn common_str_cmd(
 					pre: i, len: 2, alt: replace_begin
 				});
 			}
-			return Some(WhatNow{tri: Transition::Same, pre: i+1, len: 0, alt: None});
+			return Some(flush(i+1));
 		}
-		return Some(WhatNow{tri: Transition::Same, pre: i, len: 0, alt: None});
+		return Some(flush(i));
 	}
 	None
 }
@@ -360,7 +364,7 @@ impl Situation for SitComment {
 				return WhatNow{tri: Transition::Pop, pre: 0, len: i, alt: None};
 			}
 		}
-		WhatNow{tri: Transition::Same, pre: horizon.len(), len: 0, alt: None}
+		flush(horizon.len())
 	}
 	fn get_color(&self) -> u32{
 		0x01282828
@@ -380,7 +384,7 @@ impl Situation for SitExtent {
 			return WhatNow{tri: Transition::Pop, pre: self.len, len: 0, alt: self.end_insert};
 		}
 		self.len -= horizon.len();
-		return WhatNow{tri: Transition::Same, pre: horizon.len(), len: 0, alt: None};
+		return flush(horizon.len());
 	}
 	fn get_color(&self) -> u32{
 		self.color
@@ -401,7 +405,7 @@ impl Situation for SitUntilByte {
 				return WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: self.end_replace};
 			}
 		}
-		WhatNow{tri: Transition::Same, pre: horizon.len(), len: 0, alt: None}
+		flush(horizon.len())
 	}
 	fn get_color(&self) -> u32{
 		self.color
@@ -422,7 +426,7 @@ impl Situation for SitStrSqEsc {
 				return WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None};
 			}
 		}
-		WhatNow{tri: Transition::Same, pre: horizon.len(), len: 0, alt: None}
+		flush(horizon.len())
 	}
 	fn get_color(&self) -> u32{
 		0x00ff8000
@@ -440,7 +444,7 @@ impl Situation for SitVarIdent {
 		if len < horizon.len() {
 			return WhatNow{tri: Transition::Pop, pre: len, len: 0, alt: self.end_replace};
 		}
-		WhatNow{tri: Transition::Same, pre: horizon.len(), len: 0, alt: None}
+		flush(horizon.len())
 	}
 	fn get_color(&self) -> u32{
 		0x000000ff
