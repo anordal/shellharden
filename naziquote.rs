@@ -20,21 +20,42 @@ fn main() {
 	let mut args: std::env::ArgsOs = env::args_os();
 	args.next();
 
+	let mut sett = Settings {
+		colorize: true,
+		replace: true,
+	};
+
 	loop {
-		match args.next() {
-			Some(arg) => {
-				if let Err(e) = treatfile(&arg) {
-					perror(arg, &e);
+		let arg = match args.next() {
+			Some(arg) => arg,
+			None => { break; }
+		};
+		let nonopt = match arg.into_string() {
+			Ok(comparable) => {
+				match comparable.as_ref() {
+					"--color=on" => { sett.colorize=true; None },
+					"--color=off" => { sett.colorize=false; None },
+					"--replace=on" => { sett.replace=true; None },
+					"--replace=off" => { sett.replace=false; None },
+					_ => Some(std::ffi::OsString::from(comparable))
 				}
 			},
-			None => {
-				break;
+			Err(same) => Some(same)
+		};
+		if let Some(path) = nonopt {
+			if let Err(e) = treatfile(&path, &sett) {
+				perror(path, &e);
 			}
 		}
 	}
 }
 
-fn treatfile(path: &std::ffi::OsString) -> Result<(), std::io::Error> {
+struct Settings {
+	colorize :bool,
+	replace :bool,
+}
+
+fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), std::io::Error> {
 	const BUFSIZE :usize = 128;
 	let mut fill :usize = 0;
 	let mut buf = [0; BUFSIZE];
@@ -63,7 +84,7 @@ fn treatfile(path: &std::ffi::OsString) -> Result<(), std::io::Error> {
 		};
 		fill += bytes;
 		let eof = bytes == 0;
-		let consumed = try!(stackmachine(&mut state, &mut out, &buf[0 .. fill], eof));
+		let consumed = try!(stackmachine(&mut state, &mut out, &buf[0 .. fill], eof, &sett));
 		let remain = fill - consumed;
 		if eof {
 			assert!(remain == 0);
@@ -78,10 +99,11 @@ fn treatfile(path: &std::ffi::OsString) -> Result<(), std::io::Error> {
 }
 
 fn stackmachine(
-	state :&mut Vec<Box<Situation>>,
-	out :&mut std::io::StdoutLock,
-	buf :&[u8],
-	eof :bool
+	state: &mut Vec<Box<Situation>>,
+	out: &mut std::io::StdoutLock,
+	buf: &[u8],
+	eof: bool,
+	sett: &Settings,
 ) -> Result<usize, std::io::Error> {
 	let mut pos :usize = 0;
 	while pos < buf.len() {
@@ -92,9 +114,9 @@ fn stackmachine(
 		);
 
 		try!(out.write(&horizon[.. whatnow.pre]));
-		let output :&[u8] = match whatnow.alt {
-			Some(replacement) => replacement,
-			None => &horizon[whatnow.pre .. whatnow.pre + whatnow.len],
+		let output :&[u8] = match (whatnow.alt, sett.replace) {
+			(Some(replacement), true) => replacement,
+			(_, _) => &horizon[whatnow.pre .. whatnow.pre + whatnow.len],
 		};
 		let progress = whatnow.pre + whatnow.len;
 		match whatnow.tri {
@@ -105,17 +127,21 @@ fn stackmachine(
 			}
 			Transition::Push(newstate) => {
 				state.push(newstate);
-				let color = state.last().unwrap().deref().get_color();
-				try!(write_color(out, color));
+				if sett.colorize {
+					let color = state.last().unwrap().deref().get_color();
+					try!(write_color(out, color));
+				}
 				try!(out.write(&output));
 			}
 			Transition::Pop => {
 				if state.len() > 1 {
 					state.pop();
 				}
-				let color = state.last().unwrap().deref().get_color();
 				try!(out.write(&output));
-				try!(write_color(out, color));
+				if sett.colorize {
+					let color = state.last().unwrap().deref().get_color();
+					try!(write_color(out, color));
+				}
 			}
 		}
 		pos += progress;
