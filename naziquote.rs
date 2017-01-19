@@ -21,8 +21,8 @@ fn main() {
 	args.next();
 
 	let mut sett = Settings {
-		colorize: true,
-		replace: true,
+		osel: OutputSelector::DIFF,
+		syntax: true,
 	};
 
 	loop {
@@ -33,10 +33,44 @@ fn main() {
 		let nonopt = match arg.into_string() {
 			Ok(comparable) => {
 				match comparable.as_ref() {
-					"--color=on" => { sett.colorize=true; None },
-					"--color=off" => { sett.colorize=false; None },
-					"--replace=on" => { sett.replace=true; None },
-					"--replace=off" => { sett.replace=false; None },
+					"--suggest" => {
+						sett.osel=OutputSelector::DIFF;
+						sett.syntax=false;
+						None
+					},
+					"--syntax" => {
+						sett.osel=OutputSelector::ORIGINAL;
+						sett.syntax=true;
+						None
+					},
+					"--syntax-suggest" => {
+						sett.osel=OutputSelector::DIFF;
+						sett.syntax=true;
+						None
+					},
+					"--besserwisser" => {
+						sett.osel=OutputSelector::BESSERWISSER;
+						sett.syntax=false;
+						None
+					},
+					"--help" => {
+						println!(
+							"Naziquote: A bash syntax highlighter that encourages\n\
+							(and can fix) proper quoting of variales.\n\
+							\n\
+							Usage:\n\
+							naziquote filename.bash\n\
+							cat filename.bash | naziquote ''\n\
+							\n\
+							Options:\n\
+							--suggest         Output a colored diff suggesting changes.\n\
+							--syntax          Output syntax highlighting with ANSI colors.\n\
+							--syntax-suggest  Diff with syntax highlighting (default mode).\n\
+							--besserwisser    Output suggested changes.\n\
+							"
+						);
+						None
+					},
 					_ => Some(std::ffi::OsString::from(comparable))
 				}
 			},
@@ -50,9 +84,17 @@ fn main() {
 	}
 }
 
+#[derive(Clone)]
+#[derive(Copy)]
+enum OutputSelector {
+	ORIGINAL,
+	DIFF,
+	BESSERWISSER,
+}
+
 struct Settings {
-	colorize :bool,
-	replace :bool,
+	osel :OutputSelector,
+	syntax :bool,
 }
 
 fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), std::io::Error> {
@@ -114,9 +156,18 @@ fn stackmachine(
 		);
 
 		try!(out.write(&horizon[.. whatnow.pre]));
-		let output :&[u8] = match (whatnow.alt, sett.replace) {
-			(Some(replacement), true) => replacement,
-			(_, _) => &horizon[whatnow.pre .. whatnow.pre + whatnow.len],
+		let replaceable = &horizon[whatnow.pre .. whatnow.pre + whatnow.len];
+		let output_choice :&[u8] = match (whatnow.alt, sett.osel) {
+			(Some(replacement), OutputSelector::DIFF) => {
+				try!(write_color(out, 0x02800000));
+				try!(out.write(replaceable));
+				try!(write_color(out, 0x02008000));
+				try!(out.write(&replacement));
+				try!(write_color(out, COLOR_NORMAL));
+				b""
+			},
+			(Some(replacement), OutputSelector::BESSERWISSER) => replacement,
+			(_, _) => replaceable,
 		};
 		let progress = whatnow.pre + whatnow.len;
 		match whatnow.tri {
@@ -127,18 +178,18 @@ fn stackmachine(
 			}
 			Transition::Push(newstate) => {
 				state.push(newstate);
-				if sett.colorize {
+				if sett.syntax {
 					let color = state.last().unwrap().deref().get_color();
 					try!(write_color(out, color));
 				}
-				try!(out.write(&output));
+				try!(out.write(output_choice));
 			}
 			Transition::Pop => {
 				if state.len() > 1 {
 					state.pop();
 				}
-				try!(out.write(&output));
-				if sett.colorize {
+				try!(out.write(output_choice));
+				if sett.syntax {
 					let color = state.last().unwrap().deref().get_color();
 					try!(write_color(out, color));
 				}
@@ -149,12 +200,19 @@ fn stackmachine(
 	Ok(pos)
 }
 
+const COLOR_NORMAL: u32 = 0xff000000;
+
 fn write_color(out :&mut std::io::StdoutLock, code :u32) -> Result<(), std::io::Error> {
-	let b = code & 0xff;
-	let g = (code >> 8) & 0xff;
-	let r = (code >> 16) & 0xff;
-	let ansi = (code >> 24) & 0xff;
-	write!(out, "\x1b[{};38;2;{};{};{}m", ansi, r, g, b)
+	if code == COLOR_NORMAL {
+		write!(out, "\x1b[m")
+	} else {
+		let b = code & 0xff;
+		let g = (code >> 8) & 0xff;
+		let r = (code >> 16) & 0xff;
+		let bold = (code >> 24) & 0x1;
+		let bg = (code >> 25) & 0x7f;
+		write!(out, "\x1b[{};{}8;2;{};{};{}m", bold, bg+3, r, g, b)
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -224,7 +282,7 @@ impl Situation for SitCommand {
 		flush(horizon.len())
 	}
 	fn get_color(&self) -> u32 {
-		0x00a0a0a0
+		COLOR_NORMAL
 	}
 }
 
