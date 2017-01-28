@@ -2,6 +2,7 @@ use std::env;
 use std::fs::File;
 use std::io::{self, Read, Write};
 use std::ops::Deref;
+use std::cmp;
 
 macro_rules! println_stderr(
 	($($arg:tt)*) => (
@@ -278,6 +279,18 @@ impl Situation for SitCommand {
 				},
 				None => {}
 			}
+			let (heredoc_pre, heredoc_end) = find_heredoc(&horizon[i ..]);
+			if i + heredoc_end == horizon.len() {
+				return flush(i);
+			} else if heredoc_end != heredoc_pre {
+				let originator = &horizon[i + heredoc_pre .. i + heredoc_end];
+				return WhatNow{
+					tri: Transition::Push(Box::new(
+						SitHeredoc{terminator: originator.to_vec()}
+					)),
+					pre: i + heredoc_pre, len: heredoc_end - heredoc_pre, alt: None
+				};
+			}
 		}
 		flush(horizon.len())
 	}
@@ -524,7 +537,7 @@ struct SitVarIdent {
 impl Situation for SitVarIdent {
 	#[allow(unused_variables)]
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		let len = identifiertaillen(&horizon);
+		let len = predlen(&is_identifiertail, &horizon);
 		if len < horizon.len() {
 			return WhatNow{tri: Transition::Pop, pre: len, len: 0, alt: self.end_replace};
 		}
@@ -535,17 +548,40 @@ impl Situation for SitVarIdent {
 	}
 }
 
+struct SitHeredoc {
+	terminator :Vec<u8>,
+}
+
+impl Situation for SitHeredoc {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
+		if horizon.len() < self.terminator.len() {
+			if is_horizon_lengthenable {
+				return flush(0);
+			}
+		}
+		else if &horizon[0 .. self.terminator.len()] == &self.terminator[..] {
+			return WhatNow{tri: Transition::Pop, pre: 0, len: self.terminator.len(), alt: None};
+		}
+		return flush(1);
+	}
+	fn get_color(&self) -> u32{
+		0x0077ff00
+	}
+}
+
+//------------------------------------------------------------------------------
+
 fn identifierlen(horizon: &[u8]) -> usize {
 	return if horizon.len() > 0 && is_identifierhead(horizon[0]) {
-		1 + identifiertaillen(&horizon[1 ..])
+		1 + predlen(&is_identifiertail, &horizon[1 ..])
 	} else {
 		0
 	}
 }
 
-fn identifiertaillen(horizon: &[u8]) -> usize {
+fn predlen(pred: &Fn(u8) -> bool, horizon: &[u8]) -> usize {
 	let mut i: usize = 0;
-	while i < horizon.len() && is_identifiertail(horizon[i]) {
+	while i < horizon.len() && pred(horizon[i]) {
 		i += 1;
 	}
 	i
@@ -570,4 +606,32 @@ fn is_identifiertail(c: u8) -> bool {
 		return true;
 	}
 	return false;
+}
+
+fn is_space(c: u8) -> bool {
+	if c == b' '
+	|| c == b'\t'
+	|| c == b'\n'
+	{
+		return true;
+	}
+	return false;
+}
+
+fn is_lt(c: u8) -> bool{
+	c == b'<'
+}
+
+fn find_heredoc(horizon: &[u8]) -> (usize, usize) {
+	let ltlen = predlen(&is_lt, &horizon[.. cmp::min(horizon.len(),2)]);
+	let splen: usize;
+	let idlen: usize;
+	if ltlen == 2 {
+		splen = predlen(&is_space, &horizon[ltlen ..]);
+		idlen = identifierlen(&horizon[ltlen + splen ..]);
+	} else {
+		splen = 0;
+		idlen = 0;
+	}
+	return (ltlen + splen, ltlen + splen + idlen);
 }
