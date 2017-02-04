@@ -12,8 +12,19 @@ macro_rules! println_stderr(
 	)
 );
 
-fn perror(blame: std::ffi::OsString, e: &std::io::Error) {
-	let printable = blame.to_string_lossy();
+fn write_bytes_or_panic<L: Write>(locked_io: &mut L, bytes: &[u8]) {
+	if let Err(e) = locked_io.write_all(bytes) {
+		panic!("Unable to write to stderr: {}", e);
+	}
+}
+
+fn blame_path(path: std::ffi::OsString, blame: &str) {
+	let printable = path.to_string_lossy();
+	println_stderr!("{}: {}", printable, blame);
+}
+
+fn blame_path_io(path: std::ffi::OsString, e: &std::io::Error) {
+	let printable = path.to_string_lossy();
 	println_stderr!("{}: {}", printable, e);
 }
 
@@ -79,7 +90,7 @@ fn main() {
 		};
 		if let Some(path) = nonopt {
 			if let Err(e) = treatfile(&path, &sett) {
-				perror(path, &e);
+				perror_error(path, &e);
 			}
 		}
 	}
@@ -98,7 +109,86 @@ struct Settings {
 	syntax :bool,
 }
 
-fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), std::io::Error> {
+struct ParseError {
+	ctx: Vec<u8>,
+	pos: usize,
+	msg: &'static str,
+}
+
+enum Error {
+	StdioError(std::io::Error),
+	UnsupportedSyntax(ParseError),
+}
+
+fn perror_error(path: std::ffi::OsString, e: &Error) {
+	match e {
+		&Error::StdioError(ref fail) => { blame_path_io(path, &fail); },
+		&Error::UnsupportedSyntax(ref fail) => {
+			blame_path(path, "Unsupported syntax");
+			blame_syntax(fail);
+		},
+	}
+}
+
+fn blame_syntax(fail: &ParseError) {
+	let width;
+	let failing_line_begin;
+	let failing_line_end;
+	{
+		let context_str = String::from_utf8_lossy(&fail.ctx[..]);
+		if let Some(lf) = context_str[.. fail.pos].rfind('\n') {
+			failing_line_begin = lf + 1;
+		} else {
+			failing_line_begin = 0;
+		}
+		if let Some(lf) = context_str[fail.pos ..].find('\n') {
+			failing_line_end = lf;
+		} else {
+			failing_line_end = context_str.len();
+		}
+		// FIXME: This counts codepoints, not displayed width.
+		width = context_str[failing_line_begin .. fail.pos].chars().count();
+	}
+	{
+		let stderr = io::stderr();
+		let mut stderr_lock = stderr.lock();
+		write_bytes_or_panic(&mut stderr_lock, &fail.ctx[.. failing_line_end]);
+		write_bytes_or_panic(&mut stderr_lock, b"\n");
+		for _ in 0 .. width {
+			write_bytes_or_panic(&mut stderr_lock, b" ");
+		}
+		write_bytes_or_panic(&mut stderr_lock, b"^\n");
+	}
+	println_stderr!("{}", fail.msg);
+}
+
+enum FileOrStdinInput<'a> {
+	File(std::fs::File),
+	Stdin(std::io::StdinLock<'a>),
+}
+
+trait OpenAndRead {
+	fn open_file(path: &std::ffi::OsString) -> Result<FileOrStdinInput, std::io::Error>;
+	fn open_stdin(stdin: &std::io::Stdin) -> FileOrStdinInput;
+	fn read(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error>;
+}
+
+impl<'a> OpenAndRead for FileOrStdinInput<'a> {
+	fn open_file(path: &std::ffi::OsString) -> Result<FileOrStdinInput, std::io::Error> {
+		Ok(FileOrStdinInput::File(try!(File::open(path))))
+	}
+	fn open_stdin(stdin: &std::io::Stdin) -> FileOrStdinInput {
+		FileOrStdinInput::Stdin(io::Stdin::lock(&stdin))
+	}
+	fn read(&mut self, mut buf: &mut [u8]) -> Result<usize, std::io::Error> {
+		match self {
+			&mut FileOrStdinInput::Stdin(ref mut fh) => fh.read(&mut buf),
+			&mut FileOrStdinInput::File (ref mut fh) => fh.read(&mut buf),
+		}
+	}
+}
+
+fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error> {
 	const BUFSIZE :usize = 128;
 	let mut fill :usize = 0;
 	let mut buf = [0; BUFSIZE];
@@ -108,23 +198,16 @@ fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), std::io::
 		end_replace: None
 	})};
 
-	enum FileOrStdinInput<'a> {
-		File(std::fs::File),
-		Stdin(std::io::StdinLock<'a>),
-	}
 	let stdin = io::stdin();
 	let mut fh: FileOrStdinInput = if path.is_empty() {
-		FileOrStdinInput::Stdin(io::Stdin::lock(&stdin))
+		FileOrStdinInput::open_stdin(&stdin)
 	} else {
-		FileOrStdinInput::File(try!(File::open(path)))
+		try!(FileOrStdinInput::open_file(path).map_err(|e| Error::StdioError(e)))
 	};
 	let stdout = io::stdout();
 	let mut out = stdout.lock();
 	loop {
-		let bytes = match fh {
-			FileOrStdinInput::Stdin(ref mut fh) => try!(fh.read(&mut buf[fill .. BUFSIZE])),
-			FileOrStdinInput::File (ref mut fh) => try!(fh.read(&mut buf[fill .. BUFSIZE])),
-		};
+		let bytes = try!(fh.read(&mut buf[fill ..]).map_err(|e| Error::StdioError(e)));
 		fill += bytes;
 		let eof = bytes == 0;
 		let consumed = try!(stackmachine(&mut state, &mut out, &buf[0 .. fill], eof, &sett));
@@ -147,24 +230,20 @@ fn stackmachine(
 	buf: &[u8],
 	eof: bool,
 	sett: &Settings,
-) -> Result<usize, std::io::Error> {
+) -> Result<usize, Error> {
 	let mut pos :usize = 0;
 	while pos < buf.len() {
 		let horizon :&[u8] = &buf[pos .. buf.len()];
 		let is_horizon_lengthenable = pos > 0 && !eof;
-		let whatnow :WhatNow = state.last_mut().unwrap().as_mut().whatnow(
+		let whatnow :WhatNow = try!(state.last_mut().unwrap().as_mut().whatnow(
 			&horizon, is_horizon_lengthenable
-		);
+		).map_err(|e| { println!(""); Error::UnsupportedSyntax(e)}));
 
-		try!(out.write(&horizon[.. whatnow.pre]));
+		try!(out.write(&horizon[.. whatnow.pre]).map_err(|e| Error::StdioError(e)));
 		let replaceable = &horizon[whatnow.pre .. whatnow.pre + whatnow.len];
 		let output_choice :&[u8] = match (whatnow.alt, sett.osel) {
 			(Some(replacement), OutputSelector::DIFF) => {
-				try!(write_color(out, 0x02800000));
-				try!(out.write(replaceable));
-				try!(write_color(out, 0x02008000));
-				try!(out.write(&replacement));
-				try!(write_color(out, COLOR_NORMAL));
+				try!(write_diff(out, replaceable, &replacement).map_err(|e| Error::StdioError(e)));
 				b""
 			},
 			(Some(replacement), OutputSelector::BESSERWISSER) => replacement,
@@ -181,18 +260,18 @@ fn stackmachine(
 				state.push(newstate);
 				if sett.syntax {
 					let color = state.last().unwrap().deref().get_color();
-					try!(write_color(out, color));
+					try!(write_color(out, color).map_err(|e| Error::StdioError(e)));
 				}
-				try!(out.write(output_choice));
+				try!(out.write(output_choice).map_err(|e| Error::StdioError(e)));
 			}
 			Transition::Pop => {
 				if state.len() > 1 {
 					state.pop();
 				}
-				try!(out.write(output_choice));
+				try!(out.write(output_choice).map_err(|e| Error::StdioError(e)));
 				if sett.syntax {
 					let color = state.last().unwrap().deref().get_color();
-					try!(write_color(out, color));
+					try!(write_color(out, color).map_err(|e| Error::StdioError(e)));
 				}
 			}
 		}
@@ -216,10 +295,23 @@ fn write_color(out :&mut std::io::StdoutLock, code :u32) -> Result<(), std::io::
 	}
 }
 
+fn write_diff(
+	out: &mut std::io::StdoutLock,
+	replaceable: &[u8],
+	replacement: &[u8],
+) -> Result<(), std::io::Error> {
+	try!(write_color(out, 0x02800000));
+	try!(out.write(replaceable));
+	try!(write_color(out, 0x02008000));
+	try!(out.write(replacement));
+	try!(write_color(out, COLOR_NORMAL));
+	Ok(())
+}
+
 //------------------------------------------------------------------------------
 
 trait Situation {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow;
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError>;
 	fn get_color(&self) -> u32;
 }
 
@@ -244,55 +336,60 @@ struct SitCommand {
 }
 
 impl Situation for SitCommand {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
 		for i in 0 .. horizon.len() {
 			if horizon[i] == self.end_trigger {
-				return WhatNow {
+				return Ok(WhatNow {
 					tri: Transition::Pop, pre: i, len: 1,
 					alt: self.end_replace
-				};
+				});
 			}
 			if horizon[i] == b'#' {
-				return WhatNow {
+				return Ok(WhatNow {
 					tri: Transition::Push(Box::new(SitComment{})),
 					pre: i, len: 1, alt: None
-				};
+				});
 			}
 			if horizon[i] == b'\'' {
-				return WhatNow {
+				return Ok(WhatNow {
 					tri: Transition::Push(Box::new(SitUntilByte{
 						until: b'\'', color: 0x00ffff00, end_replace: None
 					})),
 					pre: i, len: 1, alt: None
-				};
+				});
 			}
 			if horizon[i] == b'\"' {
-				return WhatNow {
+				return Ok(WhatNow {
 					tri: Transition::Push(Box::new(SitStrDq{})),
 					pre: i, len: 1, alt: None
-				};
+				});
 			}
 			let common_with_str_dq = common_str_cmd(&horizon, i, is_horizon_lengthenable, true);
 			match common_with_str_dq {
 				Some(thing) => {
-					return thing;
+					return Ok(thing);
 				},
 				None => {}
 			}
 			let (heredoc_pre, heredoc_end) = find_heredoc(&horizon[i ..]);
 			if i + heredoc_end == horizon.len() {
-				return flush(i);
+				return Ok(flush(i));
 			} else if heredoc_end != heredoc_pre {
 				let originator = &horizon[i + heredoc_pre .. i + heredoc_end];
-				return WhatNow{
+				return Ok(WhatNow{
 					tri: Transition::Push(Box::new(
-						SitHeredoc{terminator: originator.to_vec()}
+						SitHeredoc{terminator: originator.to_owned()}
 					)),
 					pre: i + heredoc_pre, len: heredoc_end - heredoc_pre, alt: None
-				};
+				});
+			} else if heredoc_end >= 2 {
+				return Err(ParseError{
+					ctx: horizon.to_owned(), pos: i + heredoc_end,
+					msg: "Only identifiers are supported as heredoc delimiters."
+				});
 			}
 		}
-		flush(horizon.len())
+		Ok(flush(horizon.len()))
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_NORMAL
@@ -303,24 +400,24 @@ struct SitStrDq {}
 
 impl Situation for SitStrDq {
 	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
 		for i in 0 .. horizon.len() {
 			if horizon[i] == b'\\' {
 				let esc = Box::new(SitExtent{len: 1, color: 0x01ff0080, end_insert: None});
-				return WhatNow{tri: Transition::Push(esc), pre: i, len: 1, alt: None};
+				return Ok(WhatNow{tri: Transition::Push(esc), pre: i, len: 1, alt: None});
 			}
 			if horizon[i] == b'\"' {
-				return WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None};
+				return Ok(WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None});
 			}
 			let common_with_cmd = common_str_cmd(&horizon, i, is_horizon_lengthenable, false);
 			match common_with_cmd {
 				Some(thing) => {
-					return thing;
+					return Ok(thing);
 				},
 				None => {}
 			}
 		}
-		flush(horizon.len())
+		Ok(flush(horizon.len()))
 	}
 	fn get_color(&self) -> u32{
 		0x00ff0000
@@ -455,13 +552,13 @@ struct SitComment {}
 
 impl Situation for SitComment {
 	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
 		for i in 0 .. horizon.len() {
 			if horizon[i] == b'\n' {
-				return WhatNow{tri: Transition::Pop, pre: 0, len: i, alt: None};
+				return Ok(WhatNow{tri: Transition::Pop, pre: 0, len: i, alt: None});
 			}
 		}
-		flush(horizon.len())
+		Ok(flush(horizon.len()))
 	}
 	fn get_color(&self) -> u32{
 		0x01282828
@@ -476,12 +573,12 @@ struct SitExtent{
 
 impl Situation for SitExtent {
 	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
 		if horizon.len() >= self.len {
-			return WhatNow{tri: Transition::Pop, pre: self.len, len: 0, alt: self.end_insert};
+			return Ok(WhatNow{tri: Transition::Pop, pre: self.len, len: 0, alt: self.end_insert});
 		}
 		self.len -= horizon.len();
-		return flush(horizon.len());
+		return Ok(flush(horizon.len()));
 	}
 	fn get_color(&self) -> u32{
 		self.color
@@ -496,13 +593,13 @@ struct SitUntilByte {
 
 impl Situation for SitUntilByte {
 	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
 		for i in 0 .. horizon.len() {
 			if horizon[i] == self.until {
-				return WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: self.end_replace};
+				return Ok(WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: self.end_replace});
 			}
 		}
-		flush(horizon.len())
+		Ok(flush(horizon.len()))
 	}
 	fn get_color(&self) -> u32{
 		self.color
@@ -513,17 +610,17 @@ struct SitStrSqEsc {}
 
 impl Situation for SitStrSqEsc {
 	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
 		for i in 0 .. horizon.len() {
 			if horizon[i] == b'\\' {
 				let esc = Box::new(SitExtent{len: 1, color: 0x01ff0080, end_insert: None});
-				return WhatNow{tri: Transition::Push(esc), pre: i, len: 1, alt: None};
+				return Ok(WhatNow{tri: Transition::Push(esc), pre: i, len: 1, alt: None});
 			}
 			if horizon[i] == b'\'' {
-				return WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None};
+				return Ok(WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None});
 			}
 		}
-		flush(horizon.len())
+		Ok(flush(horizon.len()))
 	}
 	fn get_color(&self) -> u32{
 		0x00ff8000
@@ -536,12 +633,12 @@ struct SitVarIdent {
 
 impl Situation for SitVarIdent {
 	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
 		let len = predlen(&is_identifiertail, &horizon);
 		if len < horizon.len() {
-			return WhatNow{tri: Transition::Pop, pre: len, len: 0, alt: self.end_replace};
+			return Ok(WhatNow{tri: Transition::Pop, pre: len, len: 0, alt: self.end_replace});
 		}
-		flush(horizon.len())
+		Ok(flush(horizon.len()))
 	}
 	fn get_color(&self) -> u32{
 		0x000000ff
@@ -553,16 +650,16 @@ struct SitHeredoc {
 }
 
 impl Situation for SitHeredoc {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
 		if horizon.len() < self.terminator.len() {
 			if is_horizon_lengthenable {
-				return flush(0);
+				return Ok(flush(0));
 			}
 		}
 		else if &horizon[0 .. self.terminator.len()] == &self.terminator[..] {
-			return WhatNow{tri: Transition::Pop, pre: 0, len: self.terminator.len(), alt: None};
+			return Ok(WhatNow{tri: Transition::Pop, pre: 0, len: self.terminator.len(), alt: None});
 		}
-		return flush(1);
+		return Ok(flush(1));
 	}
 	fn get_color(&self) -> u32{
 		0x0077ff00
