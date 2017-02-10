@@ -453,6 +453,34 @@ fn common_str_cmd(
 					pre: i, len: 2, alt: None
 				});
 			} else if c == b'(' {
+				let cmd_end = identifierlen(&horizon[i+2 ..]);
+				if i+2+cmd_end+1 >= horizon.len() {
+					if is_horizon_lengthenable {
+						return Some(flush(i+1));
+					}
+				} else if horizon[i+2+cmd_end] == b')' && horizon[i+2 .. i+2+cmd_end].eq(b"pwd") {
+					let replacement: &'static [u8] = if need_quotes {
+						b"\"$PWD\""
+					} else {
+						let tailhazard = is_identifiertail(horizon[i+2+cmd_end+1]);
+						if tailhazard {
+							b"${PWD}"
+						} else {
+							b"$PWD"
+						}
+					};
+					let sit = Box::new(SitExtent{
+						len: 0,
+						color: 0x000000ff,
+						end_insert: None,
+					});
+					return Some(WhatNow {
+						tri: Transition::Push(sit),
+						pre: i, len: 6,
+						alt: Some(replacement)
+					});
+				}
+
 				let cmd = Box::new(SitCommand{
 					end_trigger: b')',
 					end_replace: if_needed(need_quotes, b")\"")
