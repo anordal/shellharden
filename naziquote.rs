@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::{self, Read, Write};
 use std::ops::Deref;
 use std::cmp;
+use std::process;
 
 macro_rules! println_stderr(
 	($($arg:tt)*) => (
@@ -37,6 +38,7 @@ fn main() {
 		syntax: true,
 	};
 
+	let mut exit_code: i32 = 0;
 	loop {
 		let arg = match args.next() {
 			Some(arg) => arg,
@@ -91,9 +93,11 @@ fn main() {
 		if let Some(path) = nonopt {
 			if let Err(e) = treatfile(&path, &sett) {
 				perror_error(path, &e);
+				exit_code = 1;
 			}
 		}
 	}
+	process::exit(exit_code);
 }
 
 #[derive(Clone)]
