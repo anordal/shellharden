@@ -2,7 +2,6 @@ use std::env;
 use std::fs::File;
 use std::io::{self, Read, Write};
 use std::ops::Deref;
-use std::cmp;
 use std::process;
 
 macro_rules! println_stderr(
@@ -375,22 +374,20 @@ impl Situation for SitCommand {
 				},
 				None => {}
 			}
-			let (heredoc_pre, heredoc_end) = find_heredoc(&horizon[i ..]);
-			if i + heredoc_end == horizon.len() {
-				return Ok(flush(i));
-			} else if heredoc_end != heredoc_pre {
-				let originator = &horizon[i + heredoc_pre .. i + heredoc_end];
+			let (ate, delimiter) = find_heredoc(&horizon[i ..]);
+			if i + ate == horizon.len() {
+				if is_horizon_lengthenable {
+					return Ok(flush(i));
+				}
+			} else if delimiter.len() > 0 {
 				return Ok(WhatNow{
 					tri: Transition::Push(Box::new(
-						SitHeredoc{terminator: originator.to_owned()}
+						SitHeredoc{terminator: delimiter}
 					)),
-					pre: i + heredoc_pre, len: heredoc_end - heredoc_pre, alt: None
+					pre: i, len: ate, alt: None
 				});
-			} else if heredoc_end >= 2 {
-				return Err(ParseError{
-					ctx: horizon.to_owned(), pos: i + heredoc_end,
-					msg: "Only identifiers are supported as heredoc delimiters."
-				});
+			} else if ate > 0 {
+				return Ok(flush(i + ate));
 			}
 		}
 		Ok(flush(horizon.len()))
@@ -747,20 +744,61 @@ fn is_space(c: u8) -> bool {
 	return false;
 }
 
-fn is_lt(c: u8) -> bool{
-	c == b'<'
-}
-
-fn find_heredoc(horizon: &[u8]) -> (usize, usize) {
-	let ltlen = predlen(&is_lt, &horizon[.. cmp::min(horizon.len(),2)]);
-	let splen: usize;
-	let idlen: usize;
-	if ltlen == 2 {
-		splen = predlen(&is_space, &horizon[ltlen ..]);
-		idlen = identifierlen(&horizon[ltlen + splen ..]);
-	} else {
-		splen = 0;
-		idlen = 0;
+fn find_heredoc(horizon: &[u8]) -> (usize, Vec<u8>) {
+	let mut ate = predlen(&|x| x == b'<', &horizon);
+	let mut found = Vec::<u8>::new();
+	if ate != 2 {
+		return (ate, found);
 	}
-	return (ltlen + splen, ltlen + splen + idlen);
+	ate += predlen(&|x| x == b'-', &horizon[ate ..]);
+	ate += predlen(&is_space, &horizon[ate ..]);
+
+	// Lex one word.
+	let herein = &horizon[ate ..];
+	found.reserve(herein.len());
+
+	#[derive(Clone)]
+	#[derive(Copy)]
+	enum DelimiterSyntax {
+		WORD,
+		WORDESC,
+		SQ,
+		DQ,
+		DQESC,
+	}
+	let mut state = DelimiterSyntax::WORD;
+
+	for byte_ref in herein {
+		let byte: u8 = *byte_ref;
+		state = match (state, byte) {
+			(DelimiterSyntax::WORD, b' ' ) => break,
+			(DelimiterSyntax::WORD, b'\n') => break,
+			(DelimiterSyntax::WORD, b'\t') => break,
+			(DelimiterSyntax::WORD, b'\\') => DelimiterSyntax::WORDESC,
+			(DelimiterSyntax::WORD, b'\'') => DelimiterSyntax::SQ,
+			(DelimiterSyntax::WORD, b'\"') => DelimiterSyntax::DQ,
+			(DelimiterSyntax::SQ, b'\'') => DelimiterSyntax::WORD,
+			(DelimiterSyntax::DQ, b'\"') => DelimiterSyntax::WORD,
+			(DelimiterSyntax::DQ, b'\\') => DelimiterSyntax::DQESC,
+			(DelimiterSyntax::WORDESC, b'\n') => DelimiterSyntax::WORD,
+			(DelimiterSyntax::WORDESC, _) => {
+				found.push(byte);
+				DelimiterSyntax::WORD
+			},
+			(DelimiterSyntax::DQESC, b'\n') => DelimiterSyntax::DQ,
+			(DelimiterSyntax::DQESC, _) => {
+				if byte != b'\"' && byte != b'\\' {
+					found.push(b'\\');
+				}
+				found.push(byte);
+				DelimiterSyntax::DQ
+			},
+			(_, _) => {
+				found.push(byte);
+				state
+			},
+		};
+		ate += 1;
+	}
+	return (ate, found);
 }
