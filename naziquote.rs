@@ -449,10 +449,12 @@ fn common_str_cmd(
 		if i+1 < horizon.len() {
 			let c = horizon[i+1];
 			if c == b'\'' {
-				return Some(WhatNow {
-					tri: Transition::Push(Box::new(SitStrSqEsc{})),
-					pre: i, len: 2, alt: None
-				});
+				if need_quotes {
+					return Some(WhatNow {
+						tri: Transition::Push(Box::new(SitStrSqEsc{})),
+						pre: i, len: 2, alt: None
+					});
+				}
 			} else if c == b'(' {
 				let cmd_end = identifierlen(&horizon[i+2 ..]);
 				if i+2+cmd_end+1 >= horizon.len() {
