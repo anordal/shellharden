@@ -121,6 +121,7 @@ struct ParseError {
 enum Error {
 	StdioError(std::io::Error),
 	UnsupportedSyntax(ParseError),
+	UnexpectedEOF(ParseError),
 }
 
 fn perror_error(path: std::ffi::OsString, e: &Error) {
@@ -128,6 +129,10 @@ fn perror_error(path: std::ffi::OsString, e: &Error) {
 		&Error::StdioError(ref fail) => { blame_path_io(path, &fail); },
 		&Error::UnsupportedSyntax(ref fail) => {
 			blame_path(path, "Unsupported syntax");
+			blame_syntax(fail);
+		},
+		&Error::UnexpectedEOF(ref fail) => {
+			blame_path(path, "Unexpected end of file");
 			blame_syntax(fail);
 		},
 	}
@@ -224,7 +229,16 @@ fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error> {
 		}
 		fill = remain;
 	}
-	Ok(())
+	if state.len() == 1 {
+		Ok(())
+	} else {
+		Err(Error::UnexpectedEOF(ParseError{
+			ctx: buf[0 .. fill].to_owned(),
+			pos: fill,
+			msg: "The file's end was reached without closing all sytactic scopes.\n\
+			Either, the parser got lost, or the file is truncated or malformed.",
+		}))
+	}
 }
 
 fn stackmachine(
