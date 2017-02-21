@@ -112,33 +112,31 @@ struct Settings {
 	syntax :bool,
 }
 
-struct ParseError {
+struct UnsupportedSyntax {
 	ctx: Vec<u8>,
 	pos: usize,
+	typ: &'static str,
 	msg: &'static str,
 }
 
 enum Error {
-	StdioError(std::io::Error),
-	UnsupportedSyntax(ParseError),
-	UnexpectedEOF(ParseError),
+	Stdio(std::io::Error),
+	Syntax(UnsupportedSyntax),
 }
+
+type ParseResult = Result<WhatNow, UnsupportedSyntax>;
 
 fn perror_error(path: std::ffi::OsString, e: &Error) {
 	match e {
-		&Error::StdioError(ref fail) => { blame_path_io(path, &fail); },
-		&Error::UnsupportedSyntax(ref fail) => {
-			blame_path(path, "Unsupported syntax");
-			blame_syntax(fail);
-		},
-		&Error::UnexpectedEOF(ref fail) => {
-			blame_path(path, "Unexpected end of file");
+		&Error::Stdio(ref fail) => { blame_path_io(path, &fail); },
+		&Error::Syntax(ref fail) => {
+			blame_path(path, fail.typ);
 			blame_syntax(fail);
 		},
 	}
 }
 
-fn blame_syntax(fail: &ParseError) {
+fn blame_syntax(fail: &UnsupportedSyntax) {
 	let width;
 	let failing_line_begin;
 	let failing_line_end;
@@ -210,12 +208,12 @@ fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error> {
 	let mut fh: FileOrStdinInput = if path.is_empty() {
 		FileOrStdinInput::open_stdin(&stdin)
 	} else {
-		try!(FileOrStdinInput::open_file(path).map_err(|e| Error::StdioError(e)))
+		try!(FileOrStdinInput::open_file(path).map_err(|e| Error::Stdio(e)))
 	};
 	let stdout = io::stdout();
 	let mut out = stdout.lock();
 	loop {
-		let bytes = try!(fh.read(&mut buf[fill ..]).map_err(|e| Error::StdioError(e)));
+		let bytes = try!(fh.read(&mut buf[fill ..]).map_err(|e| Error::Stdio(e)));
 		fill += bytes;
 		let eof = bytes == 0;
 		let consumed = try!(stackmachine(&mut state, &mut out, &buf[0 .. fill], eof, &sett));
@@ -232,7 +230,8 @@ fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error> {
 	if state.len() == 1 {
 		Ok(())
 	} else {
-		Err(Error::UnexpectedEOF(ParseError{
+		Err(Error::Syntax(UnsupportedSyntax{
+			typ: "Unexpected end of file",
 			ctx: buf[0 .. fill].to_owned(),
 			pos: fill,
 			msg: "The file's end was reached without closing all sytactic scopes.\n\
@@ -254,13 +253,13 @@ fn stackmachine(
 		let is_horizon_lengthenable = pos > 0 && !eof;
 		let whatnow :WhatNow = try!(state.last_mut().unwrap().as_mut().whatnow(
 			&horizon, is_horizon_lengthenable
-		).map_err(|e| { println!(""); Error::UnsupportedSyntax(e)}));
+		).map_err(|e| { println!(""); Error::Syntax(e)}));
 
-		try!(out.write(&horizon[.. whatnow.pre]).map_err(|e| Error::StdioError(e)));
+		try!(out.write(&horizon[.. whatnow.pre]).map_err(|e| Error::Stdio(e)));
 		let replaceable = &horizon[whatnow.pre .. whatnow.pre + whatnow.len];
 		let output_choice :&[u8] = match (whatnow.alt, sett.osel) {
 			(Some(replacement), OutputSelector::DIFF) => {
-				try!(write_diff(out, replaceable, &replacement).map_err(|e| Error::StdioError(e)));
+				try!(write_diff(out, replaceable, &replacement).map_err(|e| Error::Stdio(e)));
 				b""
 			},
 			(Some(replacement), OutputSelector::BESSERWISSER) => replacement,
@@ -277,18 +276,18 @@ fn stackmachine(
 				state.push(newstate);
 				if sett.syntax {
 					let color = state.last().unwrap().deref().get_color();
-					try!(write_color(out, color).map_err(|e| Error::StdioError(e)));
+					try!(write_color(out, color).map_err(|e| Error::Stdio(e)));
 				}
-				try!(out.write(output_choice).map_err(|e| Error::StdioError(e)));
+				try!(out.write(output_choice).map_err(|e| Error::Stdio(e)));
 			}
 			Transition::Pop => {
 				if state.len() > 1 {
 					state.pop();
 				}
-				try!(out.write(output_choice).map_err(|e| Error::StdioError(e)));
+				try!(out.write(output_choice).map_err(|e| Error::Stdio(e)));
 				if sett.syntax {
 					let color = state.last().unwrap().deref().get_color();
-					try!(write_color(out, color).map_err(|e| Error::StdioError(e)));
+					try!(write_color(out, color).map_err(|e| Error::Stdio(e)));
 				}
 			}
 		}
@@ -328,7 +327,7 @@ fn write_diff(
 //------------------------------------------------------------------------------
 
 trait Situation {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError>;
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult;
 	fn get_color(&self) -> u32;
 }
 
@@ -353,7 +352,7 @@ struct SitCommand {
 }
 
 impl Situation for SitCommand {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
 			if horizon[i] == self.end_trigger {
 				return Ok(WhatNow {
@@ -381,7 +380,7 @@ impl Situation for SitCommand {
 					pre: i, len: 1, alt: None
 				});
 			}
-			let common_with_str_dq = common_str_cmd(&horizon, i, is_horizon_lengthenable, true);
+			let common_with_str_dq = try!(common_str_cmd(&horizon, i, is_horizon_lengthenable, true));
 			match common_with_str_dq {
 				Some(thing) => {
 					return Ok(thing);
@@ -415,7 +414,7 @@ struct SitStrDq {}
 
 impl Situation for SitStrDq {
 	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
 			if horizon[i] == b'\\' {
 				let esc = Box::new(SitExtent{len: 1, color: 0x01ff0080, end_insert: None});
@@ -424,7 +423,7 @@ impl Situation for SitStrDq {
 			if horizon[i] == b'\"' {
 				return Ok(WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None});
 			}
-			let common_with_cmd = common_str_cmd(&horizon, i, is_horizon_lengthenable, false);
+			let common_with_cmd = try!(common_str_cmd(&horizon, i, is_horizon_lengthenable, false));
 			match common_with_cmd {
 				Some(thing) => {
 					return Ok(thing);
@@ -448,32 +447,32 @@ fn common_str_cmd(
 	i: usize,
 	is_horizon_lengthenable: bool,
 	need_quotes: bool
-) -> Option<WhatNow> {
+) -> Result<Option<WhatNow>, UnsupportedSyntax> {
 	if horizon[i] == b'`' {
 		let cmd = Box::new(SitCommand{
 			end_trigger: b'`',
 			end_replace: if_needed(need_quotes, b")\"")
 		});
-		return Some(WhatNow {
+		return Ok(Some(WhatNow {
 			tri: Transition::Push(cmd),
 			pre: i, len: 1, alt: if_needed(need_quotes, b"\"$(")
-		});
+		}));
 	}
 	if horizon[i] == b'$' {
 		if i+1 < horizon.len() {
 			let c = horizon[i+1];
 			if c == b'\'' {
 				if need_quotes {
-					return Some(WhatNow {
+					return Ok(Some(WhatNow {
 						tri: Transition::Push(Box::new(SitStrSqEsc{})),
 						pre: i, len: 2, alt: None
-					});
+					}));
 				}
 			} else if c == b'(' {
 				let cmd_end = identifierlen(&horizon[i+2 ..]);
 				if i+2+cmd_end+1 >= horizon.len() {
 					if is_horizon_lengthenable {
-						return Some(flush(i+1));
+						return Ok(Some(flush(i+1)));
 					}
 				} else if horizon[i+2+cmd_end] == b')' && horizon[i+2 .. i+2+cmd_end].eq(b"pwd") {
 					let replacement: &'static [u8] = if need_quotes {
@@ -491,30 +490,50 @@ fn common_str_cmd(
 						color: 0x000000ff,
 						end_insert: None,
 					});
-					return Some(WhatNow {
+					return Ok(Some(WhatNow {
 						tri: Transition::Push(sit),
 						pre: i, len: 6,
 						alt: Some(replacement)
-					});
+					}));
 				}
 
 				let cmd = Box::new(SitCommand{
 					end_trigger: b')',
 					end_replace: if_needed(need_quotes, b")\"")
 				});
-				return Some(WhatNow {
+				return Ok(Some(WhatNow {
 					tri: Transition::Push(cmd),
 					pre: i, len: 2, alt: if_needed(need_quotes, b"\"$(")
-				});
+				}));
 			} else if c == b'#' || c == b'?' {
 				let ext = Box::new(SitExtent{
 					len: 0,
 					color: 0x000000ff,
 					end_insert: None
 				});
-				return Some(WhatNow {
+				return Ok(Some(WhatNow {
 					tri: Transition::Push(ext),
 					pre: i, len: 2, alt: None
+				}));
+			} else if predlen(&|c|{c >= b'0' && c <= b'9'}, &horizon[i+1 ..]) > 1 {
+				return Err(UnsupportedSyntax {
+					typ: "Unsuported syntax: Syntactic pitfall",
+					ctx: horizon.to_owned(),
+					pos: i+2,
+					msg: "This does not mean what it looks like. You may be forgiven to think that the full string of \
+					numerals is the variable name. Only the fist is.\n\
+					\n\
+					Try this and be shocked: f() { echo \"$9\" \"$10\"; }; f a b c d e f g h i j\n\
+					\n\
+					Here is where braces should be used to disambiguate, \
+					e.g. \"${10}\" vs \"${1}0\".\n\
+					\n\
+					Syntactic pitfalls are deemed too dangerous to fix automatically\n\
+					(the purpose of Naziquote is to fix brittle code – code that mostly \
+					does what it looks like, as opposed to code that never does what it looks like):\n\
+					* Fixing what it does would be 100% subtle \
+					and might slip through code review unnoticed.\n\
+					* Fixing its look would make a likely bug look intentional."
 				});
 			} else if c == b'@' || (c >= b'0' && c <= b'9') {
 				let ext = Box::new(SitExtent{
@@ -522,18 +541,18 @@ fn common_str_cmd(
 					color: 0x000000ff,
 					end_insert: if_needed(need_quotes, b"\"")
 				});
-				return Some(WhatNow {
+				return Ok(Some(WhatNow {
 					tri: Transition::Push(ext),
 					pre: i, len: 0, alt: if_needed(need_quotes, b"\"")
-				});
+				}));
 			} else if is_identifierhead(c) {
 				let boks = Box::new(SitVarIdent{
 					end_replace: if_needed(need_quotes, b"\"")
 				});
-				return Some(WhatNow {
+				return Ok(Some(WhatNow {
 					tri: Transition::Push(boks),
 					pre: i, len: 1, alt: if_needed(need_quotes, b"\"$")
-				});
+				}));
 			} else if c == b'{' {
 				let cand :&[u8] = &horizon[i+2 ..];
 				let idlen = identifierlen(cand);
@@ -541,12 +560,12 @@ fn common_str_cmd(
 				let mut is_number = false;
 				if idlen == cand.len() {
 					if is_horizon_lengthenable {
-						return Some(flush(i));
+						return Ok(Some(flush(i)));
 					}
 				} else if cand[idlen] == b'}' {
 					if idlen+1 == cand.len() {
 						if is_horizon_lengthenable {
-							return Some(flush(i));
+							return Ok(Some(flush(i)));
 						}
 					} else {
 						rm_braces = !is_identifiertail(cand[idlen+1]);
@@ -577,16 +596,16 @@ fn common_str_cmd(
 				let until = Box::new(SitUntilByte{
 					until: b'}', color: 0x000000ff, end_replace: replace_end
 				});
-				return Some(WhatNow {
+				return Ok(Some(WhatNow {
 					tri: Transition::Push(until),
 					pre: i, len: 2, alt: replace_begin
-				});
+				}));
 			}
-			return Some(flush(i+1));
+			return Ok(Some(flush(i+1)));
 		}
-		return Some(flush(i));
+		return Ok(Some(flush(i)));
 	}
-	None
+	Ok(None)
 }
 
 fn if_needed<T>(needed: bool, val: T) -> Option<T> {
@@ -597,7 +616,7 @@ struct SitComment {}
 
 impl Situation for SitComment {
 	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
 			if horizon[i] == b'\n' {
 				return Ok(WhatNow{tri: Transition::Pop, pre: 0, len: i, alt: None});
@@ -618,7 +637,7 @@ struct SitExtent{
 
 impl Situation for SitExtent {
 	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		if horizon.len() >= self.len {
 			return Ok(WhatNow{tri: Transition::Pop, pre: self.len, len: 0, alt: self.end_insert});
 		}
@@ -638,7 +657,7 @@ struct SitUntilByte {
 
 impl Situation for SitUntilByte {
 	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
 			if horizon[i] == self.until {
 				return Ok(WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: self.end_replace});
@@ -655,7 +674,7 @@ struct SitStrSqEsc {}
 
 impl Situation for SitStrSqEsc {
 	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
 			if horizon[i] == b'\\' {
 				let esc = Box::new(SitExtent{len: 1, color: 0x01ff0080, end_insert: None});
@@ -678,7 +697,7 @@ struct SitVarIdent {
 
 impl Situation for SitVarIdent {
 	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		let len = predlen(&is_identifiertail, &horizon);
 		if len < horizon.len() {
 			return Ok(WhatNow{tri: Transition::Pop, pre: len, len: 0, alt: self.end_replace});
@@ -695,7 +714,7 @@ struct SitHeredoc {
 }
 
 impl Situation for SitHeredoc {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> Result<WhatNow, ParseError> {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		if horizon.len() < self.terminator.len() {
 			if is_horizon_lengthenable {
 				return Ok(flush(0));

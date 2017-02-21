@@ -11,7 +11,6 @@ echo $6
 echo $7
 echo $8
 echo $9
-echo $10 # Yes, actually
 echo $@
 echo $# # Expands to a number
 echo $? # Expands to a number
@@ -56,7 +55,6 @@ echo "$6"
 echo "$7"
 echo "$8"
 echo "$9"
-echo "$10" # Yes, actually
 echo "$@"
 echo "$#" # Expands to a number
 echo "$?" # Expands to a number
