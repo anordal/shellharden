@@ -141,14 +141,14 @@ fn blame_syntax(fail: &UnsupportedSyntax) {
 	let failing_line_begin;
 	let failing_line_end;
 	{
-		let context_str = String::from_utf8_lossy(&fail.ctx[..]);
+		let context_str = String::from_utf8_lossy(&fail.ctx);
 		if let Some(lf) = context_str[.. fail.pos].rfind('\n') {
 			failing_line_begin = lf + 1;
 		} else {
 			failing_line_begin = 0;
 		}
 		if let Some(lf) = context_str[fail.pos ..].find('\n') {
-			failing_line_end = lf;
+			failing_line_end = fail.pos + lf;
 		} else {
 			failing_line_end = context_str.len();
 		}
@@ -253,7 +253,7 @@ fn stackmachine(
 		let is_horizon_lengthenable = pos > 0 && !eof;
 		let whatnow :WhatNow = try!(state.last_mut().unwrap().as_mut().whatnow(
 			&horizon, is_horizon_lengthenable
-		).map_err(|e| { println!(""); Error::Syntax(e)}));
+		).map_err(|e| { println!("\x1b[m"); Error::Syntax(e)}));
 
 		try!(out.write(&horizon[.. whatnow.pre]).map_err(|e| Error::Stdio(e)));
 		let replaceable = &horizon[whatnow.pre .. whatnow.pre + whatnow.len];
