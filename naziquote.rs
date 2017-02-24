@@ -515,6 +515,16 @@ fn common_str_cmd(
 					tri: Transition::Push(ext),
 					pre: i, len: 2, alt: None
 				}));
+			} else if c == b'*' {
+				let ext = Box::new(SitExtent{
+					len: 0,
+					color: 0x000000ff,
+					end_insert: None
+				});
+				return Ok(Some(WhatNow {
+					tri: Transition::Push(ext),
+					pre: i, len: 2, alt: if need_quotes { Some(b"\"$@\"") } else { Some(b"$@") }
+				}));
 			} else if predlen(&|c|{c >= b'0' && c <= b'9'}, &horizon[i+1 ..]) > 1 {
 				return Err(UnsupportedSyntax {
 					typ: "Unsuported syntax: Syntactic pitfall",
