@@ -28,3 +28,10 @@ Build
 [1]: http://mywiki.wooledge.org/BashPitfalls
 [2]: https://www.shellcheck.net/
 [3]: http://stackoverflow.com/questions/41104131/tool-to-automatically-rewrite-a-bash-script-with-proper-quoting
+
+Usage advice
+------------
+
+Don't apply `--besserwisser` blindly; code review is still necessary: A script that *relies* on the to-be-avoided behavior (implicit word splitting and glob expansion from variables and command substitutions) to work as intended will do none of that after getting the `--besserwisser` treatment!
+
+In that unlucky case, ask yourself whether the script has any business in doing that. All too often, it's just a product of classical shellscripting, and would be better off rewritten, such as by using vectors. Even in the opposite case, say the business logic involves word splitting; that can still be done without invoking globbing. In short: There is always a better way than the forbidden syntax (if not more explicit), but some times, a human must step in to rewrite. See how, in the accompanying [how to do things safely in bash](how_to_do_things_safely_in_bash.md).
