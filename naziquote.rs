@@ -1,7 +1,6 @@
 use std::env;
 use std::fs::File;
 use std::io::{self, Read, Write};
-use std::ops::Deref;
 use std::process;
 
 macro_rules! println_stderr(
@@ -257,14 +256,6 @@ fn stackmachine(
 
 		try!(out.write(&horizon[.. whatnow.pre]).map_err(|e| Error::Stdio(e)));
 		let replaceable = &horizon[whatnow.pre .. whatnow.pre + whatnow.len];
-		let output_choice :&[u8] = match (whatnow.alt, sett.osel) {
-			(Some(replacement), OutputSelector::DIFF) => {
-				try!(write_diff(out, replaceable, &replacement).map_err(|e| Error::Stdio(e)));
-				b""
-			},
-			(Some(replacement), OutputSelector::BESSERWISSER) => replacement,
-			(_, _) => replaceable,
-		};
 		let progress = whatnow.pre + whatnow.len;
 		match whatnow.tri {
 			Transition::Same => {
@@ -273,22 +264,32 @@ fn stackmachine(
 				}
 			}
 			Transition::Push(newstate) => {
+				let color_final = if sett.syntax {
+					newstate.get_color()
+				} else {
+					COLOR_NORMAL
+				};
 				state.push(newstate);
-				if sett.syntax {
-					let color = state.last().unwrap().deref().get_color();
-					try!(write_color(out, color).map_err(|e| Error::Stdio(e)));
-				}
-				try!(out.write(output_choice).map_err(|e| Error::Stdio(e)));
+				try!(write_transition(
+					out, sett, replaceable, whatnow.alt,
+					COLOR_NORMAL, color_final, color_final,
+				).map_err(|e| Error::Stdio(e)));
 			}
 			Transition::Pop => {
-				if state.len() > 1 {
-					state.pop();
-				}
-				try!(out.write(output_choice).map_err(|e| Error::Stdio(e)));
+				let color_pre;
+				let color_final;
 				if sett.syntax {
-					let color = state.last().unwrap().deref().get_color();
-					try!(write_color(out, color).map_err(|e| Error::Stdio(e)));
-				}
+					color_pre = state[state.len() - 1].get_color();
+					color_final = state[state.len() - 2].get_color();
+				} else {
+					color_pre = COLOR_NORMAL;
+					color_final = COLOR_NORMAL;
+				};
+				state.pop();
+				try!(write_transition(
+					out, sett, replaceable, whatnow.alt,
+					color_pre, color_pre, color_final,
+				).map_err(|e| Error::Stdio(e)));
 			}
 		}
 		pos += progress;
@@ -297,6 +298,74 @@ fn stackmachine(
 }
 
 const COLOR_NORMAL: u32 = 0xff000000;
+
+fn write_transition(
+	out: &mut std::io::StdoutLock,
+	sett: &Settings,
+	replaceable: &[u8],
+	alternative: Option<&[u8]>,
+	color_pre: u32,
+	color_transition: u32,
+	color_final: u32,
+) -> Result<(), std::io::Error> {
+	let mut color_cur = color_pre;
+	try!(match (alternative, sett.osel) {
+		(Some(replacement), OutputSelector::DIFF) => {
+			write_diff(out, &mut color_cur, color_transition, replaceable, &replacement)
+		},
+		(Some(replacement), OutputSelector::BESSERWISSER) => {
+			write_colored_slice(out, &mut color_cur, color_transition, replacement)
+		},
+		(_, _) => {
+			write_colored_slice(out, &mut color_cur, color_transition, replaceable)
+		},
+	});
+	if color_cur != color_final {
+		try!(write_color(out, color_final));
+	}
+	Ok(())
+}
+
+// Edit distance without replacement; greedy, but that suffices.
+fn write_diff(
+	out: &mut std::io::StdoutLock,
+	mut color_cur: &mut u32,
+	color_neutral: u32,
+	replaceable: &[u8],
+	replacement: &[u8],
+) -> Result<(), std::io::Error> {
+	let color_a = 0x02800000;
+	let color_b = 0x02008000;
+	let remain_a = replaceable;
+	let mut remain_b = replacement;
+	for i in 0 .. remain_a.len() {
+		let color_next;
+		let a: u8 = remain_a[i];
+		if let Some(pivot_b) = remain_b.iter().position(|&b| b == a) {
+			color_next = color_neutral;
+			try!(write_colored_slice(out, &mut color_cur, color_b, &remain_b[0 .. pivot_b]));
+			remain_b = &remain_b[pivot_b+1 ..];
+		} else {
+			color_next = color_a;
+		}
+		try!(write_colored_slice(out, &mut color_cur, color_next, &remain_a[i .. i+1]));
+	}
+	write_colored_slice(out, &mut color_cur, color_b, &remain_b)
+}
+
+fn write_colored_slice(
+	out: &mut std::io::StdoutLock,
+	mut color_cur: &mut u32,
+	color: u32,
+	slice: &[u8],
+) -> Result<(), std::io::Error> {
+	if slice.len() > 0 && *color_cur != color {
+		try!(write_color(out, color));
+		*color_cur = color;
+	}
+	try!(out.write(slice));
+	Ok(())
+}
 
 fn write_color(out :&mut std::io::StdoutLock, code :u32) -> Result<(), std::io::Error> {
 	if code == COLOR_NORMAL {
@@ -309,19 +378,6 @@ fn write_color(out :&mut std::io::StdoutLock, code :u32) -> Result<(), std::io::
 		let bg = (code >> 25) & 0x7f;
 		write!(out, "\x1b[{};{}8;2;{};{};{}m", bold, bg+3, r, g, b)
 	}
-}
-
-fn write_diff(
-	out: &mut std::io::StdoutLock,
-	replaceable: &[u8],
-	replacement: &[u8],
-) -> Result<(), std::io::Error> {
-	try!(write_color(out, 0x02800000));
-	try!(out.write(replaceable));
-	try!(write_color(out, 0x02008000));
-	try!(out.write(replacement));
-	try!(write_color(out, COLOR_NORMAL));
-	Ok(())
 }
 
 //------------------------------------------------------------------------------
