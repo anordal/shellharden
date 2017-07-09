@@ -842,14 +842,8 @@ fn is_identifiertail(c: u8) -> bool {
 	return false;
 }
 
-fn is_space(c: u8) -> bool {
-	if c == b' '
-	|| c == b'\t'
-	|| c == b'\n'
-	{
-		return true;
-	}
-	return false;
+fn is_controlcharacter(c: u8) -> bool {
+	return c <= b' ';
 }
 
 fn find_heredoc(horizon: &[u8]) -> (usize, Vec<u8>) {
@@ -859,7 +853,7 @@ fn find_heredoc(horizon: &[u8]) -> (usize, Vec<u8>) {
 		return (ate, found);
 	}
 	ate += predlen(&|x| x == b'-', &horizon[ate ..]);
-	ate += predlen(&is_space, &horizon[ate ..]);
+	ate += predlen(&is_controlcharacter, &horizon[ate ..]);
 
 	// Lex one word.
 	let herein = &horizon[ate ..];
