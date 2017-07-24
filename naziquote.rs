@@ -139,20 +139,31 @@ fn blame_syntax(fail: &UnsupportedSyntax) {
 	let width;
 	let failing_line_begin;
 	let failing_line_end;
-	{
-		let context_str = String::from_utf8_lossy(&fail.ctx);
-		if let Some(lf) = context_str[.. fail.pos].rfind('\n') {
-			failing_line_begin = lf + 1;
-		} else {
-			failing_line_begin = 0;
+	if fail.pos < fail.ctx.len() {
+		let mut i = fail.pos;
+		while i > 0 {
+			i -= 1;
+			if fail.ctx[i] == b'\n' {
+				break;
+			}
 		}
-		if let Some(lf) = context_str[fail.pos ..].find('\n') {
-			failing_line_end = fail.pos + lf;
-		} else {
-			failing_line_end = context_str.len();
+		failing_line_begin = if fail.ctx[i] == b'\n' { i + 1 } else { 0 };
+		let mut i = fail.pos;
+		while i < fail.ctx.len() && fail.ctx[i] != b'\n' {
+			i += 1;
 		}
+		failing_line_end = i;
 		// FIXME: This counts codepoints, not displayed width.
-		width = context_str[failing_line_begin .. fail.pos].chars().count();
+		let mut sum = 0;
+		for c in &fail.ctx[failing_line_begin .. fail.pos] {
+			if c >> b'\x06' != b'\x02' {
+				sum += 1;
+			}
+		}
+		width = sum;
+	} else {
+		width = 0;
+		failing_line_end = 0;
 	}
 	{
 		let stderr = io::stderr();
