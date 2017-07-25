@@ -90,6 +90,7 @@ fn main() {
 		};
 		if let Some(path) = nonopt {
 			if let Err(e) = treatfile(&path, &sett) {
+				println!("\x1b[m");
 				perror_error(path, &e);
 				exit_code = 1;
 			}
@@ -263,7 +264,7 @@ fn stackmachine(
 		let is_horizon_lengthenable = pos > 0 && !eof;
 		let whatnow :WhatNow = try!(state.last_mut().unwrap().as_mut().whatnow(
 			&horizon, is_horizon_lengthenable
-		).map_err(|e| { println!("\x1b[m"); Error::Syntax(e)}));
+		).map_err(|e| Error::Syntax(e)));
 
 		try!(out.write(&horizon[.. whatnow.pre]).map_err(|e| Error::Stdio(e)));
 		let replaceable = &horizon[whatnow.pre .. whatnow.pre + whatnow.len];
