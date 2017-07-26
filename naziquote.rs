@@ -137,9 +137,6 @@ fn perror_error(path: std::ffi::OsString, e: &Error) {
 }
 
 fn blame_syntax(fail: &UnsupportedSyntax) {
-	let width;
-	let failing_line_begin;
-	let failing_line_end;
 	if fail.pos < fail.ctx.len() {
 		let mut i = fail.pos;
 		while i > 0 {
@@ -148,25 +145,21 @@ fn blame_syntax(fail: &UnsupportedSyntax) {
 				break;
 			}
 		}
-		failing_line_begin = if fail.ctx[i] == b'\n' { i + 1 } else { 0 };
+		let failing_line_begin = if fail.ctx[i] == b'\n' { i + 1 } else { 0 };
 		let mut i = fail.pos;
 		while i < fail.ctx.len() && fail.ctx[i] != b'\n' {
 			i += 1;
 		}
-		failing_line_end = i;
+		let failing_line_end = i;
 		// FIXME: This counts codepoints, not displayed width.
-		let mut sum = 0;
+		let mut width = 0;
 		for c in &fail.ctx[failing_line_begin .. fail.pos] {
 			if c >> b'\x06' != b'\x02' {
-				sum += 1;
+				width += 1;
 			}
 		}
-		width = sum;
-	} else {
-		width = 0;
-		failing_line_end = 0;
-	}
-	{
+		let width = width;
+
 		let stderr = io::stderr();
 		let mut stderr_lock = stderr.lock();
 		write_bytes_or_panic(&mut stderr_lock, &fail.ctx[.. failing_line_end]);
