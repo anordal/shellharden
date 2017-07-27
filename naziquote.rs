@@ -199,7 +199,7 @@ fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error> {
 	let mut buf = [0; BUFSIZE];
 
 	let mut state :Vec<Box<Situation>> = vec!{Box::new(SitCommand{
-		end_trigger: b'\x00',
+		end_trigger: 0x100,
 		end_replace: None
 	})};
 
@@ -403,14 +403,14 @@ struct WhatNow {
 //------------------------------------------------------------------------------
 
 struct SitCommand {
-	end_trigger :u8,
+	end_trigger :u16,
 	end_replace :Option<&'static [u8]>,
 }
 
 impl Situation for SitCommand {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
-			if horizon[i] == self.end_trigger {
+			if horizon[i] as u16 == self.end_trigger {
 				return Ok(WhatNow {
 					tri: Transition::Pop, pre: i, len: 1,
 					alt: self.end_replace
@@ -506,7 +506,7 @@ fn common_str_cmd(
 ) -> Result<Option<WhatNow>, UnsupportedSyntax> {
 	if horizon[i] == b'`' {
 		let cmd = Box::new(SitCommand{
-			end_trigger: b'`',
+			end_trigger: b'`' as u16,
 			end_replace: if_needed(need_quotes, b")\"")
 		});
 		return Ok(Some(WhatNow {
@@ -554,7 +554,7 @@ fn common_str_cmd(
 				}
 
 				let cmd = Box::new(SitCommand{
-					end_trigger: b')',
+					end_trigger: b')' as u16,
 					end_replace: if_needed(need_quotes, b")\"")
 				});
 				return Ok(Some(WhatNow {
