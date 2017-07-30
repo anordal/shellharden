@@ -477,10 +477,6 @@ impl Situation for SitStrDq {
 	#[allow(unused_variables)]
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
-			if horizon[i] == b'\\' {
-				let esc = Box::new(SitExtent{len: 1, color: 0x01ff0080, end_insert: None});
-				return Ok(WhatNow{tri: Transition::Push(esc), pre: i, len: 1, alt: None});
-			}
 			if horizon[i] == b'\"' {
 				return Ok(WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None});
 			}
@@ -517,6 +513,12 @@ fn common_str_cmd(
 		return Ok(Some(WhatNow {
 			tri: Transition::Push(cmd),
 			pre: i, len: 1, alt: if_needed(need_quotes, b"\"$(")
+		}));
+	}
+	if horizon[i] == b'\\' {
+		let esc = Box::new(SitExtent{len: 1, color: 0x01ff0080, end_insert: None});
+		return Ok(Some(WhatNow{
+			tri: Transition::Push(esc), pre: i, len: 1, alt: None
 		}));
 	}
 	if horizon[i] == b'$' {
