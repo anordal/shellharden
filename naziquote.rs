@@ -403,7 +403,7 @@ fn write_diff(
 
 fn write_colored_slice(
 	out: &mut std::io::StdoutLock,
-	mut color_cur: &mut u32,
+	color_cur: &mut u32,
 	color: u32,
 	slice: &[u8],
 ) -> Result<(), std::io::Error> {
