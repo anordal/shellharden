@@ -511,7 +511,7 @@ impl Situation for SitCommand {
 			} else if delimiter.len() > 0 {
 				return Ok(WhatNow{
 					tri: Transition::Push(Box::new(
-						SitHeredoc{terminator: delimiter}
+						SitVec{terminator: delimiter, color: 0x0077ff00}
 					)),
 					pre: i, len: ate, alt: None
 				});
@@ -678,6 +678,16 @@ fn common_str_cmd(
 				tri: Transition::Push(sit),
 				pre: i, len: 6,
 				alt: Some(replacement)
+			});
+		} else if cand.len() >= 1 && cand[0] == b'(' {
+			let sit = Box::new(SitVec{
+				terminator: vec!{b')', b')'},
+				color: 0x00007fff,
+			});
+			return CommonStrCmdResult::Ok(WhatNow{
+				tri: Transition::Push(sit),
+				pre: i, len: 3,
+				alt: None
 			});
 		}
 
@@ -881,11 +891,12 @@ impl Situation for SitVarIdent {
 	}
 }
 
-struct SitHeredoc {
+struct SitVec {
 	terminator :Vec<u8>,
+	color: u32,
 }
 
-impl Situation for SitHeredoc {
+impl Situation for SitVec {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		if horizon.len() < self.terminator.len() {
 			if is_horizon_lengthenable {
@@ -898,7 +909,7 @@ impl Situation for SitHeredoc {
 		return Ok(flush(1));
 	}
 	fn get_color(&self) -> u32{
-		0x0077ff00
+		self.color
 	}
 }
 
