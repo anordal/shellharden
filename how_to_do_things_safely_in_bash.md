@@ -32,7 +32,7 @@ Bad command substitution: `` `cmd` ``
 
 There are exceptions where quoting is not necessary, but because it never hurts to quote, and the general rule is to be scared when you see an unquoted variable, pursuing the non-obvious exceptions is, for the sake of your readers, questionable. It looks wrong, and the wrong practice is common enough to raise suspicion: Enough scripts are being written with broken handling of filenames that whitespace in filenames is often avoided…
 
-The only exceptions honored by Naziquote, are variables of numeric content, such as `$?`, `$#` and `${#array[@]}`.
+The only exceptions honored by Naziquote are variables of numeric content, such as `$?`, `$#` and `${#array[@]}`.
 
 ### Use arrays FTW
 
@@ -74,6 +74,15 @@ Alternatively, for bash 4.4:
 
     readarray -td $'\v' a < <(printf '%s\v' "$s")
 
+### Gotcha: Numbered arguments
+
+Having argued that enclosing variables in braces for no reason is bad style (adds confusion), this does not extend to numbered arguments. As ShellCheck says:
+
+    echo "$10"
+          ^-- SC1037: Braces are required for positionals over 9, e.g. ${10}.
+
+Naziquote will refuse to fix this (deemed too subtle), and is not actually nazi about numbered arguments below 10 (since they are required for 10 and above).
+
 How to begin a bash script
 --------------------------
 
@@ -104,3 +113,70 @@ But not:
 * Setting the *internal field separator* to the empty string disables word splitting. Sounds like the holy grail. Sadly, this is no complete replacement for quoting variables and command substitutions, and given that you are going to use quotes, this gives you nothing. The reason you must still use quotes is that otherwise, empty strings become empty arrays (as in `test $x = ""`), and indirect wildcard expansion is still active. Furthermore, messing with this variable also messes with commands like `read` that use it, breaking constructs like `cat /etc/fstab | while read -r dev mnt fs opt dump pass; do echo "$fs"; done'`.
 * Disabling wildcard expansion: Not just the notorious indirect one, but also the unproblematic direct one, that I'm saying you should want to use. So this is a hard sell. And this too should be completely unnecessary for a script that is shellcheck/naziquote conformant.
 * As an alternative to *nullglob*, *failglob* fails if there are zero matches. While this makes sense for most commands, for example `rm -- *.txt` (because most commands that take file arguments don't expect to be called with zero of them anyway), obviously, *failglob* can only be used when you are able to assume that zero matches won't happen. That just means you mostly won't be putting wildcards in command arguments unless you can assume the same. But what can always be done, is to use *nullglob* and let the pattern expand to zero arguments in a construct that can take zero arguments, such as a `for` loop or array assignment (`txt_files=(*.txt)`).
+
+How to use errexit
+------------------
+
+Aka `set -e`.
+
+### Program-level deferred cleanup
+
+In case errexit does its thing, use this to set up any necessary cleanup to happen at exit.
+
+    tmpfile="$(mktemp -t myprogram-XXXXXX)"
+    cleanup() {
+        rm -f "$tmpfile"
+    }
+    trap cleanup EXIT
+
+### Gotcha: Errexit is ignored in command arguments
+
+Here is a nice underhanded fork bomb that I learnt the hard way – my build script worked fine on various developer machines, but brought my company's buildserver to its knees:
+
+    set -e # Fail if nproc is not installed
+    make -j"$(nproc)"
+
+Correct (command substitution in assignment):
+
+    set -e # Fail if nproc is not installed
+    jobs="$(nproc)"
+    make -j "$jobs"
+
+Caution: Builtins like `local` and `export` are also commands, so this is still wrong:
+
+    set -e # Fail if nproc is not installed
+    local jobs="$(nproc)"
+    make -j"$jobs"
+
+ShellCheck warns only about special commands like `local` in this case.
+
+### Gotcha: Errexit is ignored depending on caller context
+
+Sometimes, POSIX is cruel. Errexit is ignored in functions, scopes and even subshells if the caller is checking its success. These examples all print `Unreachable` and `Great success`, despite all sanity.
+
+Subshell:
+
+    (
+        set -e
+        false
+        echo Unreachable
+    ) && echo Great success
+
+Scope:
+
+    {
+        set -e
+        false
+        echo Unreachable
+    } && echo Great success
+
+Function:
+
+    f() {
+        set -e
+        false
+        echo Unreachable
+    }
+    f && echo Great success
+
+This makes bash with errexit practically incomposable – it is *possible* to wrap your errexit functions so that they still work, but the effort it saves (over explicit error handling) becomes questionable. Consider splitting into completely standalone scripts instead.
