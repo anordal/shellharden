@@ -3,7 +3,7 @@
 Shellharden
 =========
 
-A bash syntax highlighter that encourages (and can fix) proper quoting of variales.
+A bash syntax highlighter that encourages (and can fix) proper quoting of variables.
 
 Because rewriting scripts to adhere to the *always use quotes* principle can be daunting:
 
