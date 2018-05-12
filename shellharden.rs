@@ -1,6 +1,7 @@
 use std::env;
-use std::fs::File;
-use std::io::{self, Read, Write};
+use std::fs::{File, OpenOptions};
+use std::io::{self, Read, Write, Seek, SeekFrom};
+use std::fmt::{Write as FmtWrite, Arguments};
 use std::process;
 
 macro_rules! println_stderr(
@@ -34,6 +35,7 @@ fn main() {
 	let mut sett = Settings {
 		osel: OutputSelector::DIFF,
 		syntax: true,
+		replace: false,
 	};
 
 	let mut exit_code: i32 = 0;
@@ -48,21 +50,37 @@ fn main() {
 					"--suggest" => {
 						sett.osel=OutputSelector::DIFF;
 						sett.syntax=false;
+						sett.replace=false;
 						None
 					},
 					"--syntax" => {
 						sett.osel=OutputSelector::ORIGINAL;
 						sett.syntax=true;
+						sett.replace=false;
 						None
 					},
 					"--syntax-suggest" => {
 						sett.osel=OutputSelector::DIFF;
 						sett.syntax=true;
+						sett.replace=false;
 						None
 					},
 					"--transform" => {
 						sett.osel=OutputSelector::TRANSFORM;
 						sett.syntax=false;
+						sett.replace=false;
+						None
+					},
+					"--check" => {
+						sett.osel=OutputSelector::CHECK;
+						sett.syntax=false;
+						sett.replace=false;
+						None
+					},
+					"--replace" => {
+						sett.osel=OutputSelector::TRANSFORM;
+						sett.syntax=false;
+						sett.replace=true;
 						None
 					},
 					"--help" => {
@@ -79,6 +97,8 @@ fn main() {
 							--syntax          Output syntax highlighting with ANSI colors.\n\
 							--syntax-suggest  Diff with syntax highlighting (default mode).\n\
 							--transform       Output suggested changes.\n\
+							--check           No output; exit with 2 if changes are suggested.\n\
+							--replace         Replace file contents with suggested changes.\n\
 							"
 						);
 						None
@@ -91,8 +111,18 @@ fn main() {
 		if let Some(path) = nonopt {
 			if let Err(e) = treatfile(&path, &sett) {
 				println!("\x1b[m");
-				perror_error(path, &e);
 				exit_code = 1;
+				match &e {
+					&Error::Stdio(ref fail) => blame_path_io(path, &fail),
+					&Error::Syntax(ref fail) => {
+						blame_path(path, fail.typ);
+						blame_syntax(fail);
+					},
+					&Error::Check => {
+						exit_code = 2;
+						break;
+					},
+				};
 			}
 		}
 	}
@@ -101,15 +131,18 @@ fn main() {
 
 #[derive(Clone)]
 #[derive(Copy)]
+#[derive(PartialEq)]
 enum OutputSelector {
 	ORIGINAL,
 	DIFF,
 	TRANSFORM,
+	CHECK,
 }
 
 struct Settings {
 	osel :OutputSelector,
 	syntax :bool,
+	replace :bool,
 }
 
 struct UnsupportedSyntax {
@@ -122,19 +155,10 @@ struct UnsupportedSyntax {
 enum Error {
 	Stdio(std::io::Error),
 	Syntax(UnsupportedSyntax),
+	Check,
 }
 
 type ParseResult = Result<WhatNow, UnsupportedSyntax>;
-
-fn perror_error(path: std::ffi::OsString, e: &Error) {
-	match e {
-		&Error::Stdio(ref fail) => { blame_path_io(path, &fail); },
-		&Error::Syntax(ref fail) => {
-			blame_path(path, fail.typ);
-			blame_syntax(fail);
-		},
-	}
-}
 
 fn blame_syntax(fail: &UnsupportedSyntax) {
 	if fail.pos < fail.ctx.len() {
@@ -172,81 +196,154 @@ fn blame_syntax(fail: &UnsupportedSyntax) {
 	println_stderr!("{}", fail.msg);
 }
 
-enum FileOrStdinInput<'a> {
+enum InputSource<'a> {
 	File(std::fs::File),
 	Stdin(std::io::StdinLock<'a>),
 }
 
-trait OpenAndRead {
-	fn open_file(path: &std::ffi::OsString) -> Result<FileOrStdinInput, std::io::Error>;
-	fn open_stdin(stdin: &std::io::Stdin) -> FileOrStdinInput;
-	fn read(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error>;
-}
-
-impl<'a> OpenAndRead for FileOrStdinInput<'a> {
-	fn open_file(path: &std::ffi::OsString) -> Result<FileOrStdinInput, std::io::Error> {
-		Ok(FileOrStdinInput::File(try!(File::open(path))))
+impl<'a> InputSource<'a> {
+	fn open_file(path: &std::ffi::OsString) -> Result<InputSource, std::io::Error> {
+		Ok(InputSource::File(try!(File::open(path))))
 	}
-	fn open_stdin(stdin: &std::io::Stdin) -> FileOrStdinInput {
-		FileOrStdinInput::Stdin(io::Stdin::lock(&stdin))
+	fn open_stdin(stdin: &std::io::Stdin) -> InputSource {
+		InputSource::Stdin(stdin.lock())
 	}
 	fn read(&mut self, mut buf: &mut [u8]) -> Result<usize, std::io::Error> {
 		match self {
-			&mut FileOrStdinInput::Stdin(ref mut fh) => fh.read(&mut buf),
-			&mut FileOrStdinInput::File (ref mut fh) => fh.read(&mut buf),
+			&mut InputSource::Stdin(ref mut fh) => fh.read(&mut buf),
+			&mut InputSource::File (ref mut fh) => fh.read(&mut buf),
 		}
+	}
+	fn size(&mut self) -> Result<u64, std::io::Error> {
+		match self {
+			&mut InputSource::Stdin(_) => panic!("filesize of stdin"),
+			&mut InputSource::File (ref mut fh) => {
+				let off :u64 = try!(fh.seek(SeekFrom::End(0)));
+				try!(fh.seek(SeekFrom::Start(0)));
+				Ok(off)
+			},
+		}
+	}
+}
+
+enum OutputSink<'a> {
+	Stdout(std::io::StdoutLock<'a>),
+	Soak(Vec<u8>),
+	None,
+}
+
+struct FileOut<'a> {
+	sink :OutputSink<'a>,
+	change :bool,
+}
+
+impl<'a> FileOut<'a> {
+	fn open_stdout(stdout: &std::io::Stdout) -> FileOut {
+		FileOut{sink: OutputSink::Stdout(stdout.lock()), change: false}
+	}
+	fn open_soak(reserve: u64) -> FileOut<'a> {
+		FileOut{sink: OutputSink::Soak(Vec::with_capacity(reserve as usize)), change: false}
+	}
+	fn open_none() -> FileOut<'a> {
+		FileOut{sink: OutputSink::None, change: false}
+	}
+	fn write_all(&mut self, buf: &[u8]) -> Result<(), std::io::Error> {
+		match &mut self.sink {
+			&mut OutputSink::Stdout(ref mut fh) => try!(fh.write_all(&buf)),
+			&mut OutputSink::Soak(ref mut vec) => vec.extend_from_slice(buf),
+			&mut OutputSink::None => {},
+		}
+		Ok(())
+	}
+	fn write_fmt(&mut self, args: Arguments) -> Result<(), std::io::Error> {
+		match self.sink {
+			OutputSink::Stdout(ref mut fh) => try!(fh.write_fmt(args)),
+			OutputSink::Soak(ref mut buf) => {
+				// TODO: Format directly to vec<u8>
+				let mut s = String::new();
+				if let Err(_) = s.write_fmt(args) {
+					panic!("fmt::Error");
+				}
+				buf.extend_from_slice(s.as_bytes());
+			},
+			OutputSink::None => {},
+		}
+		Ok(())
+	}
+	fn commit(&mut self, path: &std::ffi::OsString) -> Result<(), std::io::Error> {
+		match &self.sink {
+			&OutputSink::Soak(ref vec) => {
+				let mut overwrite = try!(OpenOptions::new().write(true).truncate(true).create(false).open(path));
+				try!(overwrite.write_all(vec));
+			},
+			_ => {},
+		}
+		Ok(())
 	}
 }
 
 fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error> {
-	const BUFSIZE :usize = 128;
-	let mut fill :usize = 0;
-	let mut buf = [0; BUFSIZE];
+	let stdout = io::stdout(); // TODO: not here
+	let mut fo: FileOut;
+	{
+		let stdin = io::stdin(); // TODO: not here
+		let mut fi: InputSource = if path.is_empty() {
+			InputSource::open_stdin(&stdin)
+		} else {
+			try!(InputSource::open_file(path).map_err(|e| Error::Stdio(e)))
+		};
 
-	let mut state :Vec<Box<Situation>> = vec!{Box::new(SitCommand{
-		end_trigger: 0x100,
-		end_replace: None
-	})};
+		fo = if sett.osel == OutputSelector::CHECK {
+			FileOut::open_none()
+		} else if sett.replace && !path.is_empty() {
+			FileOut::open_soak(try!(fi.size().map_err(|e| Error::Stdio(e))) * 9 / 8)
+		} else {
+			FileOut::open_stdout(&stdout)
+		};
 
-	let stdin = io::stdin();
-	let mut fh: FileOrStdinInput = if path.is_empty() {
-		FileOrStdinInput::open_stdin(&stdin)
-	} else {
-		try!(FileOrStdinInput::open_file(path).map_err(|e| Error::Stdio(e)))
-	};
-	let stdout = io::stdout();
-	let mut out = stdout.lock();
-	loop {
-		let bytes = try!(fh.read(&mut buf[fill ..]).map_err(|e| Error::Stdio(e)));
-		fill += bytes;
-		let eof = bytes == 0;
-		let consumed = try!(stackmachine(&mut state, &mut out, &buf[0 .. fill], eof, &sett));
-		let remain = fill - consumed;
-		if eof {
-			assert!(remain == 0);
-			break;
+		const BUFSIZE :usize = 128;
+		let mut fill :usize = 0;
+		let mut buf = [0; BUFSIZE];
+
+		let mut state :Vec<Box<Situation>> = vec!{Box::new(SitCommand{
+			end_trigger: 0x100,
+			end_replace: None
+		})};
+
+		loop {
+			let bytes = try!(fi.read(&mut buf[fill ..]).map_err(|e| Error::Stdio(e)));
+			fill += bytes;
+			let eof = bytes == 0;
+			let consumed = try!(stackmachine(&mut state, &mut fo, &buf[0 .. fill], eof, &sett));
+			let remain = fill - consumed;
+			if eof {
+				assert!(remain == 0);
+				break;
+			}
+			if fo.change && sett.osel == OutputSelector::CHECK {
+				return Err(Error::Check);
+			}
+			for i in 0 .. remain {
+				buf[i] = buf[consumed + i];
+			}
+			fill = remain;
 		}
-		for i in 0 .. remain {
-			buf[i] = buf[consumed + i];
+		if state.len() != 1 {
+			return Err(Error::Syntax(UnsupportedSyntax{
+				typ: "Unexpected end of file",
+				ctx: buf[0 .. fill].to_owned(),
+				pos: fill,
+				msg: "The file's end was reached without closing all sytactic scopes.\n\
+				Either, the parser got lost, or the file is truncated or malformed.",
+			}));
 		}
-		fill = remain;
 	}
-	if state.len() == 1 {
-		Ok(())
-	} else {
-		Err(Error::Syntax(UnsupportedSyntax{
-			typ: "Unexpected end of file",
-			ctx: buf[0 .. fill].to_owned(),
-			pos: fill,
-			msg: "The file's end was reached without closing all sytactic scopes.\n\
-			Either, the parser got lost, or the file is truncated or malformed.",
-		}))
-	}
+	fo.commit(path).map_err(|e| Error::Stdio(e))
 }
 
 fn stackmachine(
 	state: &mut Vec<Box<Situation>>,
-	out: &mut std::io::StdoutLock,
+	out: &mut FileOut,
 	buf: &[u8],
 	eof: bool,
 	sett: &Settings,
@@ -259,7 +356,14 @@ fn stackmachine(
 			&horizon, is_horizon_lengthenable
 		).map_err(|e| Error::Syntax(e)));
 
-		try!(out.write(&horizon[.. whatnow.pre]).map_err(|e| Error::Stdio(e)));
+		if let Some(_) = whatnow.alt {
+			out.change = true;
+			if sett.osel == OutputSelector::CHECK {
+				break;
+			}
+		}
+
+		try!(out.write_all(&horizon[.. whatnow.pre]).map_err(|e| Error::Stdio(e)));
 		let replaceable = &horizon[whatnow.pre .. whatnow.pre + whatnow.len];
 		let progress = whatnow.pre + whatnow.len;
 		let whatnow = match whatnow.tri {
@@ -348,7 +452,7 @@ fn stackmachine(
 const COLOR_NORMAL: u32 = 0xff000000;
 
 fn write_transition(
-	out: &mut std::io::StdoutLock,
+	out: &mut FileOut,
 	sett: &Settings,
 	replaceable: &[u8],
 	alternative: Option<&[u8]>,
@@ -376,7 +480,7 @@ fn write_transition(
 
 // Edit distance without replacement; greedy, but that suffices.
 fn write_diff(
-	out: &mut std::io::StdoutLock,
+	out: &mut FileOut,
 	mut color_cur: &mut u32,
 	color_neutral: u32,
 	replaceable: &[u8],
@@ -402,7 +506,7 @@ fn write_diff(
 }
 
 fn write_colored_slice(
-	out: &mut std::io::StdoutLock,
+	out: &mut FileOut,
 	color_cur: &mut u32,
 	color: u32,
 	slice: &[u8],
@@ -411,13 +515,13 @@ fn write_colored_slice(
 		try!(write_color(out, color));
 		*color_cur = color;
 	}
-	try!(out.write(slice));
+	try!(out.write_all(slice));
 	Ok(())
 }
 
-fn write_color(out :&mut std::io::StdoutLock, code :u32) -> Result<(), std::io::Error> {
+fn write_color(out :&mut FileOut, code :u32) -> Result<(), std::io::Error> {
 	if code == COLOR_NORMAL {
-		write!(out, "\x1b[m")
+		out.write_all(b"\x1b[m")
 	} else {
 		let b = code & 0xff;
 		let g = (code >> 8) & 0xff;
