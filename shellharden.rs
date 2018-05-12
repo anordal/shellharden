@@ -68,7 +68,7 @@ fn main() {
 					"--help" => {
 						println!(
 							"Shellharden: A bash syntax highlighter that encourages\n\
-							(and can fix) proper quoting of variales.\n\
+							(and can fix) proper quoting of variables.\n\
 							\n\
 							Usage:\n\
 							shellharden filename.bash\n\
