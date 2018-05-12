@@ -67,12 +67,12 @@ fn main() {
 					},
 					"--help" => {
 						println!(
-							"Naziquote: A bash syntax highlighter that encourages\n\
+							"Shellharden: A bash syntax highlighter that encourages\n\
 							(and can fix) proper quoting of variales.\n\
 							\n\
 							Usage:\n\
-							naziquote filename.bash\n\
-							cat filename.bash | naziquote ''\n\
+							shellharden filename.bash\n\
+							cat filename.bash | shellharden ''\n\
 							\n\
 							Options:\n\
 							--suggest         Output a colored diff suggesting changes.\n\
@@ -733,7 +733,7 @@ fn common_str_cmd(
 			e.g. \"${10}\" vs \"${1}0\".\n\
 			\n\
 			Syntactic pitfalls are deemed too dangerous to fix automatically\n\
-			(the purpose of Naziquote is to fix brittle code – code that mostly \
+			(the purpose of Shellharden is to fix brittle code – code that mostly \
 			does what it looks like, as opposed to code that never does what it looks like):\n\
 			* Fixing what it does would be 100% subtle \
 			and might slip through code review unnoticed.\n\

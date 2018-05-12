@@ -1,6 +1,6 @@
 <img src="img/logo.png" align="right"/>
 
-Naziquote
+Shellharden
 =========
 
 A bash syntax highlighter that encourages (and can fix) proper quoting of variales.
@@ -9,9 +9,9 @@ Because rewriting scripts to adhere to the *always use quotes* principle can be 
 
 ![real-world example](img/ex-realworld.png)
 
-Above: Selected portions of `xdg-desktop-menu` as highlighted by Naziquote.
+Above: Selected portions of `xdg-desktop-menu` as highlighted by Shellharden.
 The foreground colors are syntax highlighting, whereas the background colors
-(green and red) show characters that Naziquote would have added or removed
+(green and red) show characters that Shellharden would have added or removed
 if let loose with the `--transform` option.
 Below: An artificial example that shows more tricky cases and special features.
 
@@ -25,19 +25,17 @@ A variable in bash is like a hand grenade – take off its quotes, and it starts
 Name
 ----
 
-To be absoultely clear, this is not about nazism.
-I mean it in the sense of [an authoritarian, strict or nitpicky person](4):
+Shellharden can do what Shellcheck can't: Apply the suggested changes.
 
-> (slang, pejorative, offensive) An authoritarian, strict or nitpicky person.
+In other words, harden brittle shellscripts.
+The builtin assumption is that the script does not *depend* on the brittle behavior –
+the user is responsible for the code review.
 
-"Nazi" alludes to strict adherence to principles, with little room for excuses.
-That's Naziquote in a nutshell:
-It *will* break code that relies on unquotedness – because there is no excuse for that!
-If the strictest of all shell scripting standards is something you strive for,
-Naziquote is the tool for you.
+Shellharden was previously known as "Naziquote".
+In the right jargon, that was the best name ever,
+but oh so misleading and unspeakable to outsiders.
 
-Regrettably, "naziquote" may not be palatable everywhere,
-but I couldn't call it "bash cleaner" either, as that means "poo smearer" in Norwegian.
+I couldn't call it "bash cleaner" either, as that means "poo smearer" in Norwegian.
 
 Prior art
 ---------
@@ -49,7 +47,7 @@ Prior art
 Build
 -----
 
-    rustc naziquote.rs
+    rustc shellharden.rs
 
 Usage advice
 ------------
@@ -61,4 +59,3 @@ In that unlucky case, ask yourself whether the script has any business in doing 
 [1]: http://mywiki.wooledge.org/BashPitfalls
 [2]: https://www.shellcheck.net/
 [3]: http://stackoverflow.com/questions/41104131/tool-to-automatically-rewrite-a-bash-script-with-proper-quoting
-[4]: https://en.wiktionary.org/wiki/nazi#Dutch
