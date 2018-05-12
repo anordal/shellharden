@@ -60,8 +60,8 @@ fn main() {
 						sett.syntax=true;
 						None
 					},
-					"--besserwisser" => {
-						sett.osel=OutputSelector::BESSERWISSER;
+					"--transform" => {
+						sett.osel=OutputSelector::TRANSFORM;
 						sett.syntax=false;
 						None
 					},
@@ -78,7 +78,7 @@ fn main() {
 							--suggest         Output a colored diff suggesting changes.\n\
 							--syntax          Output syntax highlighting with ANSI colors.\n\
 							--syntax-suggest  Diff with syntax highlighting (default mode).\n\
-							--besserwisser    Output suggested changes.\n\
+							--transform       Output suggested changes.\n\
 							"
 						);
 						None
@@ -104,7 +104,7 @@ fn main() {
 enum OutputSelector {
 	ORIGINAL,
 	DIFF,
-	BESSERWISSER,
+	TRANSFORM,
 }
 
 struct Settings {
@@ -361,7 +361,7 @@ fn write_transition(
 		(Some(replacement), OutputSelector::DIFF) => {
 			write_diff(out, &mut color_cur, color_transition, replaceable, &replacement)
 		},
-		(Some(replacement), OutputSelector::BESSERWISSER) => {
+		(Some(replacement), OutputSelector::TRANSFORM) => {
 			write_colored_slice(out, &mut color_cur, color_transition, replacement)
 		},
 		(_, _) => {

@@ -12,7 +12,7 @@ Because rewriting scripts to adhere to the *always use quotes* principle can be 
 Above: Selected portions of `xdg-desktop-menu` as highlighted by Naziquote.
 The foreground colors are syntax highlighting, whereas the background colors
 (green and red) show characters that Naziquote would have added or removed
-if let loose with the `--besserwisser` option.
+if let loose with the `--transform` option.
 Below: An artificial example that shows more tricky cases and special features.
 
 ![artificial example](img/ex-artificial.png)
@@ -54,7 +54,7 @@ Build
 Usage advice
 ------------
 
-Don't apply `--besserwisser` blindly; code review is still necessary: A script that *relies* on unquoted behavior (implicit word splitting and glob expansion from variables and command substitutions) to work as intended will do none of that after getting the `--besserwisser` treatment!
+Don't apply `--transform` blindly; code review is still necessary: A script that *relies* on unquoted behavior (implicit word splitting and glob expansion from variables and command substitutions) to work as intended will do none of that after getting the `--transform` treatment!
 
 In that unlucky case, ask yourself whether the script has any business in doing that. All too often, it's just a product of classical shellscripting, and would be better off rewritten, such as by using arrays. Even in the opposite case, say the business logic involves word splitting; that can still be done without invoking globbing. In short: There is always a better way than the forbidden syntax (if not more explicit), but some times, a human must step in to rewrite. See how, in the accompanying [how to do things safely in bash](how_to_do_things_safely_in_bash.md).
 
