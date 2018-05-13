@@ -8,33 +8,78 @@ Bash has arrays and a safe mode, which may make it just about acceptable under s
 
 Fish is easier to use correctly, but lacks a safe mode. Prototyping in `fish` is therefore a good idea, provided that you know how to translate correctly from fish to bash.
 
+Preface
+-------
+
+This guide accompanies ShellHarden, but I also recommend [ShellCheck](https://github.com/koalaman/shellcheck/): ShellHarden's rules shall not disagree with ShellCheck.
+
+Bash is not a language where [the correct way to do something is also the easiest](http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/). If there is anything like a driver's license for writing bash, it must be rule zero of [BashPitfalls](http://mywiki.wooledge.org/BashPitfalls): Always use quotes.
+
 The first thing to know about bash coding
 -----------------------------------------
 
-**Quote like a maniac!** An unquoted variable is to be treated as an armed bomb: It explodes upon contact with whitespace. Yes, I mean "explode" as in [splitting a string into an array](http://php.net/manual/en/function.explode.php). Specifically, variable expansions, like `$var`, and also command substitutions, like `$(cmd)`, undergo *word splitting*, whereby the contained string expands to an array by splitting it on any of the characters in the special `$IFS` variable, which is whitespace by default. This is mostly invisible, because most of the time, the result is a 1-element array, which is indistinguishable from the string you expected.
+**Quote like a maniac!** An unquoted variable is to be treated as an armed bomb: It explodes upon contact with whitespace. Yes, "explode" as in [splitting a string into an array](http://php.net/manual/en/function.explode.php). Specifically, variable expansions, like `$var`, and also command substitutions, like `$(cmd)`, undergo *word splitting*, whereby the contained string expands to an array by splitting it on any of the characters in the special `$IFS` variable, which is whitespace by default. This is mostly invisible, because most of the time, the result is a 1-element array, which is indistinguishable from the string you expected.
 
 Not only that, but wildcard characters (`*?`) are also expanded. This process happens after word splitting, so that when a resulting word contains any wildcard characters, that word is now a wildcard pattern, expanding to any matching file paths you may happen to have. So this feature actually looks at your filesystem!
 
 Quoting inhibits both word splitting and wildcard expansion, for variables and command substitutions.
 
-Good: `"$my_var"`
-Bad: `$my_var`
+Variable expansion:
 
-Special remark: Using curly braces is no substitute for quoting, so don't pretend it is:
+* Good: `"$my_var"`
+* Bad: `$my_var`
 
-Extra bad (adds confusion): `${my_var}`
+Command substitution:
 
-Good command substitution: `"$(cmd)"`
-Bad command substitution: `$(cmd)`
-
-Good (but unusual) command substitution: `` "`cmd`" ``
-Bad command substitution: `` `cmd` ``
+* Good: `"$(cmd)"`
+* Bad: `$(cmd)`
 
 There are exceptions where quoting is not necessary, but because it never hurts to quote, and the general rule is to be scared when you see an unquoted variable, pursuing the non-obvious exceptions is, for the sake of your readers, questionable. It looks wrong, and the wrong practice is common enough to raise suspicion: Enough scripts are being written with broken handling of filenames that whitespace in filenames is often avoided…
 
 The only exceptions honored by Shellharden are variables of numeric content, such as `$?`, `$#` and `${#array[@]}`.
 
-### Use arrays FTW
+### Should I use backticks?
+
+Command substitutions also come in this form:
+
+* Correct: `` "`cmd`" ``
+* Bad: `` `cmd` ``
+
+While it is possible to use this style correctly, it looks even more awkward in quotes and is less readable when nested. The consensus around this one is pretty clear: Avoid.
+
+Shellharden rewrites these into the dollar-parenthesis form.
+
+### Should I use curly braces?
+
+* Bad: `some_command $arg1 $arg2 $arg3`
+* Extra bad (cargo culting unnecessary braces): `some_command ${arg1} ${arg2} ${arg3}`
+* Correct: `some_command "${arg1}" "${arg2}" "${arg3}"`
+* Better: `some_command "$arg1" "$arg2" "$arg3"`
+
+In the "extra bad" and "correct" examples, braces compete with quotes under the limits of tolerable verbosity.
+
+Shellharden will rewrite all these variants into the "better" form.
+
+Braces on variable expansions are sometimes necessary (to limit the boundary of the variable name) if you absolutely want to include more string content within the same pair of quotes. This is always avoidable:
+
+* Good: `"${var1}more string content$var2"`
+* Good: `"$var1""more string content""$var2"`
+
+Shellharden is neutral among these interpolation styles, but will pick the first one if asked to put down quotes anywhere.
+
+#### Gotcha: Numbered arguments
+
+Unlike normal *identifier* variable names (in regex: `[_a-zA-Z][_a-zA-Z0-9]*`), numbered arguments require braces, this time to *extend* the boundary of the variable name. ShellCheck says:
+
+    echo "$10"
+          ^-- SC1037: Braces are required for positionals over 9, e.g. ${10}.
+
+Shellharden will refuse to fix this (deemed too subtle).
+
+Since braces are required above 9, Shellharden permits them on all numbered arguments.
+
+Use arrays FTW
+--------------
 
 In order to be able to quote all variables, you must use real arrays when that's what you need, not whitespace separated pseudo-array strings.
 
@@ -73,17 +118,6 @@ This avoids wildcard expansion, and it works no matter if the delimiter is `\n`.
 Alternatively, for bash 4.4:
 
     readarray -td $'\v' a < <(printf '%s\v' "$s")
-
-### Gotcha: Numbered arguments
-
-Having argued that enclosing variables in braces for no reason is bad style (adds confusion), this does not extend to numbered arguments. As ShellCheck says:
-
-    echo "$10"
-          ^-- SC1037: Braces are required for positionals over 9, e.g. ${10}.
-
-Shellharden will refuse to fix this (deemed too subtle).
-
-Since braces are required above 9, Shellharden permits them on all numbered arguments.
 
 How to begin a bash script
 --------------------------
