@@ -4,7 +4,7 @@ Safe ways to do things in bash
 Why bash?
 ---------
 
-Bash has arrays and a safe mode, which may make it just about acceptable under safe coding practies, when used correctly.
+Bash has arrays and a safe mode, which may make it just about acceptable under safe coding practices, when used correctly.
 
 Fish is easier to use correctly, but lacks a safe mode. Prototyping in `fish` is therefore a good idea, provided that you know how to translate correctly from fish to bash.
 
