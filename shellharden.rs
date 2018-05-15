@@ -271,12 +271,14 @@ impl<'a> FileOut<'a> {
 		Ok(())
 	}
 	fn commit(&mut self, path: &std::ffi::OsString) -> Result<(), std::io::Error> {
-		match &self.sink {
-			&OutputSink::Soak(ref vec) => {
-				let mut overwrite = try!(OpenOptions::new().write(true).truncate(true).create(false).open(path));
-				try!(overwrite.write_all(vec));
-			},
-			_ => {},
+		if self.change {
+			match &self.sink {
+				&OutputSink::Soak(ref vec) => {
+					let mut overwrite = try!(OpenOptions::new().write(true).truncate(true).create(false).open(path));
+					try!(overwrite.write_all(vec));
+				},
+				_ => {},
+			}
 		}
 		Ok(())
 	}
