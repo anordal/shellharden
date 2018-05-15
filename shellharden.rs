@@ -903,7 +903,7 @@ fn common_str_cmd(
 }
 
 fn if_needed<T>(needed: bool, val: T) -> Option<T> {
-	return if needed { Some(val) } else { None };
+	if needed { Some(val) } else { None }
 }
 
 struct SitExtent{
@@ -1050,28 +1050,20 @@ fn predlen(pred: &Fn(u8) -> bool, horizon: &[u8]) -> usize {
 }
 
 fn is_identifierhead(c: u8) -> bool {
-	if (c >= b'a' && c <= b'z')
+	(c >= b'a' && c <= b'z')
 	|| (c >= b'A' && c <= b'Z')
 	|| (c == b'_')
-	{
-		return true;
-	}
-	return false;
 }
 
 fn is_identifiertail(c: u8) -> bool {
-	if (c >= b'a' && c <= b'z')
+	(c >= b'a' && c <= b'z')
 	|| (c >= b'A' && c <= b'Z')
 	|| (c >= b'0' && c <= b'9')
 	|| (c == b'_')
-	{
-		return true;
-	}
-	return false;
 }
 
 fn is_controlcharacter(c: u8) -> bool {
-	return c <= b' ';
+	c <= b' '
 }
 
 fn is_phantomstringfood(c: u8) -> bool {
