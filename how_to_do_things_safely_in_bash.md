@@ -83,7 +83,8 @@ Use arrays FTW
 
 In order to be able to quote all variables, you must use real arrays when that's what you need, not whitespace separated pseudo-array strings.
 
-The syntax is verbose, but get over it. This bashism is reason alone to drop posix compatibility for most shellscripts.
+The syntax is verbose, but get over it. This bashism is reason alone to drop posix compatibility for most shellscripts:
+Shell scripting is all about commands and arguments, and [command arguments are fundamentally arrays](http://manpag.es/RHEL6/3p+exec).
 
 Good:
 
@@ -106,6 +107,9 @@ Bad:
     if ! [ "$pseudoarray" = '' ]; then
         rm -- $pseudoarray
     fi
+
+[Dash](https://wiki.ubuntu.com/DashAsBinSh#A.24.7B....7D) and Busybox Ash do not have arrays at all.
+Posix compatibility does nothing to save them from utter disqualification on this point.
 
 ### Those exceptional cases where you actually intend to split the string
 
