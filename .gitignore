@@ -1,0 +1,8 @@
+# Backup files and temporary files
+*.swp
+*.bak
+*~
+*.tmp
+
+# Built executables
+shellharden
