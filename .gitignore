@@ -1,0 +1,5 @@
+# Built binary
+/shellharden
+
+# Tests
+/test/actual
