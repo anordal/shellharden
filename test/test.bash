@@ -8,7 +8,7 @@ mkdir -p ../actual
 # Transform the files
 for i in *.bash
 do
-  ../../shellharden --transform "$i" > ../actual/"$i"
+  ../../shellharden --transform "$i" > ../actual/"$i" 2>> ../actual/errors.txt
 done
 
 # Check the results
