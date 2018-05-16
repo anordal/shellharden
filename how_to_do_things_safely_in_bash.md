@@ -83,8 +83,7 @@ Use arrays FTW
 
 In order to be able to quote all variables, you must use real arrays when that's what you need, not whitespace separated pseudo-array strings.
 
-The syntax is verbose, but get over it. This bashism is reason alone to drop posix compatibility for most shellscripts:
-Shell scripting is all about commands and arguments, and [command arguments are fundamentally arrays](http://manpag.es/RHEL6/3p+exec).
+The syntax is verbose, but get over it. This bashism is reason alone to drop posix compatibility for most shellscripts.
 
 Good:
 
@@ -108,8 +107,12 @@ Bad:
         rm -- $pseudoarray
     fi
 
-[Dash](https://wiki.ubuntu.com/DashAsBinSh#A.24.7B....7D) and Busybox Ash do not have arrays at all.
-Posix compatibility does nothing to save them from utter disqualification on this point.
+Here is why arrays are such a basic feature for a shell: [Command arguments are fundamentally arrays](http://manpag.es/RHEL6/3p+exec)
+(and shell scripting is all about commands and arguments).
+You could say that a shell that makes it artificially impossible to pass multiple arguments around cleanly is comically unfit for purpose.
+Some widespread shells in this category include [Dash](https://wiki.ubuntu.com/DashAsBinSh#A.24.7B....7D) and Busybox Ash.
+These are minimal POSIX compatible shells –
+what good is that when the most important stuff is *not* in POSIX?
 
 ### Those exceptional cases where you actually intend to split the string
 
