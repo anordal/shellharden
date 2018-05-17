@@ -132,7 +132,7 @@ How to begin a bash script
 Something like this:
 
     #!/usr/bin/env bash
-    if test "$BASH" = "" || "$BASH" -uc 'a=();true "${a[@]}"' 2>/dev/null; then
+    if test "$BASH" = "" || "$BASH" -uc "a=();true \"\${a[@]}\"" 2>/dev/null; then
         # Bash 4.4, Zsh
         set -euo pipefail
     else
