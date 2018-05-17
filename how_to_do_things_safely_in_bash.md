@@ -195,6 +195,13 @@ Caution: Builtins like `local` and `export` are also commands, so this is still 
 
 ShellCheck warns only about special commands like `local` in this case.
 
+To use `local`, separate the declaration from the assignment:
+
+    set -e # Fail if nproc is not installed
+    local jobs
+    jobs="$(nproc)"
+    make -j"$jobs"
+
 ### Gotcha: Errexit is ignored depending on caller context
 
 Sometimes, POSIX is cruel. Errexit is ignored in functions, scopes and even subshells if the caller is checking its success. These examples all print `Unreachable` and `Great success`, despite all sanity.
