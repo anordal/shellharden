@@ -195,7 +195,7 @@ Caution: Builtins like `local` and `export` are also commands, so this is still 
 
 ShellCheck warns only about special commands like `local` in this case.
 
-If you still want to use `local`, this is correct:
+To use `local`, separate the declaration from the assignment:
 
     set -e # Fail if nproc is not installed
     local jobs
