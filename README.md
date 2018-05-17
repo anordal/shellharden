@@ -47,7 +47,7 @@ Prior art
 Build
 -----
 
-    rustc shellharden.rs
+    cargo build
 
 Usage advice
 ------------

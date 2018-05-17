@@ -1,0 +1,9 @@
+[package]
+name = "shellharden"
+version = "3.1.0"
+authors = ["Andreas Nordal"]
+repository = "https://github.com/anordal/shellharden/"
+description = "A bash syntax highlighter that encourages (and can fix) proper quoting of variables"
+license = "MPL-2.0"
+
+[dependencies]
