@@ -36,6 +36,26 @@ fn blame_path_io(path: std::ffi::OsString, e: &std::io::Error) {
 	println_stderr!("{}: {}", printable, e);
 }
 
+fn help() {
+	println!(
+		"Shellharden: A bash syntax highlighter that encourages\n\
+		(and can fix) proper quoting of variables.\n\
+		\n\
+		Usage:\n\
+		shellharden filename.bash\n\
+		cat filename.bash | shellharden ''\n\
+		\n\
+		Options:\n\
+		--suggest         Output a colored diff suggesting changes.\n\
+		--syntax          Output syntax highlighting with ANSI colors.\n\
+		--syntax-suggest  Diff with syntax highlighting (default mode).\n\
+		--transform       Output suggested changes.\n\
+		--check           No output; exit with 2 if changes are suggested.\n\
+		--replace         Replace file contents with suggested changes.\n\
+		"
+	);
+}
+
 fn main() {
 	let mut args: std::env::ArgsOs = env::args_os();
 	args.next();
@@ -92,23 +112,11 @@ fn main() {
 						None
 					},
 					"--help" => {
-						println!(
-							"Shellharden: A bash syntax highlighter that encourages\n\
-							(and can fix) proper quoting of variables.\n\
-							\n\
-							Usage:\n\
-							shellharden filename.bash\n\
-							cat filename.bash | shellharden ''\n\
-							\n\
-							Options:\n\
-							--suggest         Output a colored diff suggesting changes.\n\
-							--syntax          Output syntax highlighting with ANSI colors.\n\
-							--syntax-suggest  Diff with syntax highlighting (default mode).\n\
-							--transform       Output suggested changes.\n\
-							--check           No output; exit with 2 if changes are suggested.\n\
-							--replace         Replace file contents with suggested changes.\n\
-							"
-						);
+						help();
+						None
+					},
+					"-h" => {
+						help();
 						None
 					},
 					_ => Some(std::ffi::OsString::from(comparable))
