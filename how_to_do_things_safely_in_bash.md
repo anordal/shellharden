@@ -13,7 +13,7 @@ Preface
 
 This guide accompanies ShellHarden, but I also recommend [ShellCheck](https://github.com/koalaman/shellcheck/): ShellHarden's rules shall not disagree with ShellCheck.
 
-Bash is not a language where [the correct way to do something is also the easiest](http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/). If there is anything like a driver's license for writing bash, it must be rule zero of [BashPitfalls](http://mywiki.wooledge.org/BashPitfalls): Always use quotes.
+Bash is not a language where [the correct way to do something is also the easiest](http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/). If there is anything like a driver's license for safe bash coding, it must be rule zero of [BashPitfalls](http://mywiki.wooledge.org/BashPitfalls): Always use quotes.
 
 The first thing to know about bash coding
 -----------------------------------------
@@ -232,3 +232,59 @@ Function:
     f && echo Great success
 
 This makes bash with errexit practically incomposable – it is *possible* to wrap your errexit functions so that they still work, but the effort it saves (over explicit error handling) becomes questionable. Consider splitting into completely standalone scripts instead.
+
+How to avoid invoking the shell with improper quoting
+-----------------------------------------------------
+
+When invoking a command from other programming languages, the wrong thing to do is often the easiest: implicitly invoking the shell. If that shell command is static, fine – either it works, or it doesn't. But if your program is doing any kind of string processing to assemble that command, realize that you are **generating a shellscript**! Rarely what you want, and tedious to do correctly:
+
+* quote each argument
+* escape relevant characters in the arguments
+
+No matter which programming language you are doing this from, there are at least 3 ways to construct the command correctly. In order of preferece:
+
+### Plan A: Avoid the shell
+
+If it's just a command with arguments (i.e. no shell features like piping or redirection), choose the array representation.
+
+* Bad (python3): `subprocess.check_call('rm -rf ' + path)`
+* Good (python3): `subprocess.check_call(['rm', '-rf', path])`
+
+Bad (C++):
+
+    std::string cmd = "rm -rf ";
+    cmd += path;
+    system(cmd);
+
+Good (C/POSIX), minus error handling:
+
+    char* const args[] = {"rm", "-rf", path, NULL};
+    pid_t child;
+    posix_spawnp(&child, args[0], NULL, NULL, args, NULL);
+    int status;
+    waitpid(child, &status, 0);
+
+### Plan B: Static shellscript
+
+If the shell is needed, let arguments be arguments. You might think this was cumbersome – writing a special-purpose shellscript to its own file and invoking that – until you have seen this trick:
+
+* Bad (python3): `subprocess.check_call('docker exec {} bash -ec "printf %s {} > {}"'.format(instance, content, path))`
+* Good (python3): `subprocess.check_call(['docker', 'exec', instance, 'bash', '-ec', 'printf %s "$0" > "$1"', content, path])`
+
+Can you spot the shellscript?
+
+That's right, the printf command with the redirection. Note the correctly quoted numbered arguments. Embedding a static shellscript is fine.
+
+The examples run in Docker because they wouldn't be as useful otherwise, but Docker is also a fine example of a command that runs other commands based on arguments. This is unlike Ssh, as we will see.
+
+### Last option: String processing
+
+If it *has* to be a string (e.g. because it has to run over `ssh`), there is no way around it. We must quote each argument and escape whatever characters are necessary to escape within those quotes. The simplest is to go for single quotes, since these have the simplest escaping rules – only one: `'` → `'\''`.
+
+* Bad (python3): `subprocess.check_call('ssh user@host sha1sum ' + path)`
+* Bad (python3): `subprocess.check_call(['ssh', 'user@host', 'sha1sum', path])`
+* Often correct (python3): `subprocess.check_call(['ssh', 'user@host', "sha1sum '{}'".format(path.replace("'", "'\\''"))])`
+
+Why is the second example bad? Because Ssh is treacherous: If you try to give multiple arguments to ssh, it will do exactly the wrong thing for you – space-concatenate the arguments without quoting.
+
+Why is there no "good" example here, just an "often correct" one? This is ssh's fault: The correct solution depends on user preference at the other end, namely the remote shell, which can be anything. It can be your mother, in principle. Assuming that the remote shell is bash or another POSIX compatible shell, the "often correct" will in fact be correct, but [fish is incompatible on this point](https://github.com/fish-shell/fish-shell/issues/4907).
