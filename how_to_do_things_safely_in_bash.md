@@ -11,7 +11,7 @@ Fish is easier to use correctly, but lacks a safe mode. Prototyping in `fish` is
 Preface
 -------
 
-This guide accompanies ShellHarden, but I also recommend [ShellCheck](https://github.com/koalaman/shellcheck/): ShellHarden's rules shall not disagree with ShellCheck.
+This guide accompanies ShellHarden, but your author also recommends [ShellCheck](https://github.com/koalaman/shellcheck/): ShellHarden's rules shall not disagree with ShellCheck.
 
 Bash is not a language where [the correct way to do something is also the easiest](http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/). If there is anything like a driver's license for safe bash coding, it must be rule zero of [BashPitfalls](http://mywiki.wooledge.org/BashPitfalls): Always use quotes.
 
@@ -51,25 +51,38 @@ Shellharden rewrites these into the dollar-parenthesis form.
 
 ### Should I use curly braces?
 
+Braces are for string interpolation, i.e. usually unnecessary:
+
 * Bad: `some_command $arg1 $arg2 $arg3`
-* Extra bad (cargo culting unnecessary braces): `some_command ${arg1} ${arg2} ${arg3}`
-* Correct: `some_command "${arg1}" "${arg2}" "${arg3}"`
-* Better: `some_command "$arg1" "$arg2" "$arg3"`
+* Bad and verbose: `some_command ${arg1} ${arg2} ${arg3}`
+* Good but verbose: `some_command "${arg1}" "${arg2}" "${arg3}"`
+* Good: `some_command "$arg1" "$arg2" "$arg3"`
 
-In the "extra bad" and "correct" examples, braces compete with quotes under the limits of tolerable verbosity.
+It does not hurt to always use braces, in theory, but in your author's experience, there is a strong negative correlation between unnecessary use of braces and proper use of quotes – nearly everyone chooses the "bad and verbose" instead of "good but verbose" form!
 
-Shellharden will rewrite all these variants into the "better" form.
+Your author's theories:
 
-Braces on variable expansions are sometimes necessary (to limit the boundary of the variable name) if you absolutely want to include more string content within the same pair of quotes. This is always avoidable:
+* Fear of the wrong thing: Instead of worrying about the real danger (missing quotes), a beginner might worry that a variable named `$prefix` would influence the expansion of `"$prefix_postfix"` – this is simply not how it works.
+* Cargo cult – writing code in testament to the wrong fear perpetuates it.
+* Braces compete with quotes under the limits of tolerable verbosity.
 
-* Good: `"${var1}more string content$var2"`
-* Good: `"$var1""more string content""$var2"`
+The decision was made to ban unnecessary use of braces: Shellharden will rewrite all these variants into the simplest good form.
 
-Shellharden is neutral among these interpolation styles, but will pick the first one if asked to put down quotes anywhere.
+Now onto string interpolation, where braces are actually useful:
+
+* Bad (concatenation): `$var1"more string content"$var2`
+* Good (concatentation): `"$var1""more string content""$var2"`
+* Good (interpolation): `"${var1}more string content${var2}"`
+
+Concatenation and interpolation are equivalent in bash (even for arrays, which is ridiculous).
+
+Because Shellharden is not a style formatter, it is not supposed to change correct code. This is true of the "good (concatenation)" example: As far as shellharden is concerned, this is the holy (canonically correct) form.
+
+Shellharden currently adds and removes braces on an as-needed basis: In the bad example, var1 becomes interpolated with braces, but braces are not accepted on var2 even in the good (interpolation) case, since they are never needed at the end of a string. The latter requirement may well be lifted.
 
 #### Gotcha: Numbered arguments
 
-Unlike normal *identifier* variable names (in regex: `[_a-zA-Z][_a-zA-Z0-9]*`), numbered arguments require braces, this time to *extend* the boundary of the variable name. ShellCheck says:
+Unlike normal *identifier* variable names (in regex: `[_a-zA-Z][_a-zA-Z0-9]*`), numbered arguments require braces (string interpolation or not). ShellCheck says:
 
     echo "$10"
           ^-- SC1037: Braces are required for positionals over 9, e.g. ${10}.
