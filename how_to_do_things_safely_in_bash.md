@@ -198,7 +198,7 @@ Correct (command substitution in assignment):
 
     set -e # Fail if nproc is not installed
     jobs="$(nproc)"
-    make -j "$jobs"
+    make -j"$jobs"
 
 Caution: Builtins like `local` and `export` are also commands, so this is still wrong:
 
@@ -294,10 +294,14 @@ The examples run in Docker because they wouldn't be as useful otherwise, but Doc
 
 If it *has* to be a string (e.g. because it has to run over `ssh`), there is no way around it. We must quote each argument and escape whatever characters are necessary to escape within those quotes. The simplest is to go for single quotes, since these have the simplest escaping rules – only one: `'` → `'\''`.
 
-* Bad (python3): `subprocess.check_call('ssh user@host sha1sum ' + path)`
-* Bad (python3): `subprocess.check_call(['ssh', 'user@host', 'sha1sum', path])`
+A very typical filename, in single quotes:
+
+    echo 'Don'\''t stop (12" dub mix).mp3'
+
+Now, how to use this trick to run commands safely over ssh? It's impossible! Well, here is an "often correct" solution:
+
 * Often correct (python3): `subprocess.check_call(['ssh', 'user@host', "sha1sum '{}'".format(path.replace("'", "'\\''"))])`
 
-Why is the second example bad? Because Ssh is treacherous: If you try to give multiple arguments to ssh, it will do exactly the wrong thing for you – space-concatenate the arguments without quoting.
+The reason we have to concatenate all the args to a string in the first place, is so that Ssh won't do it the wrong way for us: If you try to give multiple arguments to ssh, it will treacherously space-concatenate the arguments without quoting.
 
-Why is there no "good" example here, just an "often correct" one? This is ssh's fault: The correct solution depends on user preference at the other end, namely the remote shell, which can be anything. It can be your mother, in principle. Assuming that the remote shell is bash or another POSIX compatible shell, the "often correct" will in fact be correct, but [fish is incompatible on this point](https://github.com/fish-shell/fish-shell/issues/4907).
+The reason this is not generally possible is that the correct solution depends on user preference at the other end, namely the remote shell, which can be anything. It can be your mother, in principle. Assuming that the remote shell is bash or another POSIX compatible shell, the "often correct" will in fact be correct, but [fish is incompatible on this point](https://github.com/fish-shell/fish-shell/issues/4907).
