@@ -331,3 +331,32 @@ Now, how to use this trick to run commands safely over ssh? It's impossible! Wel
 The reason we have to concatenate all the args to a string in the first place, is so that Ssh won't do it the wrong way for us: If you try to give multiple arguments to ssh, it will treacherously space-concatenate the arguments without quoting.
 
 The reason this is not generally possible is that the correct solution depends on user preference at the other end, namely the remote shell, which can be anything. It can be your mother, in principle. Assuming that the remote shell is bash or another POSIX compatible shell, the "often correct" will in fact be correct, but [fish is incompatible on this point](https://github.com/fish-shell/fish-shell/issues/4907).
+
+How to be Fish compatible
+-------------------------
+
+This is possible:
+
+    test '\'
+
+    echo "This is POSIX!"
+
+    test '
+
+    echo "This is fish!"
+
+    test \'
+
+Obviously, this should only be attempted when necessary.
+Fish's syntax differs from POSIX/Bash in fundamental ways,
+yielding little usable subset between the two
+(outside of running commands and exporting variables),
+thus making it necessary to duplicate the code in the typical case – a recipe for disaster.
+
+But if you can tick these boxes
+
+- [ ] The source is a subset of either fish or bash that I can machine translate to the other language
+- [ ] The translator verifies that I only use the supported subset
+- [ ] I can do without single quotes, and the translator verifies that too
+
+then the duplicate code concern has been dealt with.
