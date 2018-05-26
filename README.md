@@ -49,6 +49,11 @@ Build
 
     cargo build
 
+Test
+----
+
+    test/moduletest target/debug/shellharden test/original/*
+
 Usage advice
 ------------
 

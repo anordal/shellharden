@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -e
+
+if test $# -lt 1; then
+	echo "Usage: $0 target/debug/shellharden test/original/*"
+	exit 1
+fi
+exe="$1"
+shift
+
+pass=()
+fail=()
+for i in "$@"; do
+	printf '\n——— \e[1m%s\e[m ———\n' "$i"
+	expect="$(dirname "$(dirname "$i")")/expected/$(basename "$i")"
+	if diff -u "$expect" <("$exe" --transform "$i" 2>&1); then
+		pass+=("$i")
+	else
+		fail+=("$i")
+	fi
+done
+
+echo
+echo Passes:
+printf '\t\e[32m%s\e[m\n' "${pass[@]}"
+
+echo
+echo Fails:
+printf '\t\e[31m%s\e[m\n' "${fail[@]}"
+
+exit ${#fail[@]}
