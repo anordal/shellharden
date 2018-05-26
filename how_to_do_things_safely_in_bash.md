@@ -131,9 +131,9 @@ what good is that when the most important stuff is *not* in POSIX?
 
 Example with `\v` as delimiter (note the second occurence):
 
-    IFS=$'\v' read -d '' -ra a < <(printf '%s\v' "$s")
+    IFS=$'\v' read -d '' -ra a < <(printf '%s\v' "$s") || true
 
-This avoids wildcard expansion, and it works no matter if the delimiter is `\n`. The second occurence of the delimiter preserves the last element if it's empty. For some reason, the `-d` option must come first, so putting the options together as `-rad ''`, which is tempting, doesn't work. Tested with bash 4.2, 4.3 and 4.4.
+This avoids wildcard expansion, and it works no matter if the delimiter is `\n`. The second occurence of the delimiter preserves the last element if it's empty. For some reason, the `-d` option must come first, so putting the options together as `-rad ''`, which is tempting, doesn't work. Because read returns nonzero in this case, it must be guarded against errexit (`|| true`) if that is enabled. Tested with bash 4.0, 4.1, 4.2, 4.3 and 4.4.
 
 Alternatively, for bash 4.4:
 
