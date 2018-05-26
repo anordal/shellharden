@@ -1,0 +1,2 @@
+"$(echo "$oddvar")"
+"$(echo "$oddvar")"

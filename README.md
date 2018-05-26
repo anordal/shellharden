@@ -49,6 +49,11 @@ Build
 
     cargo build
 
+Test
+----
+
+    bash test/test.bash
+
 Usage advice
 ------------
 
