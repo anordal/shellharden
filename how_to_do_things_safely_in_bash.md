@@ -217,7 +217,7 @@ To use `local`, separate the declaration from the assignment:
 
 ### Gotcha: Errexit is ignored depending on caller context
 
-Sometimes, POSIX is cruel. Errexit is ignored in functions, scopes and even subshells if the caller is checking its success. These examples all print `Unreachable` and `Great success`, despite all sanity.
+Sometimes, POSIX is cruel. Errexit is ignored in functions, group commands and even subshells if the caller is checking its success. These examples all print `Unreachable` and `Great success`, despite all sanity.
 
 Subshell:
 
@@ -227,7 +227,7 @@ Subshell:
         echo Unreachable
     ) && echo Great success
 
-Scope:
+Group command:
 
     {
         set -e
