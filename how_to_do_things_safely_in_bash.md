@@ -172,6 +172,32 @@ But not:
 * Disabling wildcard expansion: Not just the notorious indirect one, but also the unproblematic direct one, that I'm saying you should want to use. So this is a hard sell. And this too should be completely unnecessary for a script that is shellcheck/shellharden conformant.
 * As an alternative to *nullglob*, *failglob* fails if there are zero matches. While this makes sense for most commands, for example `rm -- *.txt` (because most commands that take file arguments don't expect to be called with zero of them anyway), obviously, *failglob* can only be used when you are able to assume that zero matches won't happen. That just means you mostly won't be putting wildcards in command arguments unless you can assume the same. But what can always be done, is to use *nullglob* and let the pattern expand to zero arguments in a construct that can take zero arguments, such as a `for` loop or array assignment (`txt_files=(*.txt)`).
 
+How to end a bash script
+------------------------
+
+The script's exit status is that of the last command executed. Make sure that's representative of actual success or failure.
+
+The worst thing you could do would be to leave this up to an unrelated condition in the form of an AND list at the end: If the condition is false, the last command executed is the condition itself.
+
+If you are using errexit, you aren't using AND-list-conditions anywhere in the first place. If not using errexit, consider doing error handling even for the last command, so its exit status is not masked if more code is appended to the script.
+
+Bad:
+
+    condition && extra_stuff
+
+Good (errexit edition):
+
+    if condition; then
+        extra_stuff
+    fi
+
+Good (error handling edition):
+
+    if condition; then
+        extra_stuff || exit
+    fi
+    exit 0
+
 How to use errexit
 ------------------
 
