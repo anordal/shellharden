@@ -45,7 +45,7 @@ Command substitutions also come in this form:
 * Correct: `` "`cmd`" ``
 * Bad: `` `cmd` ``
 
-While it is possible to use this style correctly, it looks even more awkward in quotes and is less readable when nested. The consensus around this one is pretty clear: Avoid.
+While it is possible to use this style correctly, it is harder: [Backticks require escaping when nested, and examples in the wild are improperly quoted more often than not](http://wiki.bash-hackers.org/scripting/obsolete). Avoid.
 
 Shellharden rewrites these into the dollar-parenthesis form.
 
