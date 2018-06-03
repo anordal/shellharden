@@ -1022,13 +1022,16 @@ impl Situation for SitVec {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		if horizon.len() < self.terminator.len() {
 			if is_horizon_lengthenable {
-				return Ok(flush(0));
+				Ok(flush(0))
+			} else {
+				Ok(flush(horizon.len()))
 			}
 		}
 		else if &horizon[0 .. self.terminator.len()] == &self.terminator[..] {
-			return Ok(WhatNow{tri: Transition::Pop, pre: 0, len: self.terminator.len(), alt: None});
+			Ok(WhatNow{tri: Transition::Pop, pre: 0, len: self.terminator.len(), alt: None})
+		} else {
+			Ok(flush(1))
 		}
-		return Ok(flush(1));
 	}
 	fn get_color(&self) -> u32{
 		self.color
