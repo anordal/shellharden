@@ -1,7 +1,7 @@
-[m
+echo [m
 test/original/unsupp_numeral_variable_unquot.bash: Unsuported syntax: Syntactic pitfall
-echo $10
-       ^
+$10
+  ^
 This does not mean what it looks like. You may be forgiven to think that the full string of numerals is the variable name. Only the fist is.
 
 Try this and be shocked: f() { echo "$9" "$10"; }; f a b c d e f g h i j
