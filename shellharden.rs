@@ -619,6 +619,14 @@ fn keyword_or_command(
 		return flush(i);
 	}
 	let word = &horizon[i..i+len];
+	if word == b"[[" {
+		return WhatNow{
+			tri: Transition::Push(Box::new(
+				SitVec{terminator: vec!{b']', b']'}, color: 0x00007fff}
+			)),
+			pre: i, len: len, alt: None
+		};
+	}
 	match KEYWORDS_SORTED.binary_search(&word) {
 		Ok(_) => WhatNow{
 			tri: Transition::Push(Box::new(SitExtent{
