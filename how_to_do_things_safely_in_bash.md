@@ -4,14 +4,17 @@ Safe ways to do things in bash
 Why bash?
 ---------
 
-Bash has arrays and a safe mode, which may make it just about acceptable under safe coding practices, when used correctly.
+Sometimes, a shellscript is the right tool for the job.
+At that, Bash has arrays and a safe mode,
+which in large part makes it possible and practical (respectively) to write scripts without glaring bugs.
+Other times, you are invoking the shell because that's what you get.
 
 Fish is easier to use correctly, but lacks a safe mode. Prototyping in `fish` is therefore a good idea, provided that you know how to translate correctly from fish to bash.
 
 Preface
 -------
 
-This guide accompanies ShellHarden, but your author also recommends [ShellCheck](https://github.com/koalaman/shellcheck/): ShellHarden's rules shall not disagree with ShellCheck.
+This guide accompanies Shellharden, but your author also recommends [ShellCheck](https://github.com/koalaman/shellcheck/): Shellharden's rules shall not disagree with ShellCheck.
 
 Bash is not a language where [the correct way to do something is also the easiest](http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/). If there is anything like a driver's license for safe bash coding, it must be rule zero of [BashPitfalls](http://mywiki.wooledge.org/BashPitfalls): Always use quotes.
 
