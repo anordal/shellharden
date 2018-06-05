@@ -1,6 +1,6 @@
 [package]
 name = "shellharden"
-version = "3.1.0"
+version = "3.2.0"
 authors = ["Andreas Nordal"]
 repository = "https://github.com/anordal/shellharden/"
 description = "A bash syntax highlighter that encourages (and can fix) proper quoting of variables"
