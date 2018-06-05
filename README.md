@@ -49,10 +49,10 @@ Build
 
     cargo build
 
-Test
-----
+Test (requires bash)
+--------------------
 
-    test/moduletest target/debug/shellharden test/original/*
+    cargo test
 
 Usage advice
 ------------
