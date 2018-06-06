@@ -19,7 +19,7 @@ fn moduletest() {
 		.arg("-ec")
 		.arg(BASH_RUN_MODULETEST)
 		.spawn()
-		.expect("test/moduletest: Command not found")
+		.expect("moduletests/run: Command not found")
 	;
 	match &child.wait() {
 		&Ok(status) => assert!(status.success()),
