@@ -132,15 +132,30 @@ what good is that when the most important stuff is *not* in POSIX?
 
 ### Those exceptional cases where you actually intend to split the string
 
-Example with `\v` as delimiter (note the second occurence):
+These examples split the string `$s` using `\v` as separator (which occurs twice in each example).
 
-    IFS=$'\v' read -d '' -ra a < <(printf '%s\v' "$s") || true
+Split to separate variables:
 
-This avoids wildcard expansion, and it works no matter if the delimiter is `\n`. The second occurence of the delimiter preserves the last element if it's empty. For some reason, the `-d` option must come first, so putting the options together as `-rad ''`, which is tempting, doesn't work. Because read returns nonzero in this case, it must be guarded against errexit (`|| true`) if that is enabled. Tested with bash 4.0, 4.1, 4.2, 4.3 and 4.4.
+    IFS=$'\v' read -rd '' a b rest < <(printf '%s\v' "$s") || true
+
+Split to an array:
+
+    IFS=$'\v' read -rd '' -a a < <(printf '%s\v' "$s") || true
+
+Using `read` to split the string avoids wildcard expansion and can be used for any separator byte except NUL (NUL can't be assigned to any variable, IFS included).
+
+The second occurence of the separator is necessary to preserve the last element in case it is empty.
+The `-d ''` makes it work if the separator is `\n`.
+Because read returns nonzero when it encounters the end of our string, it must be guarded against errexit (`|| true`) if that is enabled.
+Tested with bash 4.0, 4.1, 4.2, 4.3 and 4.4.
 
 Alternatively, for bash 4.4:
 
     readarray -td $'\v' a < <(printf '%s\v' "$s")
+
+Readarray also works with NUL as a separator, but not separators above 127.
+
+    readarray -td $'\0' a < <(find -print0)
 
 How to begin a bash script
 --------------------------
