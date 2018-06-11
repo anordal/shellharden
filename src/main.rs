@@ -1065,8 +1065,7 @@ struct SitExtent{
 }
 
 impl Situation for SitExtent {
-	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
+	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> ParseResult {
 		if horizon.len() >= self.len {
 			return Ok(WhatNow{tri: Transition::Pop, pre: self.len, len: 0, alt: self.end_insert});
 		}
@@ -1085,8 +1084,7 @@ struct SitUntilByte {
 }
 
 impl Situation for SitUntilByte {
-	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
+	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> ParseResult {
 		let len = predlen(&|x| x != self.until, &horizon);
 		return Ok(if len < horizon.len() {
 			WhatNow{tri: Transition::Pop, pre: len, len: 1, alt: self.end_replace}
@@ -1108,8 +1106,7 @@ impl Situation for SitUntilByte {
 struct SitStrSqEsc {}
 
 impl Situation for SitStrSqEsc {
-	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
+	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
 			if horizon[i] == b'\\' {
 				let esc = Box::new(SitExtent{len: 1, color: 0x01ff0080, end_insert: None});
@@ -1131,8 +1128,7 @@ struct SitVarIdent {
 }
 
 impl Situation for SitVarIdent {
-	#[allow(unused_variables)]
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
+	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> ParseResult {
 		let len = predlen(&is_identifiertail, &horizon);
 		if len < horizon.len() {
 			return Ok(WhatNow{tri: Transition::Pop, pre: len, len: 0, alt: self.end_insert});
