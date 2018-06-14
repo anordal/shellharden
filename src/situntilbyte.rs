@@ -12,7 +12,7 @@ use ::situation::WhatNow;
 use ::situation::ParseResult;
 
 use ::microparsers::predlen;
-use ::microparsers::is_controlcharacter;
+use ::microparsers::is_whitespace;
 
 pub struct SitUntilByte {
 	pub until: u8,
@@ -27,7 +27,7 @@ impl Situation for SitUntilByte {
 			WhatNow{tri: Transition::Pop, pre: len, len: 1, alt: self.end_replace}
 		} else {
 			WhatNow{
-				tri: if is_controlcharacter(self.until) {
+				tri: if is_whitespace(self.until) {
 					Transition::FlushPopOnEof
 				} else {
 					Transition::Flush

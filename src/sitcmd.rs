@@ -19,7 +19,7 @@ use ::commonstrcmd::CommonStrCmdResult;
 use ::commonstrcmd::common_str_cmd;
 
 use ::microparsers::predlen;
-use ::microparsers::is_controlcharacter;
+use ::microparsers::is_whitespace;
 
 use ::sitextent::SitExtent;
 use ::sitstrdq::SitStrDq;
@@ -35,7 +35,7 @@ impl Situation for SitBeforeFirstArg {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
 			let a = horizon[i];
-			if is_controlcharacter(a) || a == b';' || a == b'|' || a == b'&' {
+			if is_whitespace(a) || a == b';' || a == b'|' || a == b'&' {
 				continue;
 			}
 			if a == b'#' {
@@ -63,7 +63,7 @@ fn keyword_or_command(
 	i: usize,
 	is_horizon_lengthenable: bool,
 ) -> WhatNow {
-	let len = predlen(&|x| !is_controlcharacter(x), &horizon[i..]);
+	let len = predlen(&|x| !is_whitespace(x), &horizon[i..]);
 	if i + len == horizon.len() && is_horizon_lengthenable {
 		return flush(i);
 	}
@@ -118,7 +118,7 @@ impl Situation for SitFirstArg {
 			if let Some(res) = common_arg_cmd(&self.arg_cmd_data, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
-			if is_controlcharacter(horizon[i]) {
+			if is_whitespace(horizon[i]) {
 				return Ok(WhatNow{
 					tri: Transition::Replace(Box::new(SitArg{
 						arg_cmd_data: self.arg_cmd_data,
@@ -240,7 +240,7 @@ fn find_heredoc(horizon: &[u8]) -> (usize, Vec<u8>) {
 		return (ate, found);
 	}
 	ate += predlen(&|x| x == b'-', &horizon[ate ..]);
-	ate += predlen(&is_controlcharacter, &horizon[ate ..]);
+	ate += predlen(&is_whitespace, &horizon[ate ..]);
 
 	// Lex one word.
 	let herein = &horizon[ate ..];

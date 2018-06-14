@@ -27,6 +27,6 @@ pub fn is_identifiertail(c: u8) -> bool {
 	|| (c == b'_')
 }
 
-pub fn is_controlcharacter(c: u8) -> bool {
+pub fn is_whitespace(c: u8) -> bool {
 	c <= b' '
 }
