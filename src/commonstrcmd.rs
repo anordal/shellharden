@@ -134,7 +134,7 @@ pub fn common_str_cmd(
 		});
 	} else if predlen(&|c|{c >= b'0' && c <= b'9'}, &horizon[i+1 ..]) > 1 {
 		return CommonStrCmdResult::Err(UnsupportedSyntax {
-			typ: "Unsuported syntax: Syntactic pitfall",
+			typ: "Unsupported syntax: Syntactic pitfall",
 			ctx: horizon.to_owned(),
 			pos: i+2,
 			msg: "This does not mean what it looks like. You may be forgiven to think that the full string of \

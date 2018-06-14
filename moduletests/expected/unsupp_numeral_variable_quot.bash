@@ -1,5 +1,5 @@
 echo "[m
-moduletests/original/unsupp_numeral_variable_quot.bash: Unsuported syntax: Syntactic pitfall
+moduletests/original/unsupp_numeral_variable_quot.bash: Unsupported syntax: Syntactic pitfall
 $10"
   ^
 This does not mean what it looks like. You may be forgiven to think that the full string of numerals is the variable name. Only the fist is.
