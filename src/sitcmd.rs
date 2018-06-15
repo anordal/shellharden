@@ -69,45 +69,39 @@ fn keyword_or_command(
 		return flush(i);
 	}
 	let word = &horizon[i..i+len];
-	if word == b"[[" {
-		return WhatNow{
+	match word {
+		b"[[" => WhatNow{
 			tri: Transition::Push(Box::new(
 				SitVec{terminator: vec!{b']', b']'}, color: 0x00007fff}
 			)),
 			pre: i, len: len, alt: None
-		};
-	}
-	match KEYWORDS_SORTED.binary_search(&word) {
-		Ok(_) => WhatNow{
+		},
+		b"case" |
+		b"do" |
+		b"done" |
+		b"elif" |
+		b"else" |
+		b"esac" |
+		b"fi" |
+		b"for" |
+		b"if" |
+		b"select" |
+		b"then" |
+		b"until" |
+		b"while" => WhatNow{
 			tri: Transition::Push(Box::new(SitExtent{
 				len: len,
 				color: COLOR_BOLD | 0x800080,
 				end_insert: None
 			})), pre: i, len: 0, alt: None
 		},
-		Err(_) => WhatNow{
+		_ => WhatNow{
 			tri: Transition::Replace(Box::new(SitFirstArg{
 				arg_cmd_data: data.clone(),
 			})), pre: i, len: 0, alt: None
 		},
 	}
 }
-
-static KEYWORDS_SORTED :[&'static[u8]; 13] = [
-	b"case",
-	b"do",
-	b"done",
-	b"elif",
-	b"else",
-	b"esac",
-	b"fi",
-	b"for",
-	b"if",
-	b"select",
-	b"then",
-	b"until",
-	b"while",
-];
 
 struct SitFirstArg {
 	arg_cmd_data :ArgCmdData,
