@@ -20,6 +20,7 @@ use ::microparsers::is_word;
 use ::commonstrcmd::CommonStrCmdResult;
 use ::commonstrcmd::common_str_cmd;
 
+use ::sitcase::SitIn;
 use ::sitcmd::SitNormal;
 use ::sitcmd::SitCmd;
 use ::sitcomment::SitComment;
@@ -70,7 +71,10 @@ pub fn keyword_or_command(
 			)),
 			pre: i, len: len, alt: None
 		},
-		b"case" |
+		b"case" => WhatNow{
+			tri: Transition::Push(Box::new(SitIn{end_trigger: end_trigger})),
+			pre: i, len: len, alt: None
+		},
 		b"do" |
 		b"done" |
 		b"elif" |

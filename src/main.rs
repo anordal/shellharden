@@ -132,6 +132,7 @@ fn main() {
 mod commonargcmd;
 mod commonstrcmd;
 mod microparsers;
+mod sitcase;
 mod sitcomment;
 mod sitcmd;
 mod sitrvalue;
