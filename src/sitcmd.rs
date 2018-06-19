@@ -20,6 +20,7 @@ use ::commonstrcmd::common_str_cmd;
 
 use ::microparsers::predlen;
 use ::microparsers::is_whitespace;
+use ::microparsers::is_word;
 
 use ::sitextent::SitExtent;
 use ::sitstrdq::SitStrDq;
@@ -63,7 +64,7 @@ fn keyword_or_command(
 	i: usize,
 	is_horizon_lengthenable: bool,
 ) -> WhatNow {
-	let len = predlen(&|x| !is_whitespace(x), &horizon[i..]);
+	let len = predlen(&is_word, &horizon[i..]);
 	if i + len == horizon.len() && is_horizon_lengthenable {
 		return flush(i);
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 - 2017 Andreas Nordal
+ * Copyright 2016 - 2018 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,4 +29,19 @@ pub fn is_identifiertail(c: u8) -> bool {
 
 pub fn is_whitespace(c: u8) -> bool {
 	c <= b' '
+}
+
+pub fn is_word(byte: u8) -> bool {
+	match byte {
+		0 ... b' ' => false,
+		b'&' => false,
+		b'(' => false,
+		b')' => false,
+		b';' => false,
+		b'<' => false,
+		b'>' => false,
+		b'`' => false,
+		b'|' => false,
+		_ => true
+	}
 }
