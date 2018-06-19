@@ -11,6 +11,7 @@ use ::situation::Transition;
 use ::situation::WhatNow;
 use ::situation::ParseResult;
 use ::situation::flush;
+use ::situation::flush_or_pop;
 use ::situation::COLOR_NORMAL;
 use ::situation::COLOR_BOLD;
 use ::situation::COLOR_ITALIC;
@@ -28,27 +29,26 @@ use ::sitstrphantom::SitStrPhantom;
 use ::situntilbyte::SitUntilByte;
 use ::sitvec::SitVec;
 
-pub struct SitBeforeFirstArg {
-	pub arg_cmd_data :ArgCmdData,
+pub struct SitNormal {
+	pub end_trigger :u16,
+	pub end_replace :Option<&'static [u8]>,
 }
 
-impl Situation for SitBeforeFirstArg {
+impl Situation for SitNormal {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
 			let a = horizon[i];
 			if is_whitespace(a) || a == b';' || a == b'|' || a == b'&' {
 				continue;
 			}
-			if a == b'#' {
+			if a as u16 == self.end_trigger {
 				return Ok(WhatNow{
-					tri: Transition::Push(Box::new(SitUntilByte{
-						until: b'\n', color: COLOR_ITALIC | 0x20a040, end_replace: None
-					})),
-					pre: i, len: 1, alt: None
+					tri: Transition::Pop, pre: i, len: 1,
+					alt: self.end_replace
 				});
 			}
 			return Ok(keyword_or_command(
-				&self.arg_cmd_data, &horizon, i, is_horizon_lengthenable
+				self.end_trigger, &horizon, i, is_horizon_lengthenable
 			));
 		}
 		Ok(flush(horizon.len()))
@@ -59,7 +59,7 @@ impl Situation for SitBeforeFirstArg {
 }
 
 fn keyword_or_command(
-	data :&ArgCmdData,
+	end_trigger :u16,
 	horizon: &[u8],
 	i: usize,
 	is_horizon_lengthenable: bool,
@@ -96,32 +96,31 @@ fn keyword_or_command(
 			})), pre: i, len: 0, alt: None
 		},
 		_ => WhatNow{
-			tri: Transition::Replace(Box::new(SitFirstArg{
-				arg_cmd_data: data.clone(),
-			})), pre: i, len: 0, alt: None
+			tri: Transition::Push(Box::new(SitCmd{end_trigger: end_trigger})),
+			pre: i, len: 0, alt: None
 		},
 	}
 }
 
-struct SitFirstArg {
-	arg_cmd_data :ArgCmdData,
+struct SitCmd {
+	end_trigger :u16,
 }
 
-impl Situation for SitFirstArg {
+impl Situation for SitCmd {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
-			if let Some(res) = common_arg_cmd(&self.arg_cmd_data, horizon, i, is_horizon_lengthenable) {
-				return res;
-			}
-			if is_whitespace(horizon[i]) {
+			let a = horizon[i];
+			if a == b' ' || a == b'\t' {
 				return Ok(WhatNow{
-					tri: Transition::Replace(Box::new(SitArg{
-						arg_cmd_data: self.arg_cmd_data,
-					})), pre: i, len: 1, alt: None
+					tri: Transition::Replace(Box::new(SitArg{end_trigger: self.end_trigger})),
+					pre: i, len: 1, alt: None
 				});
 			}
+			if let Some(res) = common_arg_cmd(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+				return res;
+			}
 		}
-		Ok(flush(horizon.len()))
+		flush_or_pop(horizon.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_BOLD
@@ -129,47 +128,40 @@ impl Situation for SitFirstArg {
 }
 
 struct SitArg {
-	arg_cmd_data :ArgCmdData,
+	end_trigger :u16,
 }
 
 impl Situation for SitArg {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
-			if let Some(res) = common_arg_cmd(&self.arg_cmd_data, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_arg_cmd(self.end_trigger, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 		}
-		Ok(flush(horizon.len()))
+		flush_or_pop(horizon.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_NORMAL
 	}
 }
 
-#[derive(Clone)]
-#[derive(Copy)]
-pub struct ArgCmdData {
-	pub end_trigger :u16,
-	pub end_replace :Option<&'static [u8]>,
-}
-
+// Does not pop on eof → Callers must use flush_or_pop
 fn common_arg_cmd(
-	data :&ArgCmdData,
+	end_trigger :u16,
 	horizon :&[u8],
 	i :usize,
 	is_horizon_lengthenable :bool,
 ) -> Option<ParseResult> {
 	let a = horizon[i];
-	if a as u16 == data.end_trigger {
+	if a as u16 == end_trigger || a == b'\n' || a == b';' || a == b'|' || a == b'&' {
 		return Some(Ok(WhatNow{
-			tri: Transition::Pop, pre: i, len: 1,
-			alt: data.end_replace
+			tri: Transition::Pop, pre: i, len: 0, alt: None
 		}));
 	}
 	if a == b'#' {
 		return Some(Ok(WhatNow{
-			tri: Transition::Push(Box::new(SitUntilByte{
-				until: b'\n', color: 0x0320a040, end_replace: None
+			tri: Transition::Replace(Box::new(SitUntilByte{
+				until: b'\n', color: COLOR_ITALIC | 0x20a040, end_replace: None
 			})),
 			pre: i, len: 1, alt: None
 		}));
@@ -188,13 +180,6 @@ fn common_arg_cmd(
 			pre: i, len: 1, alt: None
 		}));
 	}
-	if a == b'\n' || a == b';' || a == b'|' || a == b'&' {
-		return Some(Ok(WhatNow{
-			tri: Transition::Replace(Box::new(SitBeforeFirstArg{
-				arg_cmd_data: data.clone(),
-			})), pre: i, len: 0, alt: None
-		}));
-	}
 	match common_str_cmd(&horizon, i, is_horizon_lengthenable, true) {
 		CommonStrCmdResult::None => {},
 		CommonStrCmdResult::Err(e) => { return Some(Err(e)); },
@@ -205,7 +190,7 @@ fn common_arg_cmd(
 		CommonStrCmdResult::OnlyWithQuotes(_) => {
 			return Some(Ok(WhatNow{
 				tri: Transition::Push(Box::new(SitStrPhantom{
-					cmd_end_trigger: data.end_trigger,
+					cmd_end_trigger: end_trigger,
 				})), pre: i, len: 0, alt: Some(b"\"")
 			}));
 		},

@@ -34,6 +34,10 @@ pub fn flush(i: usize) -> WhatNow {
 
 pub type ParseResult = Result<WhatNow, UnsupportedSyntax>;
 
+pub fn flush_or_pop(i: usize) -> Result<WhatNow, UnsupportedSyntax> {
+	Ok(WhatNow{tri: Transition::FlushPopOnEof, pre: i, len: 0, alt: None})
+}
+
 pub const COLOR_NORMAL: u32 = 0x00000000;
 pub const COLOR_BOLD  : u32 = 0x01000000;
 pub const COLOR_ITALIC: u32 = 0x03000000;

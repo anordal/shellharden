@@ -19,8 +19,7 @@ use ::situation::Transition;
 use ::situation::WhatNow;
 use ::situation::COLOR_NORMAL;
 
-use ::sitcmd::SitBeforeFirstArg;
-use ::sitcmd::ArgCmdData;
+use ::sitcmd::SitNormal;
 
 #[derive(Clone)]
 #[derive(Copy)]
@@ -67,8 +66,8 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 		let mut fill :usize = 0;
 		let mut buf = [0; BUFSIZE];
 
-		let mut state :Vec<Box<Situation>> = vec!{Box::new(SitBeforeFirstArg{
-			arg_cmd_data: ArgCmdData{end_trigger: 0x100, end_replace: None},
+		let mut state :Vec<Box<Situation>> = vec!{Box::new(SitNormal{
+			end_trigger: 0x100, end_replace: None,
 		})};
 
 		loop {
@@ -172,7 +171,7 @@ fn stackmachine(
 				};
 				try!(write_transition(
 					out, sett, replaceable, whatnow.alt,
-					color_pre, color_pre, color_final,
+					color_pre, color_final, color_final,
 				).map_err(|e| Error::Stdio(e)));
 				state[ix] = newstate;
 			}

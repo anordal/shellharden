@@ -16,8 +16,7 @@ use ::microparsers::is_identifiertail;
 
 use ::syntaxerror::UnsupportedSyntax;
 
-use ::sitcmd::SitBeforeFirstArg;
-use ::sitcmd::ArgCmdData;
+use ::sitcmd::SitNormal;
 use ::sitextent::SitExtent;
 use ::sitstrsqesc::SitStrSqEsc;
 use ::situntilbyte::SitUntilByte;
@@ -39,8 +38,8 @@ pub fn common_str_cmd(
 	ctx_cmd: bool,
 ) -> CommonStrCmdResult {
 	if horizon[i] == b'`' {
-		let cmd = Box::new(SitBeforeFirstArg{
-			arg_cmd_data: ArgCmdData{end_trigger: b'`' as u16, end_replace: Some(b")")},
+		let cmd = Box::new(SitNormal{
+			end_trigger: b'`' as u16, end_replace: Some(b")"),
 		});
 		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
 			tri: Transition::Push(cmd), pre: i, len: 1, alt: Some(b"$(")
@@ -105,8 +104,8 @@ pub fn common_str_cmd(
 			});
 		}
 
-		let cmd = Box::new(SitBeforeFirstArg{
-			arg_cmd_data: ArgCmdData{end_trigger: b')' as u16, end_replace: None},
+		let cmd = Box::new(SitNormal{
+			end_trigger: b')' as u16, end_replace: None,
 		});
 		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
 			tri: Transition::Push(cmd),
