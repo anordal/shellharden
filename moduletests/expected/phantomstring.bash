@@ -1,5 +1,6 @@
 echo "$a" "$b"
 echo "$a$b"
+echo "$a$(:)"
 echo "$a/blædi/ "
 echo "$a/blædi/$b"
 echo "$a/blædi/$(
@@ -43,8 +44,14 @@ echo "$a/blædi/$(
 	echo "${PWD}Z"
 	echo "${PWD}_"
 )"
-echo "$a$(";")"
-echo "$a";";"
-echo "$a"|";"
+# Characters that must not be swallowed
+echo "$a"' '
+echo "$a" ""
+echo "$a"*":"
+echo "$a"?":"
+echo "$a";":"
+echo "$a"&":"
+echo "$a"|":"
+echo "$a"\;":"
 echo "$a">"/dev/null"
 echo "$a"<"/dev/null"

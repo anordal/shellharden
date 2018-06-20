@@ -16,6 +16,7 @@ use ::commonstrcmd::CommonStrCmdResult;
 use ::commonstrcmd::common_str_cmd;
 
 use ::microparsers::predlen;
+use ::microparsers::is_word;
 
 use ::sitstrdq::SitStrDq;
 
@@ -38,7 +39,7 @@ impl Situation for SitStrPhantom {
 						pre: mouthful, len: 1, alt: Some(b"")
 					});
 				}
-				b'$' | b'\\' | b'`' => {
+				b'$' | b'`' => {
 					match common_str_cmd(&horizon, mouthful, is_horizon_lengthenable, true) {
 						CommonStrCmdResult::None => {},
 						CommonStrCmdResult::Err(e) => { return Err(e); },
@@ -74,7 +75,6 @@ impl Situation for SitStrPhantom {
 }
 
 fn is_phantomstringfood(c: u8) -> bool {
-	c >= b'+'
-	&& c != b';' && c != b'<' && c != b'>'
-	&& c != b'\\' && c != b'`' && c != b'|'
+	c >= b'+' && is_word(c)
+	&& c != b'?' && c != b'\\'
 }
