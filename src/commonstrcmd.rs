@@ -13,6 +13,7 @@ use ::situation::flush;
 use ::microparsers::predlen;
 use ::microparsers::is_identifierhead;
 use ::microparsers::is_identifiertail;
+use ::microparsers::identifierlen;
 
 use ::syntaxerror::UnsupportedSyntax;
 
@@ -212,14 +213,6 @@ pub fn common_str_cmd(
 
 fn if_needed<T>(needed: bool, val: T) -> Option<T> {
 	if needed { Some(val) } else { None }
-}
-
-pub fn identifierlen(horizon: &[u8]) -> usize {
-	return if horizon.len() > 0 && is_identifierhead(horizon[0]) {
-		1 + predlen(&is_identifiertail, &horizon[1 ..])
-	} else {
-		0
-	}
 }
 
 fn pos_tailhazard(horizon: &[u8], end: u8) -> (usize, usize) {

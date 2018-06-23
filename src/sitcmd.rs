@@ -19,6 +19,7 @@ use ::commonstrcmd::CommonStrCmdResult;
 use ::commonstrcmd::common_str_cmd;
 
 use ::microparsers::predlen;
+use ::microparsers::identifierlen;
 use ::microparsers::is_whitespace;
 use ::microparsers::is_word;
 
@@ -38,7 +39,7 @@ impl Situation for SitNormal {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
 			let a = horizon[i];
-			if is_whitespace(a) || a == b';' || a == b'|' || a == b'&' {
+			if is_whitespace(a) || a == b';' || a == b'|' || a == b'&' || a == b'<' || a == b'>' {
 				continue;
 			}
 			if a as u16 == self.end_trigger {
@@ -64,8 +65,30 @@ fn keyword_or_command(
 	i: usize,
 	is_horizon_lengthenable: bool,
 ) -> WhatNow {
-	let len = predlen(&is_word, &horizon[i..]);
-	if i + len == horizon.len() && is_horizon_lengthenable {
+	if horizon[i] == b'(' {
+		return WhatNow{
+			tri: Transition::Push(Box::new(SitNormal{
+				end_trigger: b')' as u16, end_replace: None
+			})), pre: i, len: 1, alt: None
+		};
+	}
+	let mut len = identifierlen(&horizon[i..]);
+	if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
+		return flush(i);
+	}
+	if len > 0 && i + len < horizon.len() {
+		if horizon[i + len] == b'+' && i + len + 1 < horizon.len() {
+			len += 1;
+		}
+		if horizon[i + len] == b'=' {
+			return WhatNow{
+				tri: Transition::Push(Box::new(SitRvalue{end_trigger: end_trigger})),
+				pre: i + len + 1, len: 0, alt: None
+			};
+		}
+	}
+	let len = len + predlen(&is_word, &horizon[i+len..]);
+	if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
 		return flush(i);
 	}
 	let word = &horizon[i..i+len];
@@ -88,7 +111,9 @@ fn keyword_or_command(
 		b"select" |
 		b"then" |
 		b"until" |
-		b"while" => WhatNow{
+		b"while" |
+		b"{" |
+		b"}" => WhatNow{
 			tri: Transition::Push(Box::new(SitExtent{
 				len: len,
 				color: COLOR_BOLD | 0x800080,
@@ -114,6 +139,11 @@ impl Situation for SitCmd {
 				return Ok(WhatNow{
 					tri: Transition::Replace(Box::new(SitArg{end_trigger: self.end_trigger})),
 					pre: i, len: 1, alt: None
+				});
+			}
+			if horizon[i] == b'(' {
+				return Ok(WhatNow{
+					tri: Transition::Pop, pre: i, len: 0, alt: None
 				});
 			}
 			if let Some(res) = common_arg_cmd(self.end_trigger, horizon, i, is_horizon_lengthenable) {
@@ -145,6 +175,52 @@ impl Situation for SitArg {
 	}
 }
 
+struct SitRvalue {
+	end_trigger :u16,
+}
+
+impl Situation for SitRvalue {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
+		for i in 0 .. horizon.len() {
+			let a = horizon[i];
+			if a == b' ' || a == b'\t' {
+				return Ok(WhatNow{
+					tri: Transition::Pop, pre: i, len: 1, alt: None
+				});
+			}
+			if a == b'(' {
+				return Ok(WhatNow{
+					tri: Transition::Push(Box::new(SitArray{})),
+					pre: i, len: 1, alt: None
+				});
+			}
+			if let Some(res) = common_arg_cmd(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+				return res;
+			}
+		}
+		flush_or_pop(horizon.len())
+	}
+	fn get_color(&self) -> u32 {
+		COLOR_NORMAL
+	}
+}
+
+struct SitArray {}
+
+impl Situation for SitArray {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
+		for i in 0 .. horizon.len() {
+			if let Some(res) = common_arg_cmd_array(b')' as u16, horizon, i, is_horizon_lengthenable) {
+				return res;
+			}
+		}
+		Ok(flush(horizon.len()))
+	}
+	fn get_color(&self) -> u32 {
+		COLOR_NORMAL
+	}
+}
+
 // Does not pop on eof → Callers must use flush_or_pop
 fn common_arg_cmd(
 	end_trigger :u16,
@@ -153,7 +229,22 @@ fn common_arg_cmd(
 	is_horizon_lengthenable :bool,
 ) -> Option<ParseResult> {
 	let a = horizon[i];
-	if a as u16 == end_trigger || a == b'\n' || a == b';' || a == b'|' || a == b'&' {
+	if a == b'\n' || a == b';' || a == b'|' || a == b'&' {
+		return Some(Ok(WhatNow{
+			tri: Transition::Pop, pre: i, len: 0, alt: None
+		}));
+	}
+	common_arg_cmd_array(end_trigger, horizon, i, is_horizon_lengthenable)
+}
+
+fn common_arg_cmd_array(
+	end_trigger :u16,
+	horizon :&[u8],
+	i :usize,
+	is_horizon_lengthenable :bool,
+) -> Option<ParseResult> {
+	let a = horizon[i];
+	if a as u16 == end_trigger {
 		return Some(Ok(WhatNow{
 			tri: Transition::Pop, pre: i, len: 0, alt: None
 		}));

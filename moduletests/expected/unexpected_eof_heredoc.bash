@@ -1,4 +1,4 @@
-<<EOF
+cat <<EOF
 [m
 moduletests/original/unexpected_eof_heredoc.bash: Unexpected end of file
 The file's end was reached without closing all sytactic scopes.

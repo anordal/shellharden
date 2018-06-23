@@ -1,1 +1,1 @@
-<<EOF
+cat <<EOF
