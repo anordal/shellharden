@@ -129,10 +129,12 @@ fn main() {
 
 //------------------------------------------------------------------------------
 
+mod commonargcmd;
 mod commonstrcmd;
 mod microparsers;
 mod sitcomment;
 mod sitcmd;
+mod sitrvalue;
 mod sitvec;
 mod sitvarident;
 mod sitstrsqesc;
