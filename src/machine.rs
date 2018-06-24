@@ -291,6 +291,6 @@ fn write_color(out :&mut FileOut, code :u32) -> Result<(), std::io::Error> {
 		let g = (code >> 8) & 0xff;
 		let r = (code >> 16) & 0xff;
 		let bg = (code >> 28) & 0xf;
-		write!(out, "\x1b[{};{}8;2;{};{};{}m", bold, bg+3, r, g, b)
+		write!(out, "\x1b[0;{};{}8;2;{};{};{}m", bold, bg+3, r, g, b)
 	}
 }
