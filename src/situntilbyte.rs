@@ -9,10 +9,10 @@
 use ::situation::Situation;
 use ::situation::Transition;
 use ::situation::WhatNow;
+use ::situation::flush;
 use ::situation::ParseResult;
 
 use ::microparsers::predlen;
-use ::microparsers::is_whitespace;
 
 pub struct SitUntilByte {
 	pub until: u8,
@@ -26,13 +26,7 @@ impl Situation for SitUntilByte {
 		return Ok(if len < horizon.len() {
 			WhatNow{tri: Transition::Pop, pre: len, len: 1, alt: self.end_replace}
 		} else {
-			WhatNow{
-				tri: if is_whitespace(self.until) {
-					Transition::FlushPopOnEof
-				} else {
-					Transition::Flush
-				}, pre: len, len: 0, alt: None
-			}
+			flush(len)
 		});
 	}
 	fn get_color(&self) -> u32{

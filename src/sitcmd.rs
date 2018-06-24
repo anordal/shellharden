@@ -14,7 +14,6 @@ use ::situation::flush;
 use ::situation::flush_or_pop;
 use ::situation::COLOR_NORMAL;
 use ::situation::COLOR_BOLD;
-use ::situation::COLOR_ITALIC;
 
 use ::commonstrcmd::CommonStrCmdResult;
 use ::commonstrcmd::common_str_cmd;
@@ -23,6 +22,7 @@ use ::microparsers::predlen;
 use ::microparsers::is_whitespace;
 use ::microparsers::is_word;
 
+use ::sitcomment::SitComment;
 use ::sitextent::SitExtent;
 use ::sitstrdq::SitStrDq;
 use ::sitstrphantom::SitStrPhantom;
@@ -160,9 +160,7 @@ fn common_arg_cmd(
 	}
 	if a == b'#' {
 		return Some(Ok(WhatNow{
-			tri: Transition::Replace(Box::new(SitUntilByte{
-				until: b'\n', color: COLOR_ITALIC | 0x20a040, end_replace: None
-			})),
+			tri: Transition::Push(Box::new(SitComment{})),
 			pre: i, len: 1, alt: None
 		}));
 	}
