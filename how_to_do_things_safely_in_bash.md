@@ -48,7 +48,7 @@ Command substitutions also come in this form:
 * Correct: `` "`cmd`" ``
 * Bad: `` `cmd` ``
 
-While it is possible to use this style correctly, it is harder: [Backticks require escaping when nested, and examples in the wild are improperly quoted more often than not](http://wiki.bash-hackers.org/scripting/obsolete). Avoid.
+While it is possible to use this style correctly, it is harder: [Backticks require escaping when nested, and examples in the wild are improperly quoted more often than not](http://wiki.bash-hackers.org/scripting/obsolete).
 
 Shellharden rewrites these into the dollar-parenthesis form.
 
@@ -126,9 +126,12 @@ Bad:
 Here is why arrays are such a basic feature for a shell: [Command arguments are fundamentally arrays](http://manpag.es/RHEL6/3p+exec)
 (and shell scripting is all about commands and arguments).
 You could say that a shell that makes it artificially impossible to pass multiple arguments around cleanly is comically unfit for purpose.
-Some widespread shells in this category include [Dash](https://wiki.ubuntu.com/DashAsBinSh#A.24.7B....7D) and Busybox Ash.
-These are minimal POSIX compatible shells –
-what good is that when the most important stuff is *not* in POSIX?
+
+For our purposes, lack of arrays is the ~~most~~ pressing feature omission of the POSIX shell standard.
+In other words, POSIX is not the standard. The Bash array syntax is, and Zsh supports a superset of it.
+Awareness needs to be raised that minimal POSIX compatible shells
+like [Dash](https://wiki.ubuntu.com/DashAsBinSh#A.24.7B....7D) and Busybox Ash
+are only doing us a disfavor.
 
 ### Those exceptional cases where you actually intend to split the string
 
@@ -378,10 +381,14 @@ The reason we have to concatenate all the args to a string in the first place, i
 
 The reason this is not generally possible is that the correct solution depends on user preference at the other end, namely the remote shell, which can be anything. It can be your mother, in principle. Assuming that the remote shell is bash or another POSIX compatible shell, the "often correct" will in fact be correct, but [fish is incompatible on this point](https://github.com/fish-shell/fish-shell/issues/4907).
 
-How to be Fish compatible
--------------------------
+#### How to be Fish compatible
 
-This is possible:
+This is only necessary if you are forced to interoperate with a user's favourite shell, such as when implementing [ssh-copy-id](https://github.com/fish-shell/fish-shell/issues/2292).
+
+The issue with supporting Fish is that the subset of common syntax with POSIX/Bash is mostly useless.
+The general approach is therefore to duplicate the code – obviously against any safety recommendation.
+
+But if you must, so be it:
 
     test '\'
 
@@ -392,17 +399,3 @@ This is possible:
     echo "This is fish!"
 
     test \'
-
-Obviously, this should only be attempted when necessary.
-Fish's syntax differs from POSIX/Bash in fundamental ways,
-yielding little usable subset between the two
-(outside of running commands and exporting variables),
-thus making it necessary to duplicate the code in the typical case – a recipe for disaster.
-
-But if you can tick these boxes
-
-- [ ] The source is a subset of either fish or bash that I can machine translate to the other language
-- [ ] The translator verifies that I only use the supported subset
-- [ ] I can do without single quotes, and the translator verifies that too
-
-then the duplicate code concern has been dealt with.
