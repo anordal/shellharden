@@ -135,30 +135,53 @@ are only doing us a disfavor.
 
 ### Those exceptional cases where you actually intend to split the string
 
-These examples split the string `$s` using `\v` as separator (which occurs twice in each example).
+Splitting `$string` on the separator `$sep` into `$array`:
+
+Bad (invokes wildcard expansion):
+
+    IFS="$sep"
+    array=($string)
+
+Good:
+
+    array=()
+    while read -rd "$sep"; do
+        array+=("$i")
+    done <<< "$string$sep"
+
+This works for any separator byte (no UTF-8 or multi-character separator string) except NUL. To make it work for NUL, hardcode the literal `$'\0'` in place of `$sep`.
+
+The reason for appending the separator to the end is that the field separator is really a field *terminator* (postfix, not infix). The distinction matters to the notion of an empty field at the end. Skip this if your input is already field terminated.
+
+Alternatively, for Bash 4:
+
+    readarray -td $"$sep" array <<< "$string$sep"
+
+The same notes apply to readarray (hardcoding of NUL, already field terminated input):
+
+    readarray -td $'\0' array < <(find -print0)
+
+Readarray gets a small minus point for only working with ASCII separators (still no UTF-8).
+
+If the separator consists of multiple bytes, it is also possible to do this correctly by string processing (such as by [parameter substitution](https://www.tldp.org/LDP/abs/html/parameter-substitution.html#PSOREX2)).
+
+#### An alternative with 3 corner cases
+
+The otherwise evil IFS variable has a legitimate use in the `read` command, where it can be used as another way to separate fields without invoking wildcard expansion.
+IFS is brought into significance by requesting either multiple variables or using the array option to `read`.
+By disabling the delimiter `-d ''`, we read all the way to the end.
+Because read returns nonzero when it encounters the end, it must be guarded against errexit (`|| true`) if that is enabled.
 
 Split to separate variables:
 
-    IFS=$'\v' read -rd '' a b rest < <(printf '%s\v' "$s") || true
+    IFS="$sep" read -rd '' a b rest <<< "$string$sep" || true
 
 Split to an array:
 
-    IFS=$'\v' read -rd '' -a a < <(printf '%s\v' "$s") || true
+    IFS="$sep" read -rd '' -a array <<< "$string$sep" || true
 
-Using `read` to split the string avoids wildcard expansion and can be used for any separator byte except NUL (NUL can't be assigned to any variable, IFS included).
-
-The second occurence of the separator is necessary to preserve the last element in case it is empty.
-The `-d ''` makes it work if the separator is `\n`.
-Because read returns nonzero when it encounters the end of our string, it must be guarded against errexit (`|| true`) if that is enabled.
-Tested with bash 4.0, 4.1, 4.2, 4.3 and 4.4.
-
-Alternatively, for bash 4.4:
-
-    readarray -td $'\v' a < <(printf '%s\v' "$s")
-
-Readarray also works with NUL as a separator, but not separators above 127.
-
-    readarray -td $'\0' a < <(find -print0)
+The 3 corner cases are tab, newline and space – when IFS is set to one of these as above, `read` drops empty fields!
+Because this is often useful, this method makes the bottom of the recommendation list instead of disqualification.
 
 Should I use double brackets?
 -----------------------------
