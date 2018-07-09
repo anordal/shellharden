@@ -145,7 +145,7 @@ Bad (invokes wildcard expansion):
 Good:
 
     array=()
-    while read -rd "$sep"; do
+    while read -rd "$sep" i; do
         array+=("$i")
     done <<< "$string$sep"
 
@@ -155,7 +155,7 @@ The reason for appending the separator to the end is that the field separator is
 
 Alternatively, for Bash 4:
 
-    readarray -td $"$sep" array <<< "$string$sep"
+    readarray -td "$sep" array <<< "$string$sep"
 
 The same notes apply to readarray (hardcoding of NUL, already field terminated input):
 
@@ -181,7 +181,7 @@ Split to an array:
     IFS="$sep" read -rd '' -a array <<< "$string$sep" || true
 
 The 3 corner cases are tab, newline and space – when IFS is set to one of these as above, `read` drops empty fields!
-Because this is often useful, this method makes the bottom of the recommendation list instead of disqualification.
+Because this is often useful though, this method makes the bottom of the recommendation list instead of disqualification.
 
 Should I use double brackets?
 -----------------------------
