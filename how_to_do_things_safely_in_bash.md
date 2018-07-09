@@ -147,7 +147,7 @@ Good:
     array=()
     while read -rd "$sep" i; do
         array+=("$i")
-    done <<< "$string$sep"
+    done < <(printf '%s%s' "$string" "$sep")
 
 This works for any separator byte (no UTF-8 or multi-character separator string) except NUL. To make it work for NUL, hardcode the literal `$'\0'` in place of `$sep`.
 
@@ -155,7 +155,7 @@ The reason for appending the separator to the end is that the field separator is
 
 Alternatively, for Bash 4:
 
-    readarray -td "$sep" array <<< "$string$sep"
+    readarray -td "$sep" array < <(printf '%s%s' "$string" "$sep")
 
 The same notes apply to readarray (hardcoding of NUL, already field terminated input):
 
@@ -174,11 +174,11 @@ Because read returns nonzero when it encounters the end, it must be guarded agai
 
 Split to separate variables:
 
-    IFS="$sep" read -rd '' a b rest <<< "$string$sep" || true
+    IFS="$sep" read -rd '' a b rest < <(printf '%s%s' "$string" "$sep") || true
 
 Split to an array:
 
-    IFS="$sep" read -rd '' -a array <<< "$string$sep" || true
+    IFS="$sep" read -rd '' -a array < <(printf '%s%s' "$string" "$sep") || true
 
 The 3 corner cases are tab, newline and space – when IFS is set to one of these as above, `read` drops empty fields!
 Because this is often useful though, this method makes the bottom of the recommendation list instead of disqualification.
