@@ -247,27 +247,16 @@ But not:
 How to end a bash script
 ------------------------
 
-The script's exit status is that of the last command executed. Make sure that's representative of actual success or failure.
+Goal: The script's exit status should convey its overall success or failure.
 
-The worst thing you could do would be to leave this up to an unrelated condition in the form of an AND list at the end: If the condition is false, the last command executed is the condition itself.
+Reality: The script's exit status is that of the last command executed.
 
-If you are using errexit, you aren't using AND-list-conditions anywhere in the first place. If not using errexit, consider doing error handling even for the last command, so its exit status is not masked if more code is appended to the script.
+There is a wrong way to end a bash script:
+Letting a command used as a condition be the last command executed, so that the script "fails" iff the last condition is false.
+While that might happen to be correct for a script, it is a way to encode the exit status that looks accidental and is easily broken by adding or removing code to the end.
 
-Bad:
+The rightness criterion here is that the last statement follows the "Errexit basics" below. When in doubt, end the script with an explicit exit status:
 
-    condition && extra_stuff
-
-Good (errexit edition):
-
-    if condition; then
-        extra_stuff
-    fi
-
-Good (error handling edition):
-
-    if condition; then
-        extra_stuff || exit
-    fi
     exit 0
 
 How to use errexit
