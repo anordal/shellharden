@@ -275,6 +275,55 @@ How to use errexit
 
 Aka `set -e`.
 
+### Errexit basics
+
+Background: If a command that is not used as a condition returns nonzero, the interpreter exits at that point.
+
+Failure is trivial to suppress:
+
+    command || true
+
+Don't skimp on if-statements. You can't use `&&` as a shorthand if-statement without always using `||` as an else-branch. Otherwise, the script terminates if the condition is false.
+
+Bad:
+
+    command && …
+
+Good (contrived):
+
+    command && … || true
+
+Good (contrived):
+
+    ! command || …
+
+Good (idiomatic):
+
+    if command; then
+        …
+    fi
+
+To capture a command's output while using it as a condition, use an assignment as the condition (but see below on not using `local` on assignments):
+
+    if output="$(command)"; then
+        …
+    fi
+
+If at all using the exit status variable `$?`, it must be conditioned on the command (specifically, it only makes sense to use in the conditional branch where it is nonzero). Otherwise, your script won't live to see this variable whenever it is nonzero.
+
+Bad:
+
+    command
+    if test $? -ne 0; then
+        echo Command returned $?
+    fi
+
+Good:
+
+    if ! command; then
+        echo Command returned $?
+    fi
+
 ### Program-level deferred cleanup
 
 In case errexit does its thing, use this to set up any necessary cleanup to happen at exit.
