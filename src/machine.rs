@@ -282,18 +282,34 @@ fn write_colored_slice(
 }
 
 fn write_color(out :&mut FileOut, code :u32) -> Result<(), std::io::Error> {
-	let bold = (code >> 24) & 0xf;
+	if code == COLOR_NORMAL {
+		return out.write_all(b"\x1b[m");
+	}
+	let mut buf = [0; 4];
+	let mut fill = 0;
+	if (code >> 24) & 1 == 1 {
+		buf[fill] = b';';
+		fill += 1;
+		buf[fill] = b'1';
+		fill += 1;
+	}
+	if (code >> 25) & 1 == 1 {
+		buf[fill] = b';';
+		fill += 1;
+		buf[fill] = b'3';
+		fill += 1;
+	}
+	let bufstr :&str = match std::str::from_utf8(&buf[0 .. fill]) {
+		Ok(ok) => ok,
+		Err(_) => panic!(),
+	};
 	if code & 0x00ffffff == 0 {
-		if bold == 0 {
-			out.write_all(b"\x1b[m")
-		} else {
-			write!(out, "\x1b[0;{}m", bold)
-		}
+		write!(out, "\x1b[0{}m", bufstr)
 	} else {
 		let b = code & 0xff;
 		let g = (code >> 8) & 0xff;
 		let r = (code >> 16) & 0xff;
 		let bg = (code >> 28) & 0xf;
-		write!(out, "\x1b[0;{};{}8;2;{};{};{}m", bold, bg+3, r, g, b)
+		write!(out, "\x1b[0{};{}8;2;{};{};{}m", bufstr, bg+3, r, g, b)
 	}
 }

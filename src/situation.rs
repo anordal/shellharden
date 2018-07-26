@@ -40,4 +40,4 @@ pub fn flush_or_pop(i: usize) -> Result<WhatNow, UnsupportedSyntax> {
 
 pub const COLOR_NORMAL: u32 = 0x00000000;
 pub const COLOR_BOLD  : u32 = 0x01000000;
-pub const COLOR_ITALIC: u32 = 0x03000000;
+pub const COLOR_ITALIC: u32 = 0x02000000;
