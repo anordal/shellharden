@@ -10,6 +10,7 @@ use ::situation::Situation;
 use ::situation::Transition;
 use ::situation::WhatNow;
 use ::situation::ParseResult;
+use ::situation::COLOR_VAR;
 
 use ::microparsers::predlen;
 use ::microparsers::is_identifiertail;
@@ -30,6 +31,6 @@ impl Situation for SitVarIdent {
 		})
 	}
 	fn get_color(&self) -> u32{
-		0x000000ff
+		COLOR_VAR
 	}
 }

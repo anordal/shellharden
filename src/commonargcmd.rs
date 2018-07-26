@@ -10,7 +10,9 @@ use ::situation::Transition;
 use ::situation::WhatNow;
 use ::situation::ParseResult;
 use ::situation::flush;
-use ::situation::COLOR_BOLD;
+use ::situation::COLOR_KWD;
+use ::situation::COLOR_MAGIC;
+use ::situation::COLOR_HERE;
 
 use ::microparsers::prefixlen;
 use ::microparsers::predlen;
@@ -68,7 +70,7 @@ pub fn keyword_or_command(
 	match word {
 		b"[[" => WhatNow{
 			tri: Transition::Push(Box::new(
-				SitVec{terminator: vec!{b']', b']'}, color: 0x00007fff}
+				SitVec{terminator: vec!{b']', b']'}, color: COLOR_MAGIC}
 			)),
 			pre: i, len: len, alt: None
 		},
@@ -92,7 +94,7 @@ pub fn keyword_or_command(
 		b"}" => WhatNow{
 			tri: Transition::Push(Box::new(SitExtent{
 				len: len,
-				color: COLOR_BOLD | 0x800080,
+				color: COLOR_KWD,
 				end_insert: None
 			})), pre: i, len: 0, alt: None
 		},
@@ -181,7 +183,7 @@ pub fn common_arg_cmd_array(
 	} else if delimiter.len() > 0 {
 		return Some(Ok(WhatNow{
 			tri: Transition::Push(Box::new(
-				SitVec{terminator: delimiter, color: 0x0077ff00}
+				SitVec{terminator: delimiter, color: COLOR_HERE}
 			)),
 			pre: i, len: ate, alt: None
 		}));

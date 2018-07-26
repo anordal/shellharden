@@ -39,5 +39,12 @@ pub fn flush_or_pop(i: usize) -> Result<WhatNow, UnsupportedSyntax> {
 }
 
 pub const COLOR_NORMAL: u32 = 0x00000000;
-pub const COLOR_BOLD  : u32 = 0x01000000;
-pub const COLOR_ITALIC: u32 = 0x02000000;
+const COLOR_BOLD : u32 = 0x01000000;
+const COLOR_ITAL : u32 = 0x02000000;
+
+pub const COLOR_KWD   : u32 = COLOR_BOLD;
+pub const COLOR_CMD   : u32 = 0xc00080;
+pub const COLOR_MAGIC : u32 = 0xc000c0;
+pub const COLOR_VAR   : u32 = 0x007fff;
+pub const COLOR_HERE  : u32 = 0x802000;
+pub const COLOR_CMT   : u32 = 0x283020 | COLOR_BOLD | COLOR_ITAL;

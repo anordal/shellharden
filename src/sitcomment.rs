@@ -11,7 +11,7 @@ use ::situation::Transition;
 use ::situation::WhatNow;
 use ::situation::ParseResult;
 use ::situation::flush_or_pop;
-use ::situation::COLOR_ITALIC;
+use ::situation::COLOR_CMT;
 
 // Unlike SitUntilByte, does not swallow the end byte, and pops on eof.
 pub struct SitComment {}
@@ -29,6 +29,6 @@ impl Situation for SitComment {
 		flush_or_pop(horizon.len())
 	}
 	fn get_color(&self) -> u32 {
-		COLOR_ITALIC | 0x20a040
+		COLOR_CMT
 	}
 }

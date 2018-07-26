@@ -13,7 +13,7 @@ use ::situation::ParseResult;
 use ::situation::flush;
 use ::situation::flush_or_pop;
 use ::situation::COLOR_NORMAL;
-use ::situation::COLOR_BOLD;
+use ::situation::COLOR_CMD;
 
 use ::microparsers::is_whitespace;
 
@@ -75,7 +75,7 @@ impl Situation for SitCmd {
 		flush_or_pop(horizon.len())
 	}
 	fn get_color(&self) -> u32 {
-		COLOR_BOLD
+		COLOR_CMD
 	}
 }
 

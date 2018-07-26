@@ -12,7 +12,7 @@ use ::situation::WhatNow;
 use ::situation::ParseResult;
 use ::situation::flush;
 use ::situation::COLOR_NORMAL;
-use ::situation::COLOR_BOLD;
+use ::situation::COLOR_KWD;
 
 use ::microparsers::predlen;
 use ::microparsers::is_whitespace;
@@ -53,7 +53,7 @@ impl Situation for SitIn {
 		Ok(flush(horizon.len()))
 	}
 	fn get_color(&self) -> u32 {
-		COLOR_BOLD | 0x800080
+		COLOR_KWD
 	}
 }
 
