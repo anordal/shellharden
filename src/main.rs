@@ -33,6 +33,7 @@ fn help() {
 		--transform       Output suggested changes.\n\
 		--check           No output; exit with 2 if changes are suggested.\n\
 		--replace         Replace file contents with suggested changes.\n\
+		--                Don't treat further arguments as options.\n\
 		"
 	);
 }
@@ -48,80 +49,78 @@ fn main() {
 	};
 
 	let mut exit_code: i32 = 0;
-	loop {
-		let arg = match args.next() {
-			Some(arg) => arg,
-			None => { break; }
-		};
-		let nonopt = match arg.into_string() {
-			Ok(comparable) => {
-				match comparable.as_ref() {
+	let mut opt_trigger: &str = "-";
+	while let Some(arg) = args.next() {
+		if let Some(comparable) = arg.to_str() {
+			if comparable.starts_with(opt_trigger) {
+				match comparable {
 					"--suggest" => {
 						sett.osel=OutputSelector::DIFF;
 						sett.syntax=false;
 						sett.replace=false;
-						None
+						continue;
 					},
 					"--syntax" => {
 						sett.osel=OutputSelector::ORIGINAL;
 						sett.syntax=true;
 						sett.replace=false;
-						None
+						continue;
 					},
 					"--syntax-suggest" => {
 						sett.osel=OutputSelector::DIFF;
 						sett.syntax=true;
 						sett.replace=false;
-						None
+						continue;
 					},
 					"--transform" => {
 						sett.osel=OutputSelector::TRANSFORM;
 						sett.syntax=false;
 						sett.replace=false;
-						None
+						continue;
 					},
 					"--check" => {
 						sett.osel=OutputSelector::CHECK;
 						sett.syntax=false;
 						sett.replace=false;
-						None
+						continue;
 					},
 					"--replace" => {
 						sett.osel=OutputSelector::TRANSFORM;
 						sett.syntax=false;
 						sett.replace=true;
-						None
+						continue;
 					},
-					"--help" => {
+					"--help" | "-h" => {
 						help();
-						None
+						continue;
 					},
-					"-h" => {
-						help();
-						None
+					"--" => {
+						opt_trigger = "\x00";
+						continue;
 					},
-					_ => Some(std::ffi::OsString::from(comparable))
-				}
-			},
-			Err(same) => Some(same)
-		};
-		if let Some(path) = nonopt {
-			if let Err(e) = machine::treatfile(&path, &sett) {
-				println!("\x1b[m");
-				exit_code = 1;
-				match &e {
-					&machine::Error::Stdio(ref fail) => {
-						errfmt::blame_path_io(&path, &fail);
-					},
-					&machine::Error::Syntax(ref fail) => {
-						errfmt::blame_syntax(&path, &fail);
-					},
-					&machine::Error::Check => {
-						exit_code = 2;
+					_ => {
+						errfmt::blame_path(&arg, "No such option.");
+						exit_code = 3;
 						break;
 					},
-				};
+				}
 			}
+		}
+		if let Err(e) = machine::treatfile(&arg, &sett) {
+			println!("\x1b[m");
+			exit_code = 1;
+			match &e {
+				&machine::Error::Stdio(ref fail) => {
+					errfmt::blame_path_io(&arg, &fail);
+				},
+				&machine::Error::Syntax(ref fail) => {
+					errfmt::blame_syntax(&arg, &fail);
+				},
+				&machine::Error::Check => {
+					exit_code = 2;
+					break;
+				},
+			};
 		}
 	}
 	process::exit(exit_code);
