@@ -176,15 +176,19 @@ fn stackmachine(
 				state[ix] = newstate;
 			}
 			Transition::Push(newstate) => {
-				let color_final = if sett.syntax {
-					newstate.get_color()
+				let color_pre;
+				let color_final;
+				if sett.syntax {
+					color_pre = state[state.len() - 1].get_color();
+					color_final = newstate.get_color();
 				} else {
-					COLOR_NORMAL
+					color_pre = COLOR_NORMAL;
+					color_final = COLOR_NORMAL;
 				};
 				state.push(newstate);
 				try!(write_transition(
 					out, sett, replaceable, whatnow.alt,
-					COLOR_NORMAL, color_final, color_final,
+					color_pre, color_final, color_final,
 				).map_err(|e| Error::Stdio(e)));
 			}
 			Transition::Pop => {
