@@ -126,28 +126,9 @@ fn stackmachine(
 		try!(out.write_all(&horizon[.. whatnow.pre]).map_err(|e| Error::Stdio(e)));
 		let replaceable = &horizon[whatnow.pre .. whatnow.pre + whatnow.len];
 		let progress = whatnow.pre + whatnow.len;
-		let whatnow = match whatnow.tri {
-			Transition::FlushPopOnEof => {
-				if eof {
-					WhatNow{
-						tri: Transition::Pop,
-						pre: whatnow.pre,
-						len: whatnow.len,
-						alt: whatnow.alt,
-					}
-				} else {
-					WhatNow{
-						tri: Transition::Flush,
-						pre: whatnow.pre,
-						len: 0,
-						alt: None,
-					}
-				}
-			},
-			_ => whatnow
-		};
-		match whatnow.tri {
-			Transition::Flush => {
+
+		match (whatnow.tri, eof) {
+			(Transition::Flush, _) | (Transition::FlushPopOnEof, false) => {
 				if progress == 0 {
 					break;
 				}
@@ -155,10 +136,7 @@ fn stackmachine(
 					break;
 				}
 			}
-			Transition::FlushPopOnEof => {
-				panic!("This case shall be filtered out");
-			}
-			Transition::Replace(newstate) => {
+			(Transition::Replace(newstate), _) => {
 				let ix = state.len() - 1;
 				let color_pre;
 				let color_final;
@@ -175,7 +153,7 @@ fn stackmachine(
 				).map_err(|e| Error::Stdio(e)));
 				state[ix] = newstate;
 			}
-			Transition::Push(newstate) => {
+			(Transition::Push(newstate), _) => {
 				let color_pre;
 				let color_final;
 				if sett.syntax {
@@ -191,7 +169,7 @@ fn stackmachine(
 					color_pre, color_final, color_final,
 				).map_err(|e| Error::Stdio(e)));
 			}
-			Transition::Pop => {
+			(Transition::Pop, _) | (Transition::FlushPopOnEof, true) => {
 				let color_pre;
 				let color_final;
 				if sett.syntax {
