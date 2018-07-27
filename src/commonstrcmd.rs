@@ -107,11 +107,11 @@ pub fn common_str_cmd(
 			});
 		}
 
-		let cmd = Box::new(SitNormal{
+		let sit = Box::new(SitNormal{
 			end_trigger: b')' as u16, end_replace: None,
 		});
 		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
-			tri: Transition::Push(cmd),
+			tri: Transition::Push(sit),
 			pre: i, len: 2, alt: None
 		});
 	} else if c == b'#' || c == b'?' {
