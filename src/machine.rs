@@ -251,12 +251,14 @@ fn write_colored_slice(
 	color: u32,
 	slice: &[u8],
 ) -> Result<(), std::io::Error> {
-	if slice.len() > 0 && *color_cur != color {
+	if slice.len() == 0 {
+		return Ok(());
+	}
+	if *color_cur != color {
 		try!(write_color(out, color));
 		*color_cur = color;
 	}
-	try!(out.write_all(slice));
-	Ok(())
+	out.write_all(slice)
 }
 
 fn write_color(out :&mut FileOut, code :u32) -> Result<(), std::io::Error> {
