@@ -167,7 +167,7 @@ pub fn common_arg_cmd_array(
 	}
 	let (ate, delimiter) = find_heredoc(&horizon[i ..]);
 	if i + ate == horizon.len() {
-		if is_horizon_lengthenable {
+		if i > 0 || is_horizon_lengthenable {
 			return Some(Ok(flush(i)));
 		}
 	} else if delimiter.len() > 0 {

@@ -56,7 +56,7 @@ pub fn common_str_cmd(
 		return CommonStrCmdResult::None;
 	}
 	if i+1 >= horizon.len() {
-		if is_horizon_lengthenable {
+		if i > 0 || is_horizon_lengthenable {
 			return CommonStrCmdResult::Ok(flush(i));
 		}
 		return CommonStrCmdResult::None;
@@ -73,7 +73,7 @@ pub fn common_str_cmd(
 		let cand: &[u8] = &horizon[i+2 ..];
 		let (idlen, pos_hazard) = pos_tailhazard(cand, b')');
 		if pos_hazard == cand.len() {
-			if is_horizon_lengthenable {
+			if i > 0 || is_horizon_lengthenable {
 				return CommonStrCmdResult::Ok(flush(i));
 			}
 		} else if idlen == 3 && pos_hazard >= 4 && cand[.. 3].eq(b"pwd") {
@@ -168,7 +168,7 @@ pub fn common_str_cmd(
 			let cand: &[u8] = &horizon[i+1 ..];
 			let (_, pos_hazard) = pos_tailhazard(cand, b'\"');
 			if pos_hazard == cand.len() {
-				if is_horizon_lengthenable {
+				if i > 0 || is_horizon_lengthenable {
 					return CommonStrCmdResult::Ok(flush(i));
 				}
 				tailhazard = true;
@@ -189,7 +189,7 @@ pub fn common_str_cmd(
 		let mut rm_braces = false;
 		let mut is_number = false;
 		if pos_hazard == cand.len() {
-			if is_horizon_lengthenable {
+			if i > 0 || is_horizon_lengthenable {
 				return CommonStrCmdResult::Ok(flush(i));
 			}
 		} else if idlen < pos_hazard {
