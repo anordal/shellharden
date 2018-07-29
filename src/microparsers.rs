@@ -6,6 +6,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+pub fn prefixlen(a: &[u8], b: &[u8]) -> usize {
+	let mut i: usize = 0;
+	while i < a.len() && i < b.len() && a[i] == b[i] {
+		i += 1;
+	}
+	i
+}
+
 pub fn predlen(pred: &Fn(u8) -> bool, horizon: &[u8]) -> usize {
 	let mut i: usize = 0;
 	while i < horizon.len() && pred(horizon[i]) {

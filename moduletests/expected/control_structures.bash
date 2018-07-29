@@ -94,3 +94,11 @@ array=(
 array+=(
 	[[ "$ivar" ]]
 )
+
+# Filedescriptor redirection: The code does not make sense,
+# but tests that the succeeding expression is not a command,
+# which is all shellharden needs to know for now.
+: >&[[ "$ivar" ]]
+: 1>&[[ "$ivar" ]]
+: >& [[ "$ivar" ]]
+: 1>& [[ "$ivar" ]]

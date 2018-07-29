@@ -12,6 +12,7 @@ use ::situation::ParseResult;
 use ::situation::flush;
 use ::situation::COLOR_BOLD;
 
+use ::microparsers::prefixlen;
 use ::microparsers::predlen;
 use ::microparsers::identifierlen;
 use ::microparsers::is_whitespace;
@@ -109,6 +110,13 @@ pub fn common_arg_cmd(
 	i :usize,
 	is_horizon_lengthenable :bool,
 ) -> Option<ParseResult> {
+	let plen = prefixlen(&horizon[i..], b">&");
+	if plen == 2 {
+		return Some(Ok(flush(i + 2)));
+	}
+	if i + plen == horizon.len() && (i > 0 || is_horizon_lengthenable) {
+		return Some(Ok(flush(i)));
+	}
 	let a = horizon[i];
 	if a == b'\n' || a == b';' || a == b'|' || a == b'&' {
 		return Some(Ok(WhatNow{
