@@ -47,12 +47,14 @@ Prior art
 Build
 -----
 
-    cargo build
+    cargo build --release
 
-Test (requires bash)
---------------------
+Test
+----
 
-    cargo test
+    cargo test --release
+
+(requires bash)
 
 Usage advice
 ------------
