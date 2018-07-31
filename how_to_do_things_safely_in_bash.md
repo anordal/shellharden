@@ -183,34 +183,6 @@ Split to an array:
 The 3 corner cases are tab, newline and space – when IFS is set to one of these as above, `read` drops empty fields!
 Because this is often useful though, this method makes the bottom of the recommendation list instead of disqualification.
 
-Should I use double brackets?
------------------------------
-
-What for? It does not matter.
-
-Issue: `test`, `[` and `[[` are largely interchangeable.
-
-If you are following this guide, the usual arguments don't apply:
-
-* Inside double brackets `[[ ]]`, unquoted variables and command substitutions are safe (from word splitting and glob expansion). That's a partial solution to a problem we don't have – following this guide implies not doing that anywhere to begin with. If you are, you aren't after shellhardening your scripts.
-* The usual counterargument is POSIX compatibility. We sacrificed that for arrays.
-
-Other concerns:
-
-*—What if I have n00b contributors?*
-
-This argument goes both ways: `[[` has a more forgiving syntax because it *is* syntax, not a command. **Quoting is required everywhere else.** The fewer exceptions, the lesser confusion. If you want to be pedagogical, use the `test` command – it is honest about being a command, not syntax.
-
-*—What if `[[` has a feature I need?*
-
-Chances are that you don't know the substitute.
-
-* Pattern matching (`[[ $path == *.png || $path == *.gif ]]`): This is what `case` is for.
-* Logical operators: The usual suspects `&&` and `||` work just fine – outside commands – and can be grouped with group commands: `if { true || false; } && true; then echo 1; else echo 0; fi`.
-* Checking if a variable exists (`[[ -v varname ]]`): Yes, this is possibly a killer argument, but consider the programming style of always setting variables, so you don't need to check if they exist.
-
-Shellharden will not stop you from using quotes in syntactical contexts where it does not matter, but that would deviate from common practice.
-
 How to begin a bash script
 --------------------------
 
@@ -381,6 +353,36 @@ Function:
     f && echo Great success
 
 This makes bash with errexit practically incomposable – it is *possible* to wrap your errexit functions so that they still work, but the effort it saves (over explicit error handling) becomes questionable. Consider splitting into completely standalone scripts instead.
+
+How to write conditions
+-----------------------
+
+### Should I use double brackets?
+
+What for? It does not matter.
+
+Issue: `test`, `[` and `[[` are largely interchangeable.
+
+If you are following this guide, the usual arguments don't apply:
+
+* Inside double brackets `[[ ]]`, unquoted variables and command substitutions are safe (from word splitting and glob expansion). That's a partial solution to a problem we don't have – following this guide implies not doing that anywhere to begin with. If you are, you aren't after shellhardening your scripts.
+* The usual counterargument is POSIX compatibility. We sacrificed that for arrays.
+
+Other concerns:
+
+*—What if I have n00b contributors?*
+
+This argument goes both ways: `[[` has a more forgiving syntax because it *is* syntax, not a command. **Quoting is required everywhere else.** The fewer exceptions, the lesser confusion. If you want to be pedagogical, use the `test` command – it is honest about being a command, not syntax.
+
+*—What if `[[` has a feature I need?*
+
+Chances are that you don't know the substitute.
+
+* Pattern matching (`[[ $path == *.png || $path == *.gif ]]`): This is what `case` is for.
+* Logical operators: The usual suspects `&&` and `||` work just fine – outside commands – and can be grouped with group commands: `if { true || false; } && true; then echo 1; else echo 0; fi`.
+* Checking if a variable exists (`[[ -v varname ]]`): Yes, this is possibly a killer argument, but consider the programming style of always setting variables, so you don't need to check if they exist.
+
+Shellharden will not stop you from using quotes in syntactical contexts where it does not matter, but that would deviate from common practice.
 
 How to avoid invoking the shell with improper quoting
 -----------------------------------------------------
