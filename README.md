@@ -63,15 +63,13 @@ Build from source
 
     cargo build --release
 
-Run tests
-=========
+### Run tests
 
     cargo test --release
 
 (requires bash)
 
-Install
-=======
+### Install
 
     cp target/release/shellharden /usr/local/bin/
 
