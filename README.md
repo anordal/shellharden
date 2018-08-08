@@ -58,6 +58,10 @@ Plan B: The official shellharden [rust package](https://crates.io/crates/shellha
 
 The rust package [will be lacking a manpage](https://github.com/rust-lang/cargo/issues/2729) (in the works).
 
+Plan C: Use this docker image directly:
+
+    cat shellscript.sh | docker run -i --rm sbkg0002/shellharden:4.0 ''
+
 Build from source
 -----------------
 
@@ -73,22 +77,17 @@ Build from source
 
     cp target/release/shellharden /usr/local/bin/
 
+### Build docker image
+----------------------
+
+    docker build -t shellgarden .
+
 Usage advice
 ------------
 
 Don't apply `--transform` blindly; code review is still necessary: A script that *relies* on unquoted behavior (implicit word splitting and glob expansion from variables and command substitutions) to work as intended will do none of that after getting the `--transform` treatment!
 
 In that unlucky case, ask yourself whether the script has any business in doing that. All too often, it's just a product of classical shellscripting, and would be better off rewritten, such as by using arrays. Even in the opposite case, say the business logic involves word splitting; that can still be done without invoking globbing. In short: There is always a better way than the forbidden syntax (if not more explicit), but some times, a human must step in to rewrite. See how, in the accompanying [how to do things safely in bash](how_to_do_things_safely_in_bash.md).
-
-Building in Docker
-To build a docker container with Shellharden:
-```
-docker build -t shellgarden:4.0 .
-```
-To run Shellharden in a Docker container:
-```
-cat shellscript.sh | docker run -i --rm sbkg0002/shellharden:4.0 ''
-```
 
 [1]: http://mywiki.wooledge.org/BashPitfalls
 [2]: https://www.shellcheck.net/
