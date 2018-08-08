@@ -78,7 +78,6 @@ Build from source
     cp target/release/shellharden /usr/local/bin/
 
 ### Build docker image
-----------------------
 
     docker build -t shellgarden .
 
