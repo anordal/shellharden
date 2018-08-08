@@ -62,6 +62,8 @@ Plan C: Use this docker image directly:
 
     cat shellscript.sh | docker run -i --rm sbkg0002/shellharden:4.0 ''
 
+Shameless plug: Docker is the wrong tool for this job. For greater speed and (supposedly) security, [unpack the docker image](https://github.com/larsks/undocker) once and for all and use [selfdock](https://github.com/anordal/selfdock) instead.
+
 Build from source
 -----------------
 
