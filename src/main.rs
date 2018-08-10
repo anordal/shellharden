@@ -19,12 +19,11 @@ mod syntaxerror;
 
 fn help() {
 	println!(
-		"Shellharden: A bash syntax highlighter that encourages\n\
-		(and can fix) proper quoting of variables.\n\
+		"Shellharden: The corrective bash syntax highlighter.\n\
 		\n\
 		Usage:\n\
-		shellharden filename.bash\n\
-		cat filename.bash | shellharden ''\n\
+		shellharden [options] [files]\n\
+		cat files | shellharden [options] ''\n\
 		\n\
 		Options:\n\
 		--suggest         Output a colored diff suggesting changes.\n\
@@ -34,6 +33,8 @@ fn help() {
 		--check           No output; exit with 2 if changes are suggested.\n\
 		--replace         Replace file contents with suggested changes.\n\
 		--                Don't treat further arguments as options.\n\
+		-h|--help         Show help text.\n\
+		--version         Show version.\n\
 		"
 	);
 }
@@ -92,6 +93,10 @@ fn main() {
 					},
 					"--help" | "-h" => {
 						help();
+						continue;
+					},
+					"--version" => {
+						println!(env!("CARGO_PKG_VERSION"));
 						continue;
 					},
 					"--" => {
