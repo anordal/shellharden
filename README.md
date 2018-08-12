@@ -56,8 +56,6 @@ Plan B: The official shellharden [rust package](https://crates.io/crates/shellha
 
     cargo install shellharden
 
-The rust package [will be lacking a manpage](https://github.com/rust-lang/cargo/issues/2729) (in the works).
-
 Plan C: Use this docker image directly:
 
     cat shellscript.sh | docker run -i --rm sbkg0002/shellharden:4.0 ''

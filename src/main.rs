@@ -22,19 +22,35 @@ fn help() {
 		"Shellharden: The corrective bash syntax highlighter.\n\
 		\n\
 		Usage:\n\
-		shellharden [options] [files]\n\
-		cat files | shellharden [options] ''\n\
+		\tshellharden [options] [files]\n\
+		\tcat files | shellharden [options] ''\n\
+		\n\
+		Shellharden is a syntax highlighter and a tool to semi-automate the rewriting\n\
+		of scripts to ShellCheck conformance, mainly focused on quoting.\n\
+		\n\
+		The default mode of operation is like `cat`, but with syntax highlighting in\n\
+		foreground colors and suggestive changes in background colors.\n\
 		\n\
 		Options:\n\
-		--suggest         Output a colored diff suggesting changes.\n\
-		--syntax          Output syntax highlighting with ANSI colors.\n\
-		--syntax-suggest  Diff with syntax highlighting (default mode).\n\
-		--transform       Output suggested changes.\n\
-		--check           No output; exit with 2 if changes are suggested.\n\
-		--replace         Replace file contents with suggested changes.\n\
-		--                Don't treat further arguments as options.\n\
-		-h|--help         Show help text.\n\
-		--version         Show version.\n\
+		\t--suggest         Output a colored diff suggesting changes.\n\
+		\t--syntax          Output syntax highlighting with ANSI colors.\n\
+		\t--syntax-suggest  Diff with syntax highlighting (default mode).\n\
+		\t--transform       Output suggested changes.\n\
+		\t--check           No output; exit with 2 if changes are suggested.\n\
+		\t--replace         Replace file contents with suggested changes.\n\
+		\t--                Don't treat further arguments as options.\n\
+		\t-h|--help         Show help text.\n\
+		\t--version         Show version.\n\
+		\n\
+		The changes suggested by Shellharden inhibits word splitting and indirect\n\
+		wildcard expansion. This will make your script ShellCheck compliant in terms of\n\
+		quoting. Whether your script will work afterwards is a different question:\n\
+		If your script was using those features on purpose, it obviously won't anymore!\n\
+		\n\
+		Every script is possible to write without using word splitting or indirect\n\
+		wildcard expansion, but it may involve doing things differently.\n\
+		See the accompanying file how_to_do_things_safely_in_bash.md or online:\n\
+		https://github.com/anordal/shellharden/blob/master/how_to_do_things_safely_in_bash.md\n\
 		"
 	);
 }
