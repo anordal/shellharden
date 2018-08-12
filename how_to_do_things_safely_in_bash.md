@@ -468,6 +468,30 @@ Chances are that you don't know the substitute.
 
 Shellharden will not stop you from using quotes in syntactical contexts where it does not matter, but that would deviate from common practice.
 
+### How to check if a variable exists
+
+A correct way to do this is not a feature of idiomatic POSIX/Bash scripting. Consider avoiding the problem when possible by always setting variables, so you don't need to check if they exist.
+
+You can get a long way by giving variables default values. This works even in busybox:
+
+    : "${var:=defaultvalue}"
+
+    # Or more generally
+    var="${var:-defaultvalue}"
+
+But if you must know, the correct way to check if a variable exists came with Bash 4.2 (also verified for zsh 5.6.2):
+
+    [[ -v var ]]
+
+If using this and there is any chance someone might try to run your script with an earlier Bash version, remember to fail early. The feature test approach would be to test, in the beginning of the script, for a variable that we know exists, and terminate if the result is wrong. In this case, we get a syntax error in earlier versions, and termination for free, so it suffices to add this to the beginning section:
+
+    [[ -v PWD ]]
+
+Lastly, don't ever use constructs like `[ -n $var ]` or `[ -z $var ]`. They are fundamentally string comparisons against the empty string, only less readable. However, what matters in this section, is their functional critique:
+
+* A string comparison can't distinguish an unset variable from an empty one. Let alone distinguish the ways it can be empty: Environment variables are just strings, so they may be empty strings, but normal shell variables are really arrays – they can be empty arrays or arrays of empty strings (what you think of as the empty string is indistinguishable from a one-element array).
+* Expanding a potentially unset variable obviously precludes the use of `set -u`.
+
 Commands with better alternatives
 ---------------------------------
 
