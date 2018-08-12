@@ -1,11 +1,13 @@
 <img src="img/logo.png" align="right"/>
 
 Shellharden
-=========
+===========
 
-A bash syntax highlighter that encourages (and can fix) proper quoting of variables.
+Shellharden is a syntax highlighter and a tool to semi-automate the rewriting
+of scripts to ShellCheck conformance, mainly focused on quoting.
 
-Because rewriting scripts to adhere to the *always use quotes* principle can be daunting:
+The default mode of operation is like `cat`, but with syntax highlighting in
+foreground colors and suggestive changes in background colors:
 
 ![real-world example](img/ex-realworld.png)
 
