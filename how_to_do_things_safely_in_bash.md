@@ -21,11 +21,9 @@ Bash is not a language where [the correct way to do something is also the easies
 The first thing to know about bash coding
 -----------------------------------------
 
-**Quote like a maniac!** An unquoted variable is to be treated as an armed bomb: It explodes upon contact with whitespace. Yes, "explode" as in [splitting a string into an array](http://php.net/manual/en/function.explode.php). Specifically, variable expansions, like `$var`, and also command substitutions, like `$(cmd)`, undergo *word splitting*, whereby the contained string expands to an array by splitting it on any of the characters in the special `$IFS` variable, which is whitespace by default. This is mostly invisible, because most of the time, the result is a 1-element array, which is indistinguishable from the string you expected.
+**Quote like a maniac!** An unquoted variable is to be treated as an armed bomb: It explodes upon contact with whitespace and wildcards. Yes, "explode" as in [splitting a string into an array](http://php.net/manual/en/function.explode.php). Specifically, variable expansions, like `$var`, and also command substitutions, like `$(cmd)`, undergo *word splitting*, whereby the string is split on any of the characters in the special `$IFS` variable, which is whitespace by default. Furthermore, any wildcard characters (`*?`) in the resulting words are used to expand those words to match files on your filesystem (*indirect wildcard expansion*). This is mostly invisible, because most of the time, the result is a 1-element array, which is indistinguishable from the original string value.
 
-Not only that, but wildcard characters (`*?`) are also expanded. This process happens after word splitting, so that when a resulting word contains any wildcard characters, that word is now a wildcard pattern, expanding to any matching file paths you may happen to have. So this feature actually looks at your filesystem!
-
-Quoting inhibits both word splitting and wildcard expansion, for variables and command substitutions.
+Quoting inhibits word splitting and indirect wildcard expansion, both for variables and command substitutions.
 
 Variable expansion:
 
@@ -137,7 +135,7 @@ are only doing us a disfavor.
 
 Splitting `$string` on the separator `$sep` into `$array`:
 
-Bad (invokes wildcard expansion):
+Bad (indirect wildcard expansion):
 
     IFS="$sep"
     array=($string)
@@ -167,7 +165,7 @@ If the separator consists of multiple bytes, it is also possible to do this corr
 
 #### An alternative with 3 corner cases
 
-The otherwise evil IFS variable has a legitimate use in the `read` command, where it can be used as another way to separate fields without invoking wildcard expansion.
+The otherwise evil IFS variable has a legitimate use in the `read` command, where it can be used as another way to separate fields without invoking indirect wildcard expansion.
 IFS is brought into significance by requesting either multiple variables or using the array option to `read`.
 By disabling the delimiter `-d ''`, we read all the way to the end.
 Because read returns nonzero when it encounters the end, it must be guarded against errexit (`|| true`) if that is enabled.
@@ -365,7 +363,7 @@ Issue: `test`, `[` and `[[` are largely interchangeable.
 
 If you are following this guide, the usual arguments don't apply:
 
-* Inside double brackets `[[ ]]`, unquoted variables and command substitutions are safe (from word splitting and glob expansion). That's a partial solution to a problem we don't have – following this guide implies not doing that anywhere to begin with. If you are, you aren't after shellhardening your scripts.
+* Inside double brackets `[[ ]]`, unquoted variables and command substitutions are safe (from word splitting and indirect wildcard expansion). That's a partial solution to a problem we don't have – following this guide implies not doing that anywhere to begin with. If you are, you aren't after shellhardening your scripts.
 * The usual counterargument is POSIX compatibility. We sacrificed that for arrays.
 
 Other concerns:
