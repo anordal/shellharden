@@ -21,9 +21,7 @@ use ::microparsers::is_word;
 use ::commonargcmd::keyword_or_command;
 use ::commonargcmd::common_arg_cmd_array;
 
-pub struct SitIn {
-	pub end_trigger :u16,
-}
+pub struct SitIn {}
 
 impl Situation for SitIn {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
@@ -39,14 +37,13 @@ impl Situation for SitIn {
 			match word {
 				b"in" => {
 					return Ok(WhatNow{
-						tri: Transition::Replace(Box::new(SitCase{
-							end_trigger: self.end_trigger
-						})), pre: i + len, len: 0, alt: None
+						tri: Transition::Replace(Box::new(SitCase{})),
+						pre: i + len, len: 0, alt: None
 					});
 				},
 				_ => {}
 			}
-			if let Some(res) = common_arg_cmd_array(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_arg_cmd_array(0x100, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 		}
@@ -57,9 +54,7 @@ impl Situation for SitIn {
 	}
 }
 
-struct SitCase {
-	end_trigger :u16,
-}
+struct SitCase {}
 
 impl Situation for SitCase {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
@@ -68,9 +63,8 @@ impl Situation for SitCase {
 			if len == 0 {
 				if horizon[i] == b')' {
 					return Ok(WhatNow{
-						tri: Transition::Push(Box::new(SitCaseArm{
-							end_trigger: self.end_trigger
-						})), pre: i, len: 1, alt: None
+						tri: Transition::Push(Box::new(SitCaseArm{})),
+						pre: i, len: 1, alt: None
 					});
 				}
 				continue;
@@ -87,7 +81,7 @@ impl Situation for SitCase {
 				},
 				_ => {}
 			}
-			if let Some(res) = common_arg_cmd_array(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_arg_cmd_array(0x100, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 		}
@@ -98,9 +92,7 @@ impl Situation for SitCase {
 	}
 }
 
-struct SitCaseArm {
-	end_trigger :u16,
-}
+struct SitCaseArm {}
 
 impl Situation for SitCaseArm {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
@@ -120,7 +112,7 @@ impl Situation for SitCaseArm {
 			if is_whitespace(a) || a == b';' || a == b'|' || a == b'&' || a == b'<' || a == b'>' {
 				continue;
 			}
-			return Ok(keyword_or_command(self.end_trigger, &horizon, i, is_horizon_lengthenable));
+			return Ok(keyword_or_command(0x100, &horizon, i, is_horizon_lengthenable));
 		}
 		Ok(flush(horizon.len()))
 	}

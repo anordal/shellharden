@@ -75,7 +75,7 @@ pub fn keyword_or_command(
 			pre: i, len: len, alt: None
 		},
 		b"case" => WhatNow{
-			tri: Transition::Push(Box::new(SitIn{end_trigger: end_trigger})),
+			tri: Transition::Push(Box::new(SitIn{})),
 			pre: i, len: len, alt: None
 		},
 		b"do" |
