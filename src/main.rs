@@ -43,12 +43,12 @@ fn help() {
 		\t--version         Show version.\n\
 		\n\
 		The changes suggested by Shellharden inhibits word splitting and indirect\n\
-		wildcard expansion. This will make your script ShellCheck compliant in terms of\n\
+		pathname expansion. This will make your script ShellCheck compliant in terms of\n\
 		quoting. Whether your script will work afterwards is a different question:\n\
 		If your script was using those features on purpose, it obviously won't anymore!\n\
 		\n\
 		Every script is possible to write without using word splitting or indirect\n\
-		wildcard expansion, but it may involve doing things differently.\n\
+		pathname expansion, but it may involve doing things differently.\n\
 		See the accompanying file how_to_do_things_safely_in_bash.md or online:\n\
 		https://github.com/anordal/shellharden/blob/master/how_to_do_things_safely_in_bash.md\n\
 		"

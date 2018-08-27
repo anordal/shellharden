@@ -35,9 +35,9 @@ This guide accompanies Shellharden, but your author also recommends [ShellCheck]
 The first thing to know about bash coding
 -----------------------------------------
 
-**Quote like a maniac!** An unquoted variable is to be treated as an armed bomb: It explodes upon contact with whitespace and wildcards. Yes, "explode" as in [splitting a string into an array](http://php.net/manual/en/function.explode.php). Specifically, variable expansions, like `$var`, and also command substitutions, like `$(cmd)`, undergo *word splitting*, whereby the string is split on any of the characters in the special `$IFS` variable, which is whitespace by default. Furthermore, any wildcard characters (`*?`) in the resulting words are used to expand those words to match files on your filesystem (*indirect wildcard expansion*). This is mostly invisible, because most of the time, the result is a 1-element array, which is indistinguishable from the original string value.
+**Quote like a maniac!** An unquoted variable is to be treated as an armed bomb: It explodes upon contact with whitespace and wildcards. Yes, "explode" as in [splitting a string into an array](http://php.net/manual/en/function.explode.php). Specifically, variable expansions, like `$var`, and also command substitutions, like `$(cmd)`, undergo *word splitting*, whereby the string is split on any of the characters in the special `$IFS` variable, which is whitespace by default. Furthermore, any wildcard characters (`*?`) in the resulting words are used to expand those words to match files on your filesystem (*indirect pathname expansion*). This is mostly invisible, because most of the time, the result is a 1-element array, which is indistinguishable from the original string value.
 
-Quoting inhibits word splitting and indirect wildcard expansion, both for variables and command substitutions.
+Quoting inhibits word splitting and indirect pathname expansion, both for variables and command substitutions.
 
 Variable expansion:
 
@@ -149,7 +149,7 @@ are only doing us a disfavor.
 
 Splitting `$string` on the separator `$sep` into `$array`:
 
-Bad (indirect wildcard expansion):
+Bad (indirect pathname expansion):
 
     IFS="$sep"
     array=($string)
@@ -179,7 +179,7 @@ If the separator consists of multiple bytes, it is also possible to do this corr
 
 #### An alternative with 3 corner cases
 
-The otherwise evil IFS variable has a legitimate use in the `read` command, where it can be used as another way to separate fields without invoking indirect wildcard expansion.
+The otherwise evil IFS variable has a legitimate use in the `read` command, where it can be used as another way to separate fields without invoking indirect pathname expansion.
 IFS is brought into significance by requesting either multiple variables or using the array option to `read`.
 By disabling the delimiter `-d ''`, we read all the way to the end.
 Because read returns nonzero when it encounters the end, it must be guarded against errexit (`|| true`) if that is enabled.
@@ -224,7 +224,7 @@ But not:
     set -f
     shopt -s failglob
 
-* Setting the *internal field separator* to the empty string disables word splitting. Sounds like the holy grail. Sadly, this is no complete replacement for quoting variables and command substitutions, and given that you are going to use quotes, this gives you nothing. The reason you must still use quotes is that otherwise, empty strings become empty arrays (as in `test $x = ""`), and indirect wildcard expansion is still active. Furthermore, messing with this variable also messes with commands like `read` that use it, breaking constructs like `cat /etc/fstab | while read -r dev mnt fs opt dump pass; do echo "$fs"; done'`.
+* Setting the *internal field separator* to the empty string disables word splitting. Sounds like the holy grail. Sadly, this is no complete replacement for quoting variables and command substitutions, and given that you are going to use quotes, this gives you nothing. The reason you must still use quotes is that otherwise, empty strings become empty arrays (as in `test $x = ""`), and indirect pathname expansion is still active. Furthermore, messing with this variable also messes with commands like `read` that use it, breaking constructs like `cat /etc/fstab | while read -r dev mnt fs opt dump pass; do echo "$fs"; done'`.
 * Disabling wildcard expansion: Not just the notorious indirect one, but also the unproblematic direct one, that I'm saying you should want to use. So this is a hard sell. And this too should be completely unnecessary for a script that is shellcheck/shellharden conformant.
 * As an alternative to *nullglob*, *failglob* fails if there are zero matches. While this makes sense for most commands, for example `rm -- *.txt` (because most commands that take file arguments don't expect to be called with zero of them anyway), obviously, *failglob* can only be used when you are able to assume that zero matches won't happen. That just means you mostly won't be putting wildcards in command arguments unless you can assume the same. But what can always be done, is to use *nullglob* and let the pattern expand to zero arguments in a construct that can take zero arguments, such as a `for` loop or array assignment (`txt_files=(*.txt)`).
 
@@ -377,7 +377,7 @@ Issue: `test`, `[` and `[[` are largely interchangeable.
 
 If you are following this guide, the usual arguments don't apply:
 
-* Inside double brackets `[[ ]]`, unquoted variables and command substitutions are safe (from word splitting and indirect wildcard expansion). That's a partial solution to a problem we don't have – following this guide implies not doing that anywhere to begin with. If you are, you aren't after shellhardening your scripts.
+* Inside double brackets `[[ ]]`, unquoted variables and command substitutions are safe (from word splitting and indirect pathname expansion). That's a partial solution to a problem we don't have – following this guide implies not doing that anywhere to begin with. If you are, you aren't after shellhardening your scripts.
 * The usual counterargument is POSIX compatibility. We sacrificed that for arrays.
 
 Other concerns:
