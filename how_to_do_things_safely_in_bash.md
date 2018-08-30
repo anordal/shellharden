@@ -4,19 +4,33 @@ Safe ways to do things in bash
 Why bash?
 ---------
 
-Sometimes, a shellscript is the right tool for the job.
-At that, Bash has arrays and a safe mode,
-which in large part makes it possible and practical (respectively) to write scripts without glaring bugs.
-Other times, you are invoking the shell because that's what you get.
+The attraction of shellscripting is that it offers
+the concisest way to programmatically run other programs –
+that is after all the purpose of any shell language.
 
-Fish is easier to use correctly, but lacks a safe mode. Prototyping in `fish` is therefore a good idea, provided that you know how to translate correctly from fish to bash.
+If that sums up the duties of your program, then
+a shellscript may be the right tool for the job.
+
+Unfortunately, Bash is not a language where
+[the correct way to do something is also the easiest](http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/).
+Because it isn't (which is to say that
+Bash is an unsafe language), it takes discipline to avoid
+creating those systematic bugs encouraged by the language.
+
+What Bash offers the disciplined, however, is the necessary
+obscure non-POSIX features to do things correctly,
+and *strict modes* to make error handling practical.
+
+Fish is easier to use correctly, but lacks a strict mode. Prototyping in `fish` is therefore a good idea, provided that you know how to translate correctly from fish to bash.
 
 Preface
 -------
 
-This guide accompanies Shellharden, but your author also recommends [ShellCheck](https://github.com/koalaman/shellcheck/): Shellharden's rules shall not disagree with ShellCheck.
+If there is anything like a driver's license for safe bash coding,
+it must be rule zero of [BashPitfalls](http://mywiki.wooledge.org/BashPitfalls):
+Always use quotes.
 
-Bash is not a language where [the correct way to do something is also the easiest](http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/). If there is anything like a driver's license for safe bash coding, it must be rule zero of [BashPitfalls](http://mywiki.wooledge.org/BashPitfalls): Always use quotes.
+This guide accompanies Shellharden, but your author also recommends [ShellCheck](https://github.com/koalaman/shellcheck/): Shellharden's rules shall not disagree with ShellCheck.
 
 The first thing to know about bash coding
 -----------------------------------------
