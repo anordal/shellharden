@@ -14,7 +14,7 @@ use ::situation::flush;
 use ::situation::flush_or_pop;
 use ::situation::COLOR_NORMAL;
 
-use ::commonargcmd::common_arg_cmd;
+use ::commonargcmd::common_quoting_unneeded;
 use ::commonargcmd::common_arg_cmd_array;
 
 pub struct SitRvalue {
@@ -36,7 +36,7 @@ impl Situation for SitRvalue {
 					pre: i, len: 1, alt: None
 				});
 			}
-			if let Some(res) = common_arg_cmd(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_quoting_unneeded(self.end_trigger, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 		}

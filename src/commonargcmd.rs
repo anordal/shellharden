@@ -105,9 +105,71 @@ pub fn keyword_or_command(
 	}
 }
 
-// Does not pop on eof → Callers must use flush_or_pop
 pub fn common_arg_cmd(
 	end_trigger :u16,
+	horizon :&[u8],
+	i :usize,
+	is_horizon_lengthenable :bool,
+) -> Option<ParseResult> {
+	if let Some(res) = find_command_enders(horizon, i, is_horizon_lengthenable) {
+		return Some(res);
+	}
+	common_arg_cmd_array(end_trigger, horizon, i, is_horizon_lengthenable)
+}
+
+pub fn common_arg_cmd_array(
+	end_trigger :u16,
+	horizon :&[u8],
+	i :usize,
+	is_horizon_lengthenable :bool,
+) -> Option<ParseResult> {
+	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable) {
+		return Some(res);
+	}
+	match common_str_cmd(&horizon, i, is_horizon_lengthenable, true) {
+		CommonStrCmdResult::None => {},
+		CommonStrCmdResult::Err(e) => { return Some(Err(e)); },
+		CommonStrCmdResult::Ok(consult)
+		| CommonStrCmdResult::OnlyWithoutQuotes(consult)=> {
+			return Some(Ok(consult));
+		},
+		CommonStrCmdResult::OnlyWithQuotes(_) => {
+			return Some(Ok(WhatNow{
+				tri: Transition::Push(Box::new(SitStrPhantom{
+					cmd_end_trigger: end_trigger,
+				})), pre: i, len: 0, alt: Some(b"\"")
+			}));
+		},
+	}
+	None
+}
+
+pub fn common_quoting_unneeded(
+	end_trigger :u16,
+	horizon :&[u8],
+	i :usize,
+	is_horizon_lengthenable :bool,
+) -> Option<ParseResult> {
+	if let Some(res) = find_command_enders(horizon, i, is_horizon_lengthenable) {
+		return Some(res);
+	}
+	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable) {
+		return Some(res);
+	}
+	match common_str_cmd(&horizon, i, is_horizon_lengthenable, false) {
+		CommonStrCmdResult::None => {},
+		CommonStrCmdResult::Err(e) => { return Some(Err(e)); },
+		CommonStrCmdResult::Ok(x)
+		| CommonStrCmdResult::OnlyWithQuotes(x)
+		| CommonStrCmdResult::OnlyWithoutQuotes(x) => {
+			return Some(Ok(x));
+		},
+	}
+	None
+}
+
+// Does not pop on eof → Callers must use flush_or_pop
+fn find_command_enders(
 	horizon :&[u8],
 	i :usize,
 	is_horizon_lengthenable :bool,
@@ -125,10 +187,10 @@ pub fn common_arg_cmd(
 			tri: Transition::Pop, pre: i, len: 0, alt: None
 		}));
 	}
-	common_arg_cmd_array(end_trigger, horizon, i, is_horizon_lengthenable)
+	None
 }
 
-pub fn common_arg_cmd_array(
+fn find_usual_suspects(
 	end_trigger :u16,
 	horizon :&[u8],
 	i :usize,
@@ -159,21 +221,6 @@ pub fn common_arg_cmd_array(
 			tri: Transition::Push(Box::new(SitStrDq{})),
 			pre: i, len: 1, alt: None
 		}));
-	}
-	match common_str_cmd(&horizon, i, is_horizon_lengthenable, true) {
-		CommonStrCmdResult::None => {},
-		CommonStrCmdResult::Err(e) => { return Some(Err(e)); },
-		CommonStrCmdResult::Ok(consult)
-		| CommonStrCmdResult::OnlyWithoutQuotes(consult)=> {
-			return Some(Ok(consult));
-		},
-		CommonStrCmdResult::OnlyWithQuotes(_) => {
-			return Some(Ok(WhatNow{
-				tri: Transition::Push(Box::new(SitStrPhantom{
-					cmd_end_trigger: end_trigger,
-				})), pre: i, len: 0, alt: Some(b"\"")
-			}));
-		},
 	}
 	let (ate, delimiter) = find_heredoc(&horizon[i ..]);
 	if i + ate == horizon.len() {
