@@ -83,6 +83,12 @@ Build from source
 
     docker build -t shellgarden .
 
+### Fuzz test
+
+    cargo install afl
+    cargo afl build --release
+    cargo afl fuzz -i moduletests/original -o /tmp/fuzz-shellharden target/release/shellharden '@@'
+
 Usage advice
 ------------
 
