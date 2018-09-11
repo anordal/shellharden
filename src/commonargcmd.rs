@@ -162,6 +162,13 @@ pub fn common_quoting_unneeded(
 		CommonStrCmdResult::Ok(x)
 		| CommonStrCmdResult::OnlyWithQuotes(x)
 		| CommonStrCmdResult::OnlyWithoutQuotes(x) => {
+			if horizon[i] == b'`' {
+				return Some(Ok(WhatNow{
+					tri: Transition::Push(Box::new(SitNormal{
+						end_trigger: b'`' as u16, end_replace: None
+					})), pre: i, len: 1, alt: None
+				}))
+			}
 			return Some(Ok(x));
 		},
 	}
