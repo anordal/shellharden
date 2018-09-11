@@ -20,6 +20,7 @@ use ::microparsers::is_word;
 
 use ::commonargcmd::keyword_or_command;
 use ::commonargcmd::common_no_cmd;
+use ::commonargcmd::common_no_cmd_quoting_unneeded;
 
 pub struct SitIn {}
 
@@ -43,7 +44,9 @@ impl Situation for SitIn {
 				},
 				_ => {}
 			}
-			if let Some(res) = common_no_cmd(0x100, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_no_cmd_quoting_unneeded(
+				0x100, horizon, i, is_horizon_lengthenable
+			) {
 				return res;
 			}
 		}

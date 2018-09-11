@@ -153,6 +153,15 @@ pub fn common_quoting_unneeded(
 	if let Some(res) = find_command_enders(horizon, i, is_horizon_lengthenable) {
 		return Some(res);
 	}
+	common_no_cmd_quoting_unneeded(end_trigger, horizon, i, is_horizon_lengthenable)
+}
+
+pub fn common_no_cmd_quoting_unneeded(
+	end_trigger :u16,
+	horizon :&[u8],
+	i :usize,
+	is_horizon_lengthenable :bool,
+) -> Option<ParseResult> {
 	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable) {
 		return Some(res);
 	}
