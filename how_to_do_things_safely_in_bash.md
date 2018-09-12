@@ -195,6 +195,30 @@ Split to an array:
 The 3 corner cases are tab, newline and space – when IFS is set to one of these as above, `read` drops empty fields!
 Because this is often useful though, this method makes the bottom of the recommendation list instead of disqualification.
 
+### Corollary: Use while loops to iterate strings and command output
+
+Shellharden won't let you get away with this:
+
+    for i in $(seq 1 10); do
+        echo "$i"
+    done
+
+The intuitive fix – piping into the loop – is not always cool,
+because the pipe operator's right operand becomes a subshell.
+Not that it matters for this silly example, but it would surprise many
+to find that this loop can't manipulate outside variables:
+
+    seq 1 10 | while read -r i; do
+        echo "$i"
+    done
+
+To avoid future surprises, the bulk of the code should typically not be the subshell.
+This is all right:
+
+    while read -r i; do
+        echo "$i"
+    done < <(seq 1 10)
+
 How to begin a bash script
 --------------------------
 
