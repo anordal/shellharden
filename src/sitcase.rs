@@ -19,7 +19,7 @@ use ::microparsers::is_whitespace;
 use ::microparsers::is_word;
 
 use ::commonargcmd::keyword_or_command;
-use ::commonargcmd::common_arg_cmd_array;
+use ::commonargcmd::common_no_cmd;
 
 pub struct SitIn {}
 
@@ -43,7 +43,7 @@ impl Situation for SitIn {
 				},
 				_ => {}
 			}
-			if let Some(res) = common_arg_cmd_array(0x100, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_no_cmd(0x100, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 		}
@@ -81,7 +81,7 @@ impl Situation for SitCase {
 				},
 				_ => {}
 			}
-			if let Some(res) = common_arg_cmd_array(0x100, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_no_cmd(0x100, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 		}

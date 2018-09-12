@@ -15,7 +15,7 @@ use ::situation::flush_or_pop;
 use ::situation::COLOR_NORMAL;
 
 use ::commonargcmd::common_quoting_unneeded;
-use ::commonargcmd::common_arg_cmd_array;
+use ::commonargcmd::common_no_cmd;
 
 pub struct SitRvalue {
 	pub end_trigger :u16,
@@ -52,7 +52,7 @@ struct SitArray {}
 impl Situation for SitArray {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for i in 0 .. horizon.len() {
-			if let Some(res) = common_arg_cmd_array(b')' as u16, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_no_cmd(b')' as u16, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 		}

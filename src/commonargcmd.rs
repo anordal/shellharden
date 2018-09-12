@@ -114,10 +114,10 @@ pub fn common_arg_cmd(
 	if let Some(res) = find_command_enders(horizon, i, is_horizon_lengthenable) {
 		return Some(res);
 	}
-	common_arg_cmd_array(end_trigger, horizon, i, is_horizon_lengthenable)
+	common_no_cmd(end_trigger, horizon, i, is_horizon_lengthenable)
 }
 
-pub fn common_arg_cmd_array(
+pub fn common_no_cmd(
 	end_trigger :u16,
 	horizon :&[u8],
 	i :usize,
