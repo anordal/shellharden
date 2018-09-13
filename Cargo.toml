@@ -1,6 +1,6 @@
 [package]
 name = "shellharden"
-version = "4.0.0"
+version = "4.0.1"
 authors = ["Andreas Nordal"]
 repository = "https://github.com/anordal/shellharden/"
 description = "The corrective bash syntax highlighter"
