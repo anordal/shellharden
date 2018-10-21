@@ -132,9 +132,6 @@ fn stackmachine(
 				if progress == 0 {
 					break;
 				}
-				if pos == buf.len() {
-					break;
-				}
 			}
 			(Transition::Replace(newstate), _) => {
 				let ix = state.len() - 1;
