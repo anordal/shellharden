@@ -28,9 +28,6 @@ impl Situation for SitStrDq {
 				CommonStrCmdResult::Err(e) => { return Err(e); },
 				CommonStrCmdResult::Ok(x) => { return Ok(x); },
 				CommonStrCmdResult::OnlyWithQuotes(x) => { return Ok(x); },
-				CommonStrCmdResult::OnlyWithoutQuotes(_) => {
-					panic!("Unreachability assertion failed");
-				},
 			}
 		}
 		Ok(flush(horizon.len()))

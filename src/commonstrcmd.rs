@@ -21,7 +21,6 @@ use ::syntaxerror::UnsupportedSyntax;
 
 use ::sitcmd::SitNormal;
 use ::sitextent::SitExtent;
-use ::sitstrsqesc::SitStrSqEsc;
 use ::situntilbyte::SitUntilByte;
 use ::sitvarident::SitVarIdent;
 use ::sitvec::SitVec;
@@ -31,7 +30,6 @@ pub enum CommonStrCmdResult {
 	Err(UnsupportedSyntax),
 	Ok(WhatNow),
 	OnlyWithQuotes(WhatNow),
-	OnlyWithoutQuotes(WhatNow),
 }
 
 pub fn common_str_cmd(
@@ -64,14 +62,7 @@ pub fn common_str_cmd(
 		return CommonStrCmdResult::None;
 	}
 	let c = horizon[i+1];
-	if c == b'\'' {
-		if ctx_cmd {
-			return CommonStrCmdResult::OnlyWithoutQuotes(WhatNow {
-				tri: Transition::Push(Box::new(SitStrSqEsc{})),
-				pre: i, len: 2, alt: None
-			});
-		}
-	} else if c == b'(' {
+	if c == b'(' {
 		let cand: &[u8] = &horizon[i+2 ..];
 		let (idlen, pos_hazard) = pos_tailhazard(cand, b')');
 		if pos_hazard == cand.len() {

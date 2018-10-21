@@ -31,6 +31,7 @@ use ::sitextent::SitExtent;
 use ::sitrvalue::SitRvalue;
 use ::sitstrdq::SitStrDq;
 use ::sitstrphantom::SitStrPhantom;
+use ::sitstrsqesc::SitStrSqEsc;
 use ::situntilbyte::SitUntilByte;
 use ::sitvec::SitVec;
 
@@ -129,8 +130,7 @@ pub fn common_no_cmd(
 	match common_str_cmd(&horizon, i, is_horizon_lengthenable, true) {
 		CommonStrCmdResult::None => {},
 		CommonStrCmdResult::Err(e) => { return Some(Err(e)); },
-		CommonStrCmdResult::Ok(consult)
-		| CommonStrCmdResult::OnlyWithoutQuotes(consult)=> {
+		CommonStrCmdResult::Ok(consult) => {
 			return Some(Ok(consult));
 		},
 		CommonStrCmdResult::OnlyWithQuotes(_) => {
@@ -169,8 +169,7 @@ pub fn common_no_cmd_quoting_unneeded(
 		CommonStrCmdResult::None => {},
 		CommonStrCmdResult::Err(e) => { return Some(Err(e)); },
 		CommonStrCmdResult::Ok(x)
-		| CommonStrCmdResult::OnlyWithQuotes(x)
-		| CommonStrCmdResult::OnlyWithoutQuotes(x) => {
+		| CommonStrCmdResult::OnlyWithQuotes(x) => {
 			if horizon[i] == b'`' {
 				return Some(Ok(WhatNow{
 					tri: Transition::Push(Box::new(SitNormal{
@@ -237,6 +236,21 @@ fn find_usual_suspects(
 			tri: Transition::Push(Box::new(SitStrDq{})),
 			pre: i, len: 1, alt: None
 		}));
+	}
+	if a == b'$' {
+		if i+1 >= horizon.len() {
+			if i > 0 || is_horizon_lengthenable {
+				return Some(Ok(flush(i)));
+			}
+			return None;
+		}
+		let b = horizon[i+1];
+		if b == b'\'' {
+			return Some(Ok(WhatNow{
+				tri: Transition::Push(Box::new(SitStrSqEsc{})),
+				pre: i, len: 2, alt: None
+			}));
+		}
 	}
 	let (ate, delimiter) = find_heredoc(&horizon[i ..]);
 	if i + ate == horizon.len() {

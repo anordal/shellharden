@@ -58,7 +58,6 @@ impl Situation for SitStrPhantom {
 								}
 							}
 						},
-						CommonStrCmdResult::OnlyWithoutQuotes(_) => {},
 					}
 				}
 				_ => {}
