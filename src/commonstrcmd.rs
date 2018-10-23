@@ -115,16 +115,6 @@ pub fn common_str_cmd(
 			tri: Transition::Push(ext),
 			pre: i, len: 0, alt: None
 		});
-	} else if c == b'*' {
-		let ext = Box::new(SitExtent{
-			len: 0,
-			color: COLOR_VAR,
-			end_insert: None
-		});
-		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
-			tri: Transition::Push(ext),
-			pre: i, len: 2, alt: Some(b"$@")
-		});
 	} else if predlen(&|c|{c >= b'0' && c <= b'9'}, &horizon[i+1 ..]) > 1 {
 		return CommonStrCmdResult::Err(UnsupportedSyntax {
 			typ: "Unsupported syntax: Syntactic pitfall",
@@ -145,7 +135,7 @@ pub fn common_str_cmd(
 			and might slip through code review unnoticed.\n\
 			* Fixing its look would make a likely bug look intentional."
 		});
-	} else if c == b'@' || (c >= b'0' && c <= b'9') {
+	} else if c == b'@' || c == b'*' || (c >= b'0' && c <= b'9') {
 		let ext = Box::new(SitExtent{
 			len: 2,
 			color: COLOR_VAR,

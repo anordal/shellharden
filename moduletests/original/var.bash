@@ -12,6 +12,7 @@ echo $7
 echo $8
 echo $9
 echo $@
+echo $*
 echo $# # Expands to a number
 echo $? # Expands to a number
 
@@ -56,6 +57,7 @@ echo "$7"
 echo "$8"
 echo "$9"
 echo "$@"
+echo "$*"
 echo "$#" # Expands to a number
 echo "$?" # Expands to a number
 
@@ -78,6 +80,7 @@ echo "${9}"
 echo "${1}0"
 echo "${10}"
 echo "${@}"
+echo "${*}"
 echo "${#}" # Expands to a number
 echo "${?}" # Expands to a number
 

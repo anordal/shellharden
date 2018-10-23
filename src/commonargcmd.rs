@@ -13,6 +13,7 @@ use ::situation::flush;
 use ::situation::COLOR_KWD;
 use ::situation::COLOR_MAGIC;
 use ::situation::COLOR_HERE;
+use ::situation::COLOR_VAR;
 
 use ::microparsers::prefixlen;
 use ::microparsers::predlen;
@@ -249,6 +250,17 @@ fn find_usual_suspects(
 			return Some(Ok(WhatNow{
 				tri: Transition::Push(Box::new(SitStrSqEsc{})),
 				pre: i, len: 2, alt: None
+			}));
+		} else if b == b'*' {
+			// $* → "$@" but not "$*" → "$@"
+			let ext = Box::new(SitExtent{
+				len: 0,
+				color: COLOR_VAR,
+				end_insert: None
+			});
+			return Some(Ok(WhatNow{
+				tri: Transition::Push(ext),
+				pre: i, len: 2, alt: Some(b"\"$@\"")
 			}));
 		}
 	}
