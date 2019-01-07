@@ -306,7 +306,7 @@ To capture a command's output while using it as a condition, use an assignment a
         …
     fi
 
-If at all using the exit status variable `$?`, it must be conditioned on the command (specifically, it only makes sense to use in the conditional branch where it is nonzero). Otherwise, your script won't live to see this variable whenever it is nonzero.
+If at all using the exit status variable `$?` with errexit, it is of course no substitute for the direct check for command success (otherwise, your script won't live to see this variable whenever it is nonzero). Corollary: The failure case is the only place it makes sense to expand the exit status variable `$?` (because success only has one exit status, which we are checking). A second pitfall is that if we negate the command as part of the check, the exit status will be that of the negated command – a boolean with precisely the useful information removed.
 
 Bad:
 
@@ -315,11 +315,23 @@ Bad:
         echo Command returned $?
     fi
 
-Good:
+Bad:
 
     if ! command; then
         echo Command returned $?
     fi
+
+Good:
+
+    if command; then
+        true
+    else
+        echo Command returned $?
+    fi
+
+Good:
+
+    command || echo Command returned $?
 
 ### Program-level deferred cleanup
 
