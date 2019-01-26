@@ -11,14 +11,6 @@ use std::io::Write;
 
 use ::syntaxerror::UnsupportedSyntax;
 
-macro_rules! println_stderr(
-	($($arg:tt)*) => (
-		if let Err(e) = writeln!(&mut std::io::stderr(), $($arg)* ) {
-			panic!("Unable to write to stderr: {}", e);
-		}
-	)
-);
-
 fn stderr_write_or_panic(lock: &mut std::io::StderrLock, bytes: &[u8]) {
 	if let Err(e) = lock.write_all(bytes) {
 		panic!("Unable to write to stderr: {}", e);
@@ -27,12 +19,12 @@ fn stderr_write_or_panic(lock: &mut std::io::StderrLock, bytes: &[u8]) {
 
 pub fn blame_path(path: &std::ffi::OsString, blame: &str) {
 	let printable = path.to_string_lossy();
-	println_stderr!("{}: {}", printable, blame);
+	eprintln!("{}: {}", printable, blame);
 }
 
 pub fn blame_path_io(path: &std::ffi::OsString, e: &std::io::Error) {
 	let printable = path.to_string_lossy();
-	println_stderr!("{}: {}", printable, e);
+	eprintln!("{}: {}", printable, e);
 }
 
 pub fn blame_syntax(path: &std::ffi::OsString, fail: &UnsupportedSyntax) {
@@ -69,5 +61,5 @@ pub fn blame_syntax(path: &std::ffi::OsString, fail: &UnsupportedSyntax) {
 		}
 		stderr_write_or_panic(&mut stderr_lock, b"^\n");
 	}
-	println_stderr!("{}", fail.msg);
+	eprintln!("{}", fail.msg);
 }
