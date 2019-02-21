@@ -115,24 +115,34 @@ The syntax is verbose, but get over it. This bashism is reason alone to drop pos
 
 Good:
 
-    array=(
+    files=(
         a
         b
     )
-    array+=(c)
-    if [ ${#array[@]} -gt 0 ]; then
-        rm -- "${array[@]}"
+    duplicates=()
+    for f in "${files[@]}"; do
+        if cmp "$f" other/"$f"; then
+            duplicates+=("$f")
+        fi
+    done
+    if [ "${#duplicates[@]}" -gt 0 ]; then
+        rm -- "${duplicates[@]}"
     fi
 
 Bad:
 
-    pseudoarray=" \
+    files=" \
         a \
         b \
     "
-    pseudoarray="$pseudoarray c"
-    if ! [ "$pseudoarray" = '' ]; then
-        rm -- $pseudoarray
+    duplicates=
+    for f in $files; do
+        if cmp "$f" other/"$f"; then
+            duplicates+=" $f"
+        fi
+    done
+    if ! [ "$duplicates" = '' ]; then
+        rm -- $duplicates
     fi
 
 Here is why arrays are such a basic feature for a shell: [Command arguments are fundamentally arrays](http://manpag.es/RHEL6/3p+exec)
