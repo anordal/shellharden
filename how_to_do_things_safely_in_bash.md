@@ -468,6 +468,33 @@ Chances are that you don't know the substitute.
 
 Shellharden will not stop you from using quotes in syntactical contexts where it does not matter, but that would deviate from common practice.
 
+Commands with better alternatives
+---------------------------------
+
+### echo → printf
+
+The `echo` command is not generally possible to use correctly – it is safe in *certain* cases.
+In contrast, `printf` is always possible to use correctly (not saying it is easier).
+
+The issue is that the bash version of `echo` interprets (any number of) leading arguments as options (until the first argument that is not an option),
+with no way to suppress further option parsing (as usually signified with a double-dash `--` argument).
+As with any command, safe use requires control of its option parsing (you don't want it to interpret your data as options).
+In `echo`'s case, we are safe as long as its first non-option character is provably not a dash – we can not just print anything unpredictable (like a variable or command substitution) – we must first print *some* literal character, that is not the dash, and *then* the unpredictable data!
+
+Even if you actually want to use `echo`s options, be aware that they are a bashism, and and that the more portable `printf` command can do all that and more.
+
+Bad:
+
+    echo "$var"
+    echo -n "$var"
+    echo -e "\e[1;33m$var\e[m"
+
+Good:
+
+    printf '%s\n' "$var"
+    printf '%s' "$var"
+    printf '\e[1;33m%s\e[m\n' "$var"
+
 How to avoid invoking the shell with improper quoting
 -----------------------------------------------------
 
