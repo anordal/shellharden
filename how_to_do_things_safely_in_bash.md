@@ -1,41 +1,54 @@
 Safe ways to do things in bash
 ==============================
 
-Why bash?
----------
+Like programming in C or driving a car,
+contemporary shellscript languages require some knowledge and discipline to use safely,
+but that's not to say it can't be done.
 
-The attraction of shellscripting is that it offers
-the concisest way to programmatically run other programs –
-that is after all the purpose of any shell language.
+Why focus on bash?
+------------------
 
-If that sums up the duties of your program, then
-a shellscript may be the right tool for the job.
-
-Unfortunately, Bash is not a language where
+This guide is here to show that in bash, it *can* be done.
+Specifically, those systematic bugs that the language encourages can be eliminated by disciplines that are outlined here.
+Realize that Bash is *not* a language where
 [the correct way to do something is also the easiest](http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/).
-Because it isn't (which is to say that
-Bash is an unsafe language), it takes discipline to avoid
-creating those systematic bugs encouraged by the language.
 
-What Bash offers the disciplined, however, is the necessary
-obscure non-POSIX features to do things correctly,
-and *strict modes* to make error handling practical.
+The judgement of alternatives is:
 
-Fish is easier to use correctly, but lacks a strict mode. Prototyping in `fish` is therefore a good idea, provided that you know how to translate correctly from fish to bash.
+* In POSIX shell (a language subset that many shells support), it can not be done. → Disqualified.
+* Fish is a relief – easy to use correctly, but (still) lacks a strict mode. → Disqualified.
+* Zsh is largely compatible with Bash. → Also qualifies.
 
-Preface
--------
+What about non-shellscript languages?
 
-If there is anything like a driver's license for safe bash coding,
-it must be rule zero of [BashPitfalls](http://mywiki.wooledge.org/BashPitfalls):
-Always use quotes.
+That is the wrong question: This is not a defense of shellscripting.
+Shellscripts keep getting written, and this is how to do it safely.
+There are valid reasons for writing something in shellscript, and in particular, there is one invalid reason not to.
+It all comes down to whether your program fundamentally needs to run other programs –
+shellscript languages are languages for running programs.
 
-This guide accompanies Shellharden, but your author also recommends [ShellCheck](https://github.com/koalaman/shellcheck/): Shellharden's rules shall not disagree with ShellCheck.
+1. The invalid reason: So you want to remove yourself from shellscripting, but are still (implicitly) invoking the shell anyway – does that count as removing yourself from shellscripting? No: You still have a shellscript on your hands, everything in this document still applies, and the chapter [how to avoid invoking the shell with improper quoting](#how-to-avoid-invoking-the-shell-with-improper-quoting) is especially for you.
+2. The attractiveness of shellscripting is that it offers the concisest way to programmatically run other programs – supposedly, they would be the right tool for that job. Well, you be the judge.
+
+Why Shellharden?
+----------------
+
+First off, your author recommends following the advice that [ShellCheck](https://github.com/koalaman/shellcheck/) gives you. If you have ambitions of ShellCheck compliance, Shellharden is that tool. Shellharden's rules shall not disagree with ShellCheck.
+
+I wrote that:
+
+> those systematic bugs that the language encourages can be eliminated by disciplines that are outlined here
+
+↑ The premise for Shellharden is that fixing all those bugs is both systematic and absolutely daunting – reviewing the fixes is easier.
 
 The first thing to know about bash coding
 -----------------------------------------
 
-**Quote like a maniac!** An unquoted variable is to be treated as an armed bomb: It explodes upon contact with whitespace and wildcards. Yes, "explode" as in [splitting a string into an array](http://php.net/manual/en/function.explode.php). Specifically, variable expansions, like `$var`, and also command substitutions, like `$(cmd)`, undergo *word splitting*, whereby the string is split on any of the characters in the special `$IFS` variable, which is whitespace by default. Furthermore, any wildcard characters (`*?`) in the resulting words are used to expand those words to match files on your filesystem (*indirect pathname expansion*). This is mostly invisible, because most of the time, the result is a 1-element array, which is indistinguishable from the original string value.
+If there is anything like a driver's license for safe bash coding,
+it must be rule zero of [BashPitfalls](http://mywiki.wooledge.org/BashPitfalls):
+**Always use quotes.**
+
+An unquoted variable is to be treated as an armed bomb: It explodes upon contact with whitespace and wildcards. Yes, "explode" as in [splitting a string into an array](http://php.net/manual/en/function.explode.php). Specifically, variable expansions, like `$var`, and also command substitutions, like `$(cmd)`, undergo *word splitting*, whereby the string is split on any of the characters in the special `$IFS` variable, which is whitespace by default. Furthermore, any wildcard characters (`*?`) in the resulting words are used to expand those words to match files on your filesystem (*indirect pathname expansion*). This is mostly invisible, because most of the time, the result is a 1-element array, which is indistinguishable from the original string value.
 
 Quoting inhibits word splitting and indirect pathname expansion, both for variables and command substitutions.
 
@@ -51,7 +64,12 @@ Command substitution:
 
 There are exceptions where quoting is not necessary, but because it never hurts to quote, and the general rule is to be scared when you see an unquoted variable, pursuing the non-obvious exceptions is, for the sake of your readers, questionable. It looks wrong, and the wrong practice is common enough to raise suspicion: Enough scripts are being written with broken handling of filenames that whitespace in filenames is often avoided…
 
-The only exceptions honored by Shellharden are variables of numeric content, such as `$?`, `$#` and `${#array[@]}`.
+The exceptions only matter in discussions of style – feel welcome to ignore them. For the sake of style neutrality, Shellharden does honor a few exceptions:
+
+* variables of invariably numeric content: `$?`, `$#` and array length `${#array[@]}`
+* assignments: `a=$b`
+* the magical case command: `case $var in … esac`
+* the magical context between double-brackets (`[[` and `]]`) – this is a language of its own.
 
 ### Should I use backticks?
 
@@ -102,7 +120,7 @@ Unlike normal *identifier* variable names (in regex: `[_a-zA-Z][_a-zA-Z0-9]*`), 
     echo "$10"
           ^-- SC1037: Braces are required for positionals over 9, e.g. ${10}.
 
-Shellharden will refuse to fix this (deemed too subtle).
+This was deemed too subtle to either fix or ignore: Shellharden will print a big error message and bail if it sees this.
 
 Since braces are required above 9, Shellharden permits them on all numbered arguments.
 
@@ -111,7 +129,7 @@ Use arrays FTW
 
 In order to be able to quote all variables, you must use real arrays when that's what you need, not whitespace separated pseudo-array strings.
 
-The syntax is verbose, but get over it. This bashism is reason alone to drop posix compatibility for most shellscripts.
+The syntax is verbose, but get over it. This bashism single-handedly disqualifies the POSIX shell for the purpose of this guide.
 
 Good:
 
@@ -121,7 +139,7 @@ Good:
     )
     duplicates=()
     for f in "${files[@]}"; do
-        if cmp "$f" other/"$f"; then
+        if cmp -- "$f" other/"$f"; then
             duplicates+=("$f")
         fi
     done
@@ -137,7 +155,7 @@ Bad:
     "
     duplicates=
     for f in $files; do
-        if cmp "$f" other/"$f"; then
+        if cmp -- "$f" other/"$f"; then
             duplicates+=" $f"
         fi
     done
@@ -145,15 +163,23 @@ Bad:
         rm -- $duplicates
     fi
 
+As the example illustrates, your typical script will still look like itself whether you use proper arrays or pseudo-array strings.
+As a bonus, array entries are actually possible to comment.
+However, the two versions are not equivalent, as the latter breaks down as soon as a filename contains whitespace.
+While it is *possible* to represent a list in a string,
+even approachable if a suitable delimiter is known,
+it is inhumanely impractical to do correctly in a general way (with escaping and unescaping the delimiter),
+and be expected to consistently repeat this excersise for every list.
+
 Here is why arrays are such a basic feature for a shell: [Command arguments are fundamentally arrays](http://manpag.es/RHEL6/3p+exec)
 (and shell scripting is all about commands and arguments).
-You could say that a shell that makes it artificially impossible to pass multiple arguments around cleanly is comically unfit for purpose.
+Arrays arise naturally all the time in shellscripting.
 
-For our purposes, lack of arrays is the ~~most~~ pressing feature omission of the POSIX shell standard.
-In other words, POSIX is not the standard. The Bash array syntax is, and Zsh supports a superset of it.
-Awareness needs to be raised that minimal POSIX compatible shells
-like [Dash](https://wiki.ubuntu.com/DashAsBinSh#A.24.7B....7D) and Busybox Ash
-are only doing us a disfavor.
+It follows that lack of arrays is a blatant feature omission of the POSIX shell standard, and that minimalistic POSIX compatible shells like [Dash](https://wiki.ubuntu.com/DashAsBinSh#A.24.7B....7D) and Ash are not worth pursuing for our purposes.
+You could say that a shell that makes it artificially impossible to pass multiple arguments around cleanly is comically unfit for purpose.
+As for Zsh, it supports a superset of Bash's array syntax, so it is good.
+
+Awareness needs to be raised that Ash, specifically, is holding us back in the seventies on this front, because as the Busybox shell, it gets used on embedded computers where Bash may not be available.
 
 ### Those exceptional cases where you actually intend to split the string
 
