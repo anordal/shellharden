@@ -236,7 +236,7 @@ Because this is often useful though, this method makes the bottom of the recomme
 Shellharden won't let you get away with this:
 
     for i in $(seq 1 10); do
-        echo "$i"
+        printf '%s\n' "$i"
     done
 
 The intuitive fix – piping into the loop – is not always cool,
@@ -245,14 +245,14 @@ Not that it matters for this silly example, but it would surprise many
 to find that this loop can't manipulate outside variables:
 
     seq 1 10 | while read -r i; do
-        echo "$i"
+        printf '%s\n' "$i"
     done
 
 To avoid future surprises, the bulk of the code should typically not be the subshell.
 This is all right:
 
     while read -r i; do
-        echo "$i"
+        printf '%s\n' "$i"
     done < <(seq 1 10)
 
 How to begin a bash script
@@ -290,7 +290,7 @@ But not:
     set -f
     shopt -s failglob
 
-* Setting the *internal field separator* to the empty string disables word splitting. Sounds like the holy grail. Sadly, this is no complete replacement for quoting variables and command substitutions, and given that you are going to use quotes, this gives you nothing. The reason you must still use quotes is that otherwise, empty strings become empty arrays (as in `test $x = ""`), and indirect pathname expansion is still active. Furthermore, messing with this variable also messes with commands like `read` that use it, breaking constructs like `cat /etc/fstab | while read -r dev mnt fs opt dump pass; do echo "$fs"; done'`.
+* Setting the *internal field separator* to the empty string disables word splitting. Sounds like the holy grail. Sadly, this is no complete replacement for quoting variables and command substitutions, and given that you are going to use quotes, this gives you nothing. The reason you must still use quotes is that otherwise, empty strings become empty arrays (as in `test $x = ""`), and indirect pathname expansion is still active. Furthermore, messing with this variable also messes with commands like `read` that use it, breaking constructs like `cat /etc/fstab | while read -r dev mnt fs opt dump pass; do printf '%s\n' "$fs"; done'`.
 * Disabling wildcard expansion: Not just the notorious indirect one, but also the unproblematic direct one, that I'm saying you should want to use. So this is a hard sell. And this too should be completely unnecessary for a script that is shellcheck/shellharden conformant.
 * As an alternative to *nullglob*, *failglob* fails if there are zero matches. While this makes sense for most commands, for example `rm -- *.txt` (because most commands that take file arguments don't expect to be called with zero of them anyway), obviously, *failglob* can only be used when you are able to assume that zero matches won't happen. That just means you mostly won't be putting wildcards in command arguments unless you can assume the same. But what can always be done, is to use *nullglob* and let the pattern expand to zero arguments in a construct that can take zero arguments, such as a `for` loop or array assignment (`txt_files=(*.txt)`).
 
