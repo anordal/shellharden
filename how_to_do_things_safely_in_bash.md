@@ -503,27 +503,51 @@ Commands with better alternatives
 
 ### echo → printf
 
-The `echo` command is not generally possible to use correctly – it is safe in *certain* cases.
-In contrast, `printf` is always possible to use correctly (not saying it is easier).
+As with any command, there must be a way to control its option parsing to prevent it from interpreting data as options.
+The standard way to signify the end of options is with a double-dash `--` argument.
 
-The issue is that the bash version of `echo` interprets (any number of) leading arguments as options (until the first argument that is not an option),
-with no way to suppress further option parsing (as usually signified with a double-dash `--` argument).
-As with any command, safe use requires control of its option parsing (you don't want it to interpret your data as options).
-In `echo`'s case, we are safe as long as its first non-option character is provably not a dash – we can not just print anything unpredictable (like a variable or command substitution) – we must first print *some* literal character, that is not the dash, and *then* the unpredictable data!
+Significance of the double-dash `--` argument, explained in error messages:
 
-Even if you actually want to use `echo`s options, be aware that they are a bashism, and and that the more portable `printf` command can do all that and more.
+    > shellharden --hlep
+    --hlep: No such option
+    > shellharden -- --hlep
+    --hlep: No such file or directory
+
+As such, the GNU version of `echo` (both the bash builtin and `command echo`) is fatally flawed.
+Unlike the POSIX version, it takes options, yet it offers no way to suppress further option parsing.
+(Specifically, it interprets any number of leading arguments as options until the first argument that is not an option.)
+
+The result is that `echo` is not *generally* possible to use correctly.
+(It is safe as long as its first non-option character is provably not a dash – we can not just print anything unpredictable like a variable or command substitution; we must first print *some* literal character, that is not the dash, and *then* the unpredictable data!)
+
+In contrast, `printf` is always possible to use correctly (not saying it is easier)
+and can do a superset of `echo` (including its bashisms, just without bashisms).
 
 Bad:
 
     echo "$var"
     echo -n "$var"
-    echo -e "\e[1;33m$var\e[m"
+    echo -en "$var\r"
+
+    echo "$a" "$b"
+    echo "${array[@]}"
 
 Good:
 
     printf '%s\n' "$var"
     printf '%s' "$var"
-    printf '\e[1;33m%s\e[m\n' "$var"
+    printf '%s\r' "$var"
+
+    printf '%s %s\n' "$a" "$b"
+    printf '%s\n' "${array[*]}"
+
+At this point, it gets tempting to redefine `echo` to something sane,
+but since this is probably not a good idea for the sanity of your peers – likely to get rage-deleted in the next refactoring,
+the right thing to do may be to call it something else, if anything, and leave `echo` forever broken:
+
+    ekko() {
+        printf '%s\n' "$*"
+    }
 
 How to avoid invoking the shell with improper quoting
 -----------------------------------------------------
