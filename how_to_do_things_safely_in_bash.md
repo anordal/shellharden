@@ -5,15 +5,29 @@ Like programming in C or driving a car,
 contemporary shellscript languages require some knowledge and discipline to use safely,
 but that's not to say it can't be done.
 
+Purpose of this guide
+---------------------
+
+This guide accompanies Shellharden, the corrective syntax highlighter.
+
+Shellharden suggests, and can apply, changes to remove brittleness in shellscripts. This is in accordance with [ShellCheck](https://github.com/koalaman/shellcheck/) and [BashPitfalls](http://mywiki.wooledge.org/BashPitfalls) – Shellharden shall not disagree with these.
+
+The problem is that not all scripts will work with their brittleness simply removed, because *that* was their working principle, and must be rewritten quite differently.
+Thus the need for a human in the loop and a holistic methodology.
+
 Why focus on bash?
 ------------------
 
-This guide is here to show that in bash, it *can* be done.
-Specifically, those systematic bugs that the language encourages can be eliminated by disciplines that are outlined here.
-Realize that Bash is *not* a language where
-[the correct way to do something is also the easiest](http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/).
+This guide is here to show that bash *can* be used safely.
 
-The judgement of alternatives is:
+It is the goal and realization of this methodology that
+all bash scripts, without exception, are possible to rewrite into wellformedness,
+thus eliminating those systematic bugs that the language encourages.
+
+The price is having to accept that Bash is simply *not* a language where
+[the correct way to do something is also the easiest](http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/) – a damning impossibility for the general community, it is argued, but doesn't rule out a determined elite.
+
+So be it, because other prevalent alternatives are not better:
 
 * In POSIX shell (a language subset that many shells support), it can not be done. → Disqualified.
 * Fish is a relief – easy to use correctly, but (still) lacks a strict mode. → Disqualified.
@@ -29,17 +43,6 @@ shellscript languages are languages for running programs.
 
 1. The invalid reason: So you want to remove yourself from shellscripting, but are still (implicitly) invoking the shell anyway – does that count as removing yourself from shellscripting? No: You still have a shellscript on your hands, everything in this document still applies, and the chapter [how to avoid invoking the shell with improper quoting](#how-to-avoid-invoking-the-shell-with-improper-quoting) is especially for you.
 2. The attractiveness of shellscripting is that it offers the concisest way to programmatically run other programs – supposedly, they would be the right tool for that job. Well, you be the judge.
-
-Why Shellharden?
-----------------
-
-First off, your author recommends following the advice that [ShellCheck](https://github.com/koalaman/shellcheck/) gives you. If you have ambitions of ShellCheck compliance, Shellharden is that tool. Shellharden's rules shall not disagree with ShellCheck.
-
-I wrote that:
-
-> those systematic bugs that the language encourages can be eliminated by disciplines that are outlined here
-
-↑ The premise for Shellharden is that fixing all those bugs is both systematic and absolutely daunting – reviewing the fixes is easier.
 
 The first thing to know about bash coding
 -----------------------------------------
