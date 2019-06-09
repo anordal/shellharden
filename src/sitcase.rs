@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Andreas Nordal
+ * Copyright 2018-2019 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@ use ::situation::COLOR_NORMAL;
 use ::situation::COLOR_KWD;
 
 use ::microparsers::predlen;
+use ::microparsers::prefixlen;
 use ::microparsers::is_whitespace;
 use ::microparsers::is_word;
 
@@ -115,6 +116,15 @@ impl Situation for SitCaseArm {
 			}
 			if is_whitespace(a) || a == b';' || a == b'|' || a == b'&' || a == b'<' || a == b'>' {
 				continue;
+			}
+			// Premature esac: Survive and rewrite.
+			let plen = prefixlen(&horizon[i..], b"esac");
+			if plen == 4 {
+				return Ok(WhatNow{
+					tri: Transition::Pop, pre: i, len: 0, alt: Some(b";; ")
+				});
+			} else if i + plen == horizon.len() && (i > 0 || is_horizon_lengthenable) {
+				return Ok(flush(i));
 			}
 			return Ok(keyword_or_command(0x100, &horizon, i, is_horizon_lengthenable));
 		}
