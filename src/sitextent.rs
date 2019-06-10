@@ -24,7 +24,7 @@ impl Situation for SitExtent {
 			return Ok(WhatNow{tri: Transition::Pop, pre: self.len, len: 0, alt: self.end_insert});
 		}
 		self.len -= horizon.len();
-		return Ok(flush(horizon.len()));
+		Ok(flush(horizon.len()))
 	}
 	fn get_color(&self) -> u32{
 		self.color

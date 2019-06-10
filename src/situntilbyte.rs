@@ -23,11 +23,11 @@ pub struct SitUntilByte {
 impl Situation for SitUntilByte {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> ParseResult {
 		let len = predlen(&|x| x != self.until, &horizon);
-		return Ok(if len < horizon.len() {
+		Ok(if len < horizon.len() {
 			WhatNow{tri: Transition::Pop, pre: len, len: 1, alt: self.end_replace}
 		} else {
 			flush(len)
-		});
+		})
 	}
 	fn get_color(&self) -> u32{
 		self.color

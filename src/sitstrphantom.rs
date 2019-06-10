@@ -64,9 +64,9 @@ impl Situation for SitStrPhantom {
 			}
 		}
 		// Dutifully end the string.
-		return Ok(WhatNow{
+		Ok(WhatNow{
 			tri: Transition::Pop, pre: 0, len: 0, alt: Some(b"\"")
-		});
+		})
 	}
 	fn get_color(&self) -> u32{
 		0x00_ff0000

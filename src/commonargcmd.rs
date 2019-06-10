@@ -338,5 +338,5 @@ fn find_heredoc(horizon: &[u8]) -> (usize, Vec<u8>) {
 		};
 		ate += 1;
 	}
-	return (ate, found);
+	(ate, found)
 }

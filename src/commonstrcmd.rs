@@ -191,7 +191,7 @@ pub fn common_str_cmd(
 			CommonStrCmdResult::OnlyWithQuotes(wn)
 		};
 	}
-	return CommonStrCmdResult::Ok(flush(i+1));
+	CommonStrCmdResult::Ok(flush(i+1))
 }
 
 fn if_needed<T>(needed: bool, val: T) -> Option<T> {
@@ -209,5 +209,5 @@ fn pos_tailhazard(horizon: &[u8], end: u8) -> (usize, usize) {
 			}
 		}
 	}
-	return (idlen, pos);
+	(idlen, pos)
 }
