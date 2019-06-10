@@ -20,7 +20,7 @@ impl Situation for SitStrSqEsc {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> ParseResult {
 		for (i, &a) in horizon.iter().enumerate() {
 			if a == b'\\' {
-				let esc = Box::new(SitExtent{len: 1, color: 0x01ff0080, end_insert: None});
+				let esc = Box::new(SitExtent{len: 1, color: 0x01_ff0080, end_insert: None});
 				return Ok(WhatNow{tri: Transition::Push(esc), pre: i, len: 1, alt: None});
 			}
 			if a == b'\'' {
@@ -30,6 +30,6 @@ impl Situation for SitStrSqEsc {
 		Ok(flush(horizon.len()))
 	}
 	fn get_color(&self) -> u32{
-		0x00ff8000
+		0x00_ff8000
 	}
 }

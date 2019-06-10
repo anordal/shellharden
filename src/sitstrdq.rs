@@ -33,6 +33,6 @@ impl Situation for SitStrDq {
 		Ok(flush(horizon.len()))
 	}
 	fn get_color(&self) -> u32{
-		0x00ff0000
+		0x00_ff0000
 	}
 }

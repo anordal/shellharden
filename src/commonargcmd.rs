@@ -227,7 +227,7 @@ fn find_usual_suspects(
 	if a == b'\'' {
 		return Some(Ok(WhatNow{
 			tri: Transition::Push(Box::new(SitUntilByte{
-				until: b'\'', color: 0x00ffff00, end_replace: None
+				until: b'\'', color: 0x00_ffff00, end_replace: None
 			})),
 			pre: i, len: 1, alt: None
 		}));

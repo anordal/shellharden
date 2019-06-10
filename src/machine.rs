@@ -223,8 +223,8 @@ fn write_diff(
 	replaceable: &[u8],
 	replacement: &[u8],
 ) -> Result<(), std::io::Error> {
-	let color_a = 0x10800000;
-	let color_b = 0x10008000;
+	let color_a = 0x10_800000;
+	let color_b = 0x10_008000;
 	let remain_a = replaceable;
 	let mut remain_b = replacement;
 	for (i, &a) in remain_a.iter().enumerate() {
@@ -265,7 +265,7 @@ fn write_color(out :&mut FileOut, code :u32) -> Result<(), std::io::Error> {
 	let bold : &str = if (code >> 24) & 1 == 1 { ";1" } else { "" };
 	let ital : &str = if (code >> 25) & 1 == 1 { ";3" } else { "" };
 
-	if code & 0x00ffffff == 0 {
+	if code & 0x00_ffffff == 0 {
 		write!(out, "\x1b[0{}{}m", bold, ital)
 	} else {
 		let b = code & 0xff;

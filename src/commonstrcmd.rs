@@ -47,7 +47,7 @@ pub fn common_str_cmd(
 		});
 	}
 	if horizon[i] == b'\\' {
-		let esc = Box::new(SitExtent{len: 1, color: 0x01ff0080, end_insert: None});
+		let esc = Box::new(SitExtent{len: 1, color: 0x01_ff0080, end_insert: None});
 		return CommonStrCmdResult::Ok(WhatNow{
 			tri: Transition::Push(esc), pre: i, len: 1, alt: None
 		});

@@ -69,7 +69,7 @@ impl Situation for SitStrPhantom {
 		});
 	}
 	fn get_color(&self) -> u32{
-		0x00ff0000
+		0x00_ff0000
 	}
 }
 
