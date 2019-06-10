@@ -86,18 +86,15 @@ impl<'a> FileOut<'a> {
 	}
 	pub fn commit(&mut self, path: &std::ffi::OsString) -> Result<(), std::io::Error> {
 		if self.change {
-			match self.sink {
-				OutputSink::Soak(ref vec) => {
-					let mut overwrite = try!(
-						std::fs::OpenOptions::new()
-						.write(true)
-						.truncate(true)
-						.create(false)
-						.open(path)
-					);
-					try!(overwrite.write_all(vec));
-				},
-				_ => {},
+			if let OutputSink::Soak(ref vec) = self.sink {
+				let mut overwrite = try!(
+					std::fs::OpenOptions::new()
+					.write(true)
+					.truncate(true)
+					.create(false)
+					.open(path)
+				);
+				try!(overwrite.write_all(vec));
 			}
 		}
 		Ok(())

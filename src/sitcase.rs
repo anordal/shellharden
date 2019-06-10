@@ -34,14 +34,11 @@ impl Situation for SitIn {
 				return Ok(flush(i));
 			}
 			let word = &horizon[i..i+len];
-			match word {
-				b"in" => {
-					return Ok(WhatNow{
-						tri: Transition::Replace(Box::new(SitCase{})),
-						pre: i + len, len: 0, alt: None
-					});
-				},
-				_ => {}
+			if word == b"in" {
+				return Ok(WhatNow{
+					tri: Transition::Replace(Box::new(SitCase{})),
+					pre: i + len, len: 0, alt: None
+				});
 			}
 			if let Some(res) = common_no_cmd_quoting_unneeded(
 				0x100, horizon, i, is_horizon_lengthenable
@@ -78,13 +75,10 @@ impl Situation for SitCase {
 				return Ok(flush(i));
 			}
 			let word = &horizon[i..i+len];
-			match word {
-				b"esac" => {
-					return Ok(WhatNow{
-						tri: Transition::Pop, pre: i, len: 0, alt: None
-					});
-				},
-				_ => {}
+			if word == b"esac" {
+				return Ok(WhatNow{
+					tri: Transition::Pop, pre: i, len: 0, alt: None
+				});
 			}
 			if let Some(res) = common_no_cmd_quoting_unneeded(
 				0x100, horizon, i, is_horizon_lengthenable
