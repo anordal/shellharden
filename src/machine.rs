@@ -51,13 +51,13 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 		let mut fi: InputSource = if path.is_empty() {
 			InputSource::open_stdin(&stdin)
 		} else {
-			try!(InputSource::open_file(path).map_err(|e| Error::Stdio(e)))
+			try!(InputSource::open_file(path).map_err(Error::Stdio))
 		};
 
 		fo = if sett.osel == OutputSelector::CHECK {
 			FileOut::open_none()
 		} else if sett.replace && !path.is_empty() {
-			FileOut::open_soak(try!(fi.size().map_err(|e| Error::Stdio(e))) * 9 / 8)
+			FileOut::open_soak(try!(fi.size().map_err(Error::Stdio)) * 9 / 8)
 		} else {
 			FileOut::open_stdout(&stdout)
 		};
@@ -71,7 +71,7 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 		})};
 
 		loop {
-			let bytes = try!(fi.read(&mut buf[fill ..]).map_err(|e| Error::Stdio(e)));
+			let bytes = try!(fi.read(&mut buf[fill ..]).map_err(Error::Stdio));
 			fill += bytes;
 			let eof = bytes == 0;
 			let consumed = try!(stackmachine(&mut state, &mut fo, &buf[0 .. fill], eof, &sett));
@@ -98,7 +98,7 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 			}));
 		}
 	}
-	fo.commit(path).map_err(|e| Error::Stdio(e))
+	fo.commit(path).map_err(Error::Stdio)
 }
 
 fn stackmachine(
@@ -114,7 +114,7 @@ fn stackmachine(
 		let is_horizon_lengthenable = pos > 0 && !eof;
 		let whatnow :WhatNow = try!(state.last_mut().unwrap().as_mut().whatnow(
 			&horizon, is_horizon_lengthenable
-		).map_err(|e| Error::Syntax(e)));
+		).map_err(Error::Syntax));
 
 		if let Some(_) = whatnow.alt {
 			out.change = true;
@@ -123,7 +123,7 @@ fn stackmachine(
 			}
 		}
 
-		try!(out.write_all(&horizon[.. whatnow.pre]).map_err(|e| Error::Stdio(e)));
+		try!(out.write_all(&horizon[.. whatnow.pre]).map_err(Error::Stdio));
 		let replaceable = &horizon[whatnow.pre .. whatnow.pre + whatnow.len];
 		let progress = whatnow.pre + whatnow.len;
 
@@ -147,7 +147,7 @@ fn stackmachine(
 				try!(write_transition(
 					out, sett, replaceable, whatnow.alt,
 					color_pre, color_final, color_final,
-				).map_err(|e| Error::Stdio(e)));
+				).map_err(Error::Stdio));
 				state[ix] = newstate;
 			}
 			(Transition::Push(newstate), _) => {
@@ -164,7 +164,7 @@ fn stackmachine(
 				try!(write_transition(
 					out, sett, replaceable, whatnow.alt,
 					color_pre, color_final, color_final,
-				).map_err(|e| Error::Stdio(e)));
+				).map_err(Error::Stdio));
 			}
 			(Transition::Pop, _) | (Transition::FlushPopOnEof, true) => {
 				let color_pre;
@@ -180,7 +180,7 @@ fn stackmachine(
 				try!(write_transition(
 					out, sett, replaceable, whatnow.alt,
 					color_pre, color_pre, color_final,
-				).map_err(|e| Error::Stdio(e)));
+				).map_err(Error::Stdio));
 			}
 		}
 		pos += progress;
