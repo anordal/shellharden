@@ -201,12 +201,10 @@ fn if_needed<T>(needed: bool, val: T) -> Option<T> {
 fn pos_tailhazard(horizon: &[u8], end: u8) -> (usize, usize) {
 	let idlen = identifierlen(&horizon);
 	let mut pos = idlen;
-	if idlen < horizon.len() {
-		if horizon[pos] == end {
-			pos += 1;
-			if pos < horizon.len() {
-				pos += predlen(&|x| x == b'\"', &horizon[pos ..]);
-			}
+	if pos < horizon.len() && horizon[pos] == end {
+		pos += 1;
+		if pos < horizon.len() {
+			pos += predlen(&|x| x == b'\"', &horizon[pos ..]);
 		}
 	}
 	(idlen, pos)
