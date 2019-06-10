@@ -130,14 +130,14 @@ fn main() {
 		if let Err(e) = machine::treatfile(&arg, &sett) {
 			println!("\x1b[m");
 			exit_code = 1;
-			match &e {
-				&machine::Error::Stdio(ref fail) => {
+			match e {
+				machine::Error::Stdio(ref fail) => {
 					errfmt::blame_path_io(&arg, &fail);
 				},
-				&machine::Error::Syntax(ref fail) => {
+				machine::Error::Syntax(ref fail) => {
 					errfmt::blame_syntax(&arg, &fail);
 				},
-				&machine::Error::Check => {
+				machine::Error::Check => {
 					exit_code = 2;
 					break;
 				},

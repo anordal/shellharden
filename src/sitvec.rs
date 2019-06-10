@@ -26,7 +26,7 @@ impl Situation for SitVec {
 				Ok(flush(horizon.len()))
 			}
 		}
-		else if &horizon[0 .. self.terminator.len()] == &self.terminator[..] {
+		else if horizon[0 .. self.terminator.len()] == self.terminator[..] {
 			Ok(WhatNow{tri: Transition::Pop, pre: 0, len: self.terminator.len(), alt: None})
 		} else {
 			Ok(flush(1))

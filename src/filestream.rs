@@ -23,15 +23,15 @@ impl<'a> InputSource<'a> {
 		InputSource::Stdin(stdin.lock())
 	}
 	pub fn read(&mut self, mut buf: &mut [u8]) -> Result<usize, std::io::Error> {
-		match self {
-			&mut InputSource::Stdin(ref mut fh) => fh.read(&mut buf),
-			&mut InputSource::File (ref mut fh) => fh.read(&mut buf),
+		match *self {
+			InputSource::Stdin(ref mut fh) => fh.read(&mut buf),
+			InputSource::File (ref mut fh) => fh.read(&mut buf),
 		}
 	}
 	pub fn size(&mut self) -> Result<u64, std::io::Error> {
-		match self {
-			&mut InputSource::Stdin(_) => panic!("filesize of stdin"),
-			&mut InputSource::File (ref mut fh) => {
+		match *self {
+			InputSource::Stdin(_) => panic!("filesize of stdin"),
+			InputSource::File (ref mut fh) => {
 				let off :u64 = try!(fh.seek(std::io::SeekFrom::End(0)));
 				try!(fh.seek(std::io::SeekFrom::Start(0)));
 				Ok(off)
@@ -62,10 +62,10 @@ impl<'a> FileOut<'a> {
 		FileOut{sink: OutputSink::None, change: false}
 	}
 	pub fn write_all(&mut self, buf: &[u8]) -> Result<(), std::io::Error> {
-		match &mut self.sink {
-			&mut OutputSink::Stdout(ref mut fh) => try!(fh.write_all(&buf)),
-			&mut OutputSink::Soak(ref mut vec) => vec.extend_from_slice(buf),
-			&mut OutputSink::None => {},
+		match self.sink {
+			OutputSink::Stdout(ref mut fh) => try!(fh.write_all(&buf)),
+			OutputSink::Soak(ref mut vec) => vec.extend_from_slice(buf),
+			OutputSink::None => {},
 		}
 		Ok(())
 	}
@@ -86,8 +86,8 @@ impl<'a> FileOut<'a> {
 	}
 	pub fn commit(&mut self, path: &std::ffi::OsString) -> Result<(), std::io::Error> {
 		if self.change {
-			match &self.sink {
-				&OutputSink::Soak(ref vec) => {
+			match self.sink {
+				OutputSink::Soak(ref vec) => {
 					let mut overwrite = try!(
 						std::fs::OpenOptions::new()
 						.write(true)

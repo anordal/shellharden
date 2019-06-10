@@ -45,15 +45,15 @@ impl Situation for SitStrPhantom {
 						CommonStrCmdResult::Err(e) => { return Err(e); },
 						CommonStrCmdResult::Ok(consult) |
 						CommonStrCmdResult::OnlyWithQuotes(consult) => {
-							match &consult.tri {
-								&Transition::Flush | &Transition::FlushPopOnEof => {
+							match consult.tri {
+								Transition::Flush | Transition::FlushPopOnEof => {
 									return Ok(WhatNow{
 										tri: Transition::FlushPopOnEof,
 										pre: 0, len: 0, alt: Some(b"\"")
 									});
 								}
-								&Transition::Pop | &Transition::Replace(_) => {}
-								&Transition::Push(_) => {
+								Transition::Pop | Transition::Replace(_) => {}
+								Transition::Push(_) => {
 									return Ok(consult);
 								}
 							}
