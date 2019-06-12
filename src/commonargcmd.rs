@@ -45,7 +45,7 @@ pub fn keyword_or_command(
 	if horizon[i] == b'(' {
 		return WhatNow{
 			tri: Transition::Push(Box::new(SitNormal{
-				end_trigger: b')' as u16, end_replace: None
+				end_trigger: u16::from(b')'), end_replace: None
 			})), pre: i, len: 1, alt: None
 		};
 	}
@@ -174,7 +174,7 @@ pub fn common_no_cmd_quoting_unneeded(
 			if horizon[i] == b'`' {
 				return Some(Ok(WhatNow{
 					tri: Transition::Push(Box::new(SitNormal{
-						end_trigger: b'`' as u16, end_replace: None
+						end_trigger: u16::from(b'`'), end_replace: None
 					})), pre: i, len: 1, alt: None
 				}))
 			}
@@ -213,7 +213,7 @@ fn find_usual_suspects(
 	is_horizon_lengthenable :bool,
 ) -> Option<ParseResult> {
 	let a = horizon[i];
-	if a as u16 == end_trigger {
+	if u16::from(a) == end_trigger {
 		return Some(Ok(WhatNow{
 			tri: Transition::Pop, pre: i, len: 0, alt: None
 		}));

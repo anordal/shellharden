@@ -31,7 +31,7 @@ impl Situation for SitNormal {
 			if is_whitespace(a) || a == b';' || a == b'|' || a == b'&' || a == b'<' || a == b'>' {
 				continue;
 			}
-			if a as u16 == self.end_trigger {
+			if u16::from(a) == self.end_trigger {
 				return Ok(WhatNow{
 					tri: Transition::Pop, pre: i, len: 1,
 					alt: self.end_replace

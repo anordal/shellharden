@@ -51,7 +51,7 @@ struct SitArray {}
 impl Situation for SitArray {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
 		for (i, _) in horizon.iter().enumerate() {
-			if let Some(res) = common_no_cmd(b')' as u16, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_no_cmd(u16::from(b')'), horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 		}

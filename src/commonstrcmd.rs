@@ -40,7 +40,7 @@ pub fn common_str_cmd(
 ) -> CommonStrCmdResult {
 	if horizon[i] == b'`' {
 		let cmd = Box::new(SitNormal{
-			end_trigger: b'`' as u16, end_replace: Some(b")"),
+			end_trigger: u16::from(b'`'), end_replace: Some(b")"),
 		});
 		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
 			tri: Transition::Push(cmd), pre: i, len: 1, alt: Some(b"$(")
@@ -99,7 +99,7 @@ pub fn common_str_cmd(
 		}
 
 		let sit = Box::new(SitNormal{
-			end_trigger: b')' as u16, end_replace: None,
+			end_trigger: u16::from(b')'), end_replace: None,
 		});
 		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
 			tri: Transition::Push(sit),

@@ -31,7 +31,7 @@ impl Situation for SitStrPhantom {
 			if is_horizon_lengthenable {
 				return Ok(flush(0));
 			}
-		} else if horizon[mouthful] as u16 != self.cmd_end_trigger {
+		} else if u16::from(horizon[mouthful]) != self.cmd_end_trigger {
 			match horizon[mouthful] {
 				b'\"' => {
 					return Ok(WhatNow{
