@@ -116,7 +116,7 @@ fn stackmachine(
 			&horizon, is_horizon_lengthenable
 		).map_err(Error::Syntax));
 
-		if let Some(_) = whatnow.alt {
+		if whatnow.alt.is_some() {
 			out.change = true;
 			if sett.osel == OutputSelector::CHECK {
 				break;

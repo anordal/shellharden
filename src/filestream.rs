@@ -75,7 +75,7 @@ impl<'a> FileOut<'a> {
 			OutputSink::Soak(ref mut buf) => {
 				// TODO: Format directly to vec<u8>
 				let mut s = String::new();
-				if let Err(_) = s.write_fmt(args) {
+				if s.write_fmt(args).is_err() {
 					panic!("fmt::Error");
 				}
 				buf.extend_from_slice(s.as_bytes());
