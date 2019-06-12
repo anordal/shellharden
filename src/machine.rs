@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 - 2018 Andreas Nordal
+ * Copyright 2016 - 2019 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -262,31 +262,17 @@ fn write_color(out :&mut FileOut, code :u32) -> Result<(), std::io::Error> {
 	if code == COLOR_NORMAL {
 		return out.write_all(b"\x1b[m");
 	}
-	let mut buf = [0; 4];
-	let mut fill = 0;
-	if (code >> 24) & 1 == 1 {
-		buf[fill] = b';';
-		fill += 1;
-		buf[fill] = b'1';
-		fill += 1;
-	}
-	if (code >> 25) & 1 == 1 {
-		buf[fill] = b';';
-		fill += 1;
-		buf[fill] = b'3';
-		fill += 1;
-	}
-	let bufstr :&str = match std::str::from_utf8(&buf[0 .. fill]) {
-		Ok(ok) => ok,
-		Err(_) => panic!(),
-	};
+
+	let bold : &str = if (code >> 24) & 1 == 1 { ";1" } else { "" };
+	let ital : &str = if (code >> 25) & 1 == 1 { ";3" } else { "" };
+
 	if code & 0x00ffffff == 0 {
-		write!(out, "\x1b[0{}m", bufstr)
+		write!(out, "\x1b[0{}{}m", bold, ital)
 	} else {
 		let b = code & 0xff;
 		let g = (code >> 8) & 0xff;
 		let r = (code >> 16) & 0xff;
 		let bg = (code >> 28) & 0xf;
-		write!(out, "\x1b[0{};{}8;2;{};{};{}m", bufstr, bg+3, r, g, b)
+		write!(out, "\x1b[0{}{};{}8;2;{};{};{}m", bold, ital, bg+3, r, g, b)
 	}
 }
