@@ -86,7 +86,7 @@ pub fn common_str_cmd(
 				pre: i, len: 6,
 				alt: Some(replacement)
 			});
-		} else if cand.len() >= 1 && cand[0] == b'(' {
+		} else if !cand.is_empty() && cand[0] == b'(' {
 			let sit = Box::new(SitVec{
 				terminator: vec!{b')', b')'},
 				color: COLOR_MAGIC,

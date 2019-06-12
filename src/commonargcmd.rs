@@ -269,7 +269,7 @@ fn find_usual_suspects(
 		if i > 0 || is_horizon_lengthenable {
 			return Some(Ok(flush(i)));
 		}
-	} else if delimiter.len() > 0 {
+	} else if !delimiter.is_empty() {
 		return Some(Ok(WhatNow{
 			tri: Transition::Push(Box::new(
 				SitVec{terminator: delimiter, color: COLOR_HERE}

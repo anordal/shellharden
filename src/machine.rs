@@ -247,7 +247,7 @@ fn write_colored_slice(
 	color: u32,
 	slice: &[u8],
 ) -> Result<(), std::io::Error> {
-	if slice.len() == 0 {
+	if slice.is_empty() {
 		return Ok(());
 	}
 	if *color_cur != color {

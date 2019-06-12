@@ -36,7 +36,7 @@ pub fn is_identifiertail(c: u8) -> bool {
 }
 
 pub fn identifierlen(horizon: &[u8]) -> usize {
-	if horizon.len() > 0 && is_identifierhead(horizon[0]) {
+	if !horizon.is_empty() && is_identifierhead(horizon[0]) {
 		1 + predlen(&is_identifiertail, &horizon[1 ..])
 	} else {
 		0
