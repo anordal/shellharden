@@ -18,12 +18,12 @@ pub struct SitStrSqEsc {}
 
 impl Situation for SitStrSqEsc {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> ParseResult {
-		for i in 0 .. horizon.len() {
-			if horizon[i] == b'\\' {
+		for (i, &a) in horizon.iter().enumerate() {
+			if a == b'\\' {
 				let esc = Box::new(SitExtent{len: 1, color: 0x01ff0080, end_insert: None});
 				return Ok(WhatNow{tri: Transition::Push(esc), pre: i, len: 1, alt: None});
 			}
-			if horizon[i] == b'\'' {
+			if a == b'\'' {
 				return Ok(WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None});
 			}
 		}

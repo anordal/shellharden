@@ -19,8 +19,8 @@ pub struct SitStrDq {}
 
 impl Situation for SitStrDq {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
-		for i in 0 .. horizon.len() {
-			if horizon[i] == b'\"' {
+		for (i, &a) in horizon.iter().enumerate() {
+			if a == b'\"' {
 				return Ok(WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None});
 			}
 			match common_str_cmd(&horizon, i, is_horizon_lengthenable, false) {

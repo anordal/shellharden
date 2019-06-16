@@ -23,8 +23,7 @@ pub struct SitRvalue {
 
 impl Situation for SitRvalue {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
-		for i in 0 .. horizon.len() {
-			let a = horizon[i];
+		for (i, &a) in horizon.iter().enumerate() {
 			if a == b' ' || a == b'\t' {
 				return Ok(WhatNow{
 					tri: Transition::Pop, pre: i, len: 1, alt: None
@@ -51,7 +50,7 @@ struct SitArray {}
 
 impl Situation for SitArray {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
-		for i in 0 .. horizon.len() {
+		for (i, _) in horizon.iter().enumerate() {
 			if let Some(res) = common_no_cmd(b')' as u16, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}

@@ -27,8 +27,7 @@ pub struct SitNormal {
 
 impl Situation for SitNormal {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
-		for i in 0 .. horizon.len() {
-			let a = horizon[i];
+		for (i, &a) in horizon.iter().enumerate() {
 			if is_whitespace(a) || a == b';' || a == b'|' || a == b'&' || a == b'<' || a == b'>' {
 				continue;
 			}
@@ -55,15 +54,14 @@ pub struct SitCmd {
 
 impl Situation for SitCmd {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
-		for i in 0 .. horizon.len() {
-			let a = horizon[i];
+		for (i, &a) in horizon.iter().enumerate() {
 			if a == b' ' || a == b'\t' {
 				return Ok(WhatNow{
 					tri: Transition::Replace(Box::new(SitArg{end_trigger: self.end_trigger})),
 					pre: i, len: 1, alt: None
 				});
 			}
-			if horizon[i] == b'(' {
+			if a == b'(' {
 				return Ok(WhatNow{
 					tri: Transition::Pop, pre: i, len: 0, alt: None
 				});
@@ -85,7 +83,7 @@ struct SitArg {
 
 impl Situation for SitArg {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
-		for i in 0 .. horizon.len() {
+		for (i, _) in horizon.iter().enumerate() {
 			if let Some(res) = common_arg_cmd(self.end_trigger, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}

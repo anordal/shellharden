@@ -18,8 +18,7 @@ pub struct SitComment {}
 
 impl Situation for SitComment {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> ParseResult {
-		for i in 0 .. horizon.len() {
-			let a = horizon[i];
+		for (i, &a) in horizon.iter().enumerate() {
 			if a == b'\n' {
 				return Ok(WhatNow{
 					tri: Transition::Pop, pre: i, len: 0, alt: None

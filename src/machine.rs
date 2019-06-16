@@ -227,9 +227,8 @@ fn write_diff(
 	let color_b = 0x10008000;
 	let remain_a = replaceable;
 	let mut remain_b = replacement;
-	for i in 0 .. remain_a.len() {
+	for (i, &a) in remain_a.iter().enumerate() {
 		let color_next;
-		let a: u8 = remain_a[i];
 		if let Some(pivot_b) = remain_b.iter().position(|&b| b == a) {
 			color_next = color_neutral;
 			try!(write_colored_slice(out, &mut color_cur, color_b, &remain_b[0 .. pivot_b]));

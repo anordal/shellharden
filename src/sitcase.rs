@@ -25,7 +25,7 @@ pub struct SitIn {}
 
 impl Situation for SitIn {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
-		for i in 0 .. horizon.len() {
+		for (i, _) in horizon.iter().enumerate() {
 			let len = predlen(&is_word, &horizon[i..]);
 			if len == 0 {
 				continue;
@@ -63,10 +63,10 @@ struct SitCase {}
 
 impl Situation for SitCase {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
-		for i in 0 .. horizon.len() {
+		for (i, &a) in horizon.iter().enumerate() {
 			let len = predlen(&is_word, &horizon[i..]);
 			if len == 0 {
-				if horizon[i] == b')' {
+				if a == b')' {
 					return Ok(WhatNow{
 						tri: Transition::Push(Box::new(SitCaseArm{})),
 						pre: i, len: 1, alt: None
@@ -106,8 +106,7 @@ struct SitCaseArm {}
 
 impl Situation for SitCaseArm {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
-		for i in 0 .. horizon.len() {
-			let a = horizon[i];
+		for (i, &a) in horizon.iter().enumerate() {
 			if a == b';' {
 				if i + 1 < horizon.len() {
 					if horizon[i + 1] == b';' {
