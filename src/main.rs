@@ -67,7 +67,7 @@ fn main() {
 
 	let mut exit_code: i32 = 0;
 	let mut opt_trigger: &str = "-";
-	while let Some(arg) = args.next() {
+	for arg in args {
 		if let Some(comparable) = arg.to_str() {
 			if comparable.starts_with(opt_trigger) {
 				match comparable {
