@@ -257,6 +257,7 @@ fn write_colored_slice(
 	out.write_all(slice)
 }
 
+#[allow(clippy::verbose_bit_mask)]
 fn write_color(out :&mut FileOut, code :u32) -> Result<(), std::io::Error> {
 	if code == COLOR_NORMAL {
 		return out.write_all(b"\x1b[m");
