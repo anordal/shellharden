@@ -236,7 +236,7 @@ fn write_diff(
 		} else {
 			color_next = color_a;
 		}
-		try!(write_colored_slice(out, &mut color_cur, color_next, &remain_a[i .. i+1]));
+		try!(write_colored_slice(out, &mut color_cur, color_next, &remain_a[i ..= i]));
 	}
 	write_colored_slice(out, &mut color_cur, color_b, &remain_b)
 }
