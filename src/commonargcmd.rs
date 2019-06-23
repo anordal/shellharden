@@ -59,7 +59,7 @@ pub fn keyword_or_command(
 		}
 		if horizon[i + len] == b'=' {
 			return WhatNow{
-				tri: Transition::Push(Box::new(SitRvalue{end_trigger: end_trigger})),
+				tri: Transition::Push(Box::new(SitRvalue{end_trigger})),
 				pre: i + len + 1, len: 0, alt: None
 			};
 		}
@@ -74,11 +74,11 @@ pub fn keyword_or_command(
 			tri: Transition::Push(Box::new(
 				SitVec{terminator: vec!{b']', b']'}, color: COLOR_MAGIC}
 			)),
-			pre: i, len: len, alt: None
+			pre: i, len, alt: None
 		},
 		b"case" => WhatNow{
 			tri: Transition::Push(Box::new(SitIn{})),
-			pre: i, len: len, alt: None
+			pre: i, len, alt: None
 		},
 		b"do" |
 		b"done" |
@@ -95,13 +95,13 @@ pub fn keyword_or_command(
 		b"{" |
 		b"}" => WhatNow{
 			tri: Transition::Push(Box::new(SitExtent{
-				len: len,
+				len,
 				color: COLOR_KWD,
 				end_insert: None
 			})), pre: i, len: 0, alt: None
 		},
 		_ => WhatNow{
-			tri: Transition::Push(Box::new(SitCmd{end_trigger: end_trigger})),
+			tri: Transition::Push(Box::new(SitCmd{end_trigger})),
 			pre: i, len: 0, alt: None
 		},
 	}
