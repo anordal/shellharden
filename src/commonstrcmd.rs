@@ -115,7 +115,7 @@ pub fn common_str_cmd(
 			tri: Transition::Push(ext),
 			pre: i, len: 0, alt: None
 		});
-	} else if predlen(&|c|{c >= b'0' && c <= b'9'}, &horizon[i+1 ..]) > 1 {
+	} else if predlen(&is_decimal, &horizon[i+1 ..]) > 1 {
 		return CommonStrCmdResult::Err(UnsupportedSyntax {
 			typ: "Unsupported syntax: Syntactic pitfall",
 			ctx: horizon.to_owned(),
@@ -208,4 +208,8 @@ fn pos_tailhazard(horizon: &[u8], end: u8) -> (usize, usize) {
 		}
 	}
 	(idlen, pos)
+}
+
+fn is_decimal(byte: u8) -> bool {
+	byte >= b'0' && byte <= b'9'
 }
