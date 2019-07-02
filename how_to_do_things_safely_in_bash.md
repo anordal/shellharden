@@ -21,28 +21,35 @@ Why focus on bash?
 This guide is here to show that bash *can* be used safely.
 
 It is the goal and realization of this methodology that
-all bash scripts, without exception, are possible to rewrite into wellformedness,
-thus eliminating those systematic bugs that the language encourages.
+all bash scripts are possible to rewrite into wellformedness,
+a representation free of those idiomatic bugs that the language otherwise practically imposes.
+This is because the set of bad language features is finite, and each has a substitute.
 
-The price is having to accept that Bash is simply *not* a language where
-[the correct way to do something is also the easiest](http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/) – a damning impossibility for the general community, it is argued, but doesn't rule out a determined elite.
+Unfortunately, [it is hard to defend the correct way of doing something when it isn't also the seemingly simplest](http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/).
+With this in mind, the python manifesto (`python3 -c 'import this'`),
+which says that there should only be one obvious way to do things, and that "explicit is better than implicit",
+makes a lot of sense.
+While that says something about the impossibility of convincing the vast number of users to adopt a safe methodology,
+it is nevertheless possible for those who care.
 
-So be it, because other prevalent alternatives are not better:
+Clearly, bash is a bad choice, but other prevalent alternatives are not better:
 
-* In POSIX shell (a language subset that many shells support), it can not be done. → Disqualified.
+* POSIX shell (a language subset that many shells support) lacks arrays. → Disqualified.
+    * Hereunder: dash, busybox ash
 * Fish is a relief – easy to use correctly, but (still) lacks a strict mode. → Disqualified.
 * Zsh is largely compatible with Bash. → Also qualifies.
 
-What about non-shellscript languages?
+### What about non-shellscript languages?
 
-That is the wrong question: This is not a defense of shellscripting.
+That is in principle the wrong question. Always use the right tool for the job™.
+Shellscript languages are languages for running programs, and for using that as a building block.
+That is a domain of its own.
+
+This is by no means a defense of shellscripting.
 Shellscripts keep getting written, and this is how to do it safely.
-There are valid reasons for writing something in shellscript, and in particular, there is one invalid reason not to.
-It all comes down to whether your program fundamentally needs to run other programs –
-shellscript languages are languages for running programs.
-
-1. The invalid reason: So you want to remove yourself from shellscripting, but are still (implicitly) invoking the shell anyway – does that count as removing yourself from shellscripting? No: You still have a shellscript on your hands, everything in this document still applies, and the chapter [how to avoid invoking the shell with improper quoting](#how-to-avoid-invoking-the-shell-with-improper-quoting) is especially for you.
-2. The attractiveness of shellscripting is that it offers the concisest way to programmatically run other programs – supposedly, they would be the right tool for that job. Well, you be the judge.
+However, there is one greater sin than writing something that is obviously a shellscript.
+When you know you have a shellscript, you know what to worry about, you can bring in the right expertise, and you have the full arsenal of shell linters.
+Not so much if [implicitly invoking the shell with improper quoting](#how-to-avoid-invoking-the-shell-with-improper-quoting).
 
 The first thing to know about bash coding
 -----------------------------------------
