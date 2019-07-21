@@ -552,10 +552,10 @@ Good:
     printf '%s\n' "${array[*]}"
 
 At this point, it gets tempting to redefine `echo` to something sane,
-but since this is probably not a good idea for the sanity of your peers – likely to get rage-deleted in the next refactoring,
-the right thing to do may be to call it something else, if anything, and leave `echo` forever broken:
+except that overloading existing functionality is generally not a robust and reassuring practice – it breaks unnoticeably.
+For verifiability's sake, better leave `echo` forever broken, and call yours something else:
 
-    ekko() {
+    println() {
         printf '%s\n' "$*"
     }
 
