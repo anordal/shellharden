@@ -137,7 +137,7 @@ Since braces are required above 9, Shellharden permits them on all numbered argu
 Use arrays FTW
 --------------
 
-In order to be able to quote all variables, you must use real arrays when that's what you need, not whitespace separated pseudo-array strings.
+In order to be able to quote all variables, you must use real arrays when that's what you need, not whitespace delimited strings.
 
 The syntax is verbose, but get over it. This bashism single-handedly disqualifies the POSIX shell for the purpose of this guide.
 
@@ -173,23 +173,29 @@ Bad:
         rm -- $duplicates
     fi
 
-As the example illustrates, your typical script will still look like itself whether you use proper arrays or pseudo-array strings.
-As a bonus, array entries are actually possible to comment.
-However, the two versions are not equivalent, as the latter breaks down as soon as a filename contains whitespace.
+Look how similar the two examples are: There is no algorithmical difference between using real arrays instead of strings as a (bad) substitute.
+A bonus point goes to the array syntax for not needing line continuations, making those lines possible to comment.
+They are not equivalent, of course, as the "bad" example uses a whitespace delimited string,
+which breaks down as soon as a filename contains whitespace, and risks deleting the wrong files.
+
+Is the second example fixable? In theory, yes; in practice, no.
 While it is *possible* to represent a list in a string,
 even approachable if a suitable delimiter is known,
-it is inhumanely impractical to do correctly in a general way (with escaping and unescaping the delimiter),
-and be expected to consistently repeat this excersise for every list.
+it becomes hairy (escaping and unescaping the delimiter) to do 100% generically correct.
+Worse, getting it back into array form can not be abstracted away (try `set -- a b c` in a function).
+The final blow is that fighting such an abstraction failure of the language is pointless if you can choose a different language.
 
-Here is why arrays are such a basic feature for a shell: [Command arguments are fundamentally arrays](http://manpag.es/RHEL6/3p+exec)
-(and shell scripting is all about commands and arguments).
-Arrays arise naturally all the time in shellscripting.
+Arrays is the feature that becomes absurdly impractical to program correctly without. Here is why:
+* You need *some* datastructure, that can take zero or more values, for passing zero or more values around cleanly.
+* In particular, [command arguments are fundamentally arrays](http://manpag.es/RHEL6/3p+exec). Hint: Shell scripting is all about commands and arguments.
+* All POSIX shells secretly support arrays anyway, in the form of the argument list `"$@"`.
 
-It follows that lack of arrays is a blatant feature omission of the POSIX shell standard, and that minimalistic POSIX compatible shells like [Dash](https://wiki.ubuntu.com/DashAsBinSh#A.24.7B....7D) and Ash are not worth pursuing for our purposes.
-You could say that a shell that makes it artificially impossible to pass multiple arguments around cleanly is comically unfit for purpose.
+The recommendation of this guide must therefore be to not give POSIX compatibility a second thought.
+The POSIX shell standard is hereby declared unfit for our purposes.
+Likewise, sadly, for minimalistic POSIX compatible shells like [Dash](https://wiki.ubuntu.com/DashAsBinSh#A.24.7B....7D) and Ash that don't support arrays either.
 As for Zsh, it supports a superset of Bash's array syntax, so it is good.
 
-Awareness needs to be raised that Ash, specifically, is holding us back in the seventies on this front, because as the Busybox shell, it gets used on embedded computers where Bash may not be available.
+The lack of a minimalistic shell with array support is a bummer for embedded computuers, where shipping another language is cost sensitive, yet expectations for safety are high. Busybox is impressive for what you get in a small size, but as part of it, you get Ash, which is a hair puller.
 
 ### Those exceptional cases where you actually intend to split the string
 
