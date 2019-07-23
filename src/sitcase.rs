@@ -134,3 +134,89 @@ impl Situation for SitCaseArm {
 		COLOR_NORMAL
 	}
 }
+
+#[cfg(test)]
+use ::testhelpers::*;
+#[cfg(test)]
+use ::sitcmd::SitCmd;
+
+#[test]
+fn test_sit_in() {
+	sit_expect!(SitIn{}, b"", &Ok(flush(0)));
+	sit_expect!(SitIn{}, b" ", &Ok(flush(1)));
+	sit_expect!(SitIn{}, b"i", &Ok(flush(0)), &Ok(flush(1)));
+	let found_the_in_word = Ok(WhatNow{
+		tri: Transition::Replace(Box::new(SitCase{})),
+		pre: 2, len: 0, alt: None
+	});
+	sit_expect!(SitIn{}, b"in ", &found_the_in_word);
+	sit_expect!(SitIn{}, b"in", &Ok(flush(0)), &found_the_in_word);
+	sit_expect!(SitIn{}, b"inn", &Ok(flush(0)), &Ok(flush(3)));
+
+	// BUG
+	let bogus = Ok(WhatNow{
+		tri: Transition::Replace(Box::new(SitCase{})),
+		pre: 3, len: 0, alt: None
+	});
+	//sit_expect!(SitIn{}, b" in", &Ok(flush(1)));
+	sit_expect!(SitIn{}, b" in", &Ok(flush(1)), &bogus);
+	//sit_expect!(SitIn{}, b"fin", &Ok(flush(0)), &Ok(flush(3)));
+	sit_expect!(SitIn{}, b"fin", &Ok(flush(0)), &bogus);
+}
+
+#[test]
+fn test_sit_case() {
+	sit_expect!(SitCase{}, b"", &Ok(flush(0)));
+	sit_expect!(SitCase{}, b" ", &Ok(flush(1)));
+	sit_expect!(SitCase{}, b"esa", &Ok(flush(0)), &Ok(flush(3)));
+	let found_the_esac_word = Ok(WhatNow{
+		tri: Transition::Pop,
+		pre: 0, len: 0, alt: None
+	});
+	sit_expect!(SitCase{}, b"esac ", &found_the_esac_word);
+	sit_expect!(SitCase{}, b"esac", &Ok(flush(0)), &found_the_esac_word);
+	sit_expect!(SitCase{}, b"esacs", &Ok(flush(0)), &Ok(flush(5)));
+
+	// BUG
+	let bogus = Ok(WhatNow{
+		tri: Transition::Pop,
+		pre: 1, len: 0, alt: None
+	});
+	//sit_expect!(SitCase{}, b" esac", &Ok(flush(1)));
+	sit_expect!(SitCase{}, b" esac", &Ok(flush(1)), &bogus);
+	//sit_expect!(SitCase{}, b"besac", &Ok(flush(0)), &Ok(flush(5)));
+	sit_expect!(SitCase{}, b"besac", &Ok(flush(0)), &bogus);
+}
+
+#[test]
+fn test_sit_casearm() {
+	sit_expect!(SitCaseArm{}, b"", &Ok(flush(0)));
+	sit_expect!(SitCaseArm{}, b" ", &Ok(flush(1)));
+	let found_command = Ok(WhatNow{
+		tri: Transition::Push(Box::new(SitCmd{end_trigger: 0x100})),
+		pre: 0, len: 0, alt: None
+	});
+	sit_expect!(SitCaseArm{}, b"esa", &Ok(flush(0)), &found_command);
+	let found_the_esac_word = Ok(WhatNow{
+		tri: Transition::Pop,
+		pre: 0, len: 0, alt: Some(b";; ")
+	});
+	sit_expect!(SitCaseArm{}, b"esac ", &found_the_esac_word);
+	sit_expect!(SitCaseArm{}, b"besac", &Ok(flush(0)), &found_command);
+
+	// BUG
+	//sit_expect!(SitCaseArm{}, b"esac", &Ok(flush(0)), &found_the_esac_word);
+	sit_expect!(SitCaseArm{}, b"esac", &found_the_esac_word);
+	let bogus = Ok(WhatNow{
+		tri: Transition::Pop,
+		pre: 1, len: 0, alt: Some(b";; ")
+	});
+	//sit_expect!(SitCaseArm{}, b" esac", &Ok(flush(1)));
+	sit_expect!(SitCaseArm{}, b" esac", &bogus);
+	let bogus2 = Ok(WhatNow{
+		tri: Transition::Pop,
+		pre: 0, len: 0, alt: Some(b";; ")
+	});
+	//sit_expect!(SitCaseArm{}, b"esacs", &Ok(flush(0)), &found_command);
+	sit_expect!(SitCaseArm{}, b"esacs", &bogus2);
+}

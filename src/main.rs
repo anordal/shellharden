@@ -149,6 +149,10 @@ fn main() {
 
 //------------------------------------------------------------------------------
 
+#[cfg(test)]
+#[macro_use]
+mod testhelpers;
+
 mod commonargcmd;
 mod commonstrcmd;
 mod microparsers;
