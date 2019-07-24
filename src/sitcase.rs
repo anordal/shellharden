@@ -31,7 +31,7 @@ impl Situation for SitIn {
 			if len == 0 {
 				continue;
 			}
-			if i + len == horizon.len() && is_horizon_lengthenable {
+			if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
 				return Ok(flush(i));
 			}
 			let word = &horizon[i..i+len];
@@ -48,6 +48,9 @@ impl Situation for SitIn {
 				0x100, horizon, i, is_horizon_lengthenable
 			) {
 				return res;
+			}
+			if i + len == horizon.len() {
+				break;
 			}
 		}
 		Ok(flush(horizon.len()))
@@ -72,7 +75,7 @@ impl Situation for SitCase {
 				}
 				continue;
 			}
-			if i + len == horizon.len() && is_horizon_lengthenable {
+			if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
 				return Ok(flush(i));
 			}
 			let word = &horizon[i..i+len];
@@ -88,6 +91,9 @@ impl Situation for SitCase {
 				0x100, horizon, i, is_horizon_lengthenable
 			) {
 				return res;
+			}
+			if i + len == horizon.len() {
+				break;
 			}
 		}
 		Ok(flush(horizon.len()))
@@ -152,16 +158,8 @@ fn test_sit_in() {
 	sit_expect!(SitIn{}, b"in ", &found_the_in_word);
 	sit_expect!(SitIn{}, b"in", &Ok(flush(0)), &found_the_in_word);
 	sit_expect!(SitIn{}, b"inn", &Ok(flush(0)), &Ok(flush(3)));
-
-	// BUG
-	let bogus = Ok(WhatNow{
-		tri: Transition::Replace(Box::new(SitCase{})),
-		pre: 3, len: 0, alt: None
-	});
-	//sit_expect!(SitIn{}, b" in", &Ok(flush(1)));
-	sit_expect!(SitIn{}, b" in", &Ok(flush(1)), &bogus);
-	//sit_expect!(SitIn{}, b"fin", &Ok(flush(0)), &Ok(flush(3)));
-	sit_expect!(SitIn{}, b"fin", &Ok(flush(0)), &bogus);
+	sit_expect!(SitIn{}, b" in", &Ok(flush(1)));
+	sit_expect!(SitIn{}, b"fin", &Ok(flush(0)), &Ok(flush(3)));
 }
 
 #[test]
@@ -176,16 +174,8 @@ fn test_sit_case() {
 	sit_expect!(SitCase{}, b"esac ", &found_the_esac_word);
 	sit_expect!(SitCase{}, b"esac", &Ok(flush(0)), &found_the_esac_word);
 	sit_expect!(SitCase{}, b"esacs", &Ok(flush(0)), &Ok(flush(5)));
-
-	// BUG
-	let bogus = Ok(WhatNow{
-		tri: Transition::Pop,
-		pre: 1, len: 0, alt: None
-	});
-	//sit_expect!(SitCase{}, b" esac", &Ok(flush(1)));
-	sit_expect!(SitCase{}, b" esac", &Ok(flush(1)), &bogus);
-	//sit_expect!(SitCase{}, b"besac", &Ok(flush(0)), &Ok(flush(5)));
-	sit_expect!(SitCase{}, b"besac", &Ok(flush(0)), &bogus);
+	sit_expect!(SitCase{}, b" esac", &Ok(flush(1)));
+	sit_expect!(SitCase{}, b"besac", &Ok(flush(0)), &Ok(flush(5)));
 }
 
 #[test]
