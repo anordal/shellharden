@@ -76,13 +76,14 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 	}
 }
 
+const MAXHORIZON :usize = 128;
+
 fn treatfile_fallible(
 	fi: &mut InputSource, fo: &mut FileOut,
 	color_cur: &mut u32, sett: &Settings,
 ) -> Result<(), Error> {
-	const BUFSIZE :usize = 128;
 	let mut fill :usize = 0;
-	let mut buf = [0; BUFSIZE];
+	let mut buf = [0; MAXHORIZON];
 
 	let mut state :Vec<Box<dyn Situation>> = vec!{Box::new(SitNormal{
 		end_trigger: 0x100, end_replace: None,
@@ -100,6 +101,7 @@ fn treatfile_fallible(
 			assert!(remain == 0);
 			break;
 		}
+		assert!(remain < MAXHORIZON);
 		for i in 0 .. remain {
 			buf[i] = buf[consumed + i];
 		}
@@ -128,7 +130,7 @@ fn stackmachine(
 	let mut pos :usize = 0;
 	loop {
 		let horizon :&[u8] = &buf[pos ..];
-		let is_horizon_lengthenable = pos > 0 && !eof;
+		let is_horizon_lengthenable = horizon.len() < MAXHORIZON && !eof;
 		let stacksize_pre = state.len();
 		let statebox: &mut Box<dyn Situation> = if let Some(innerstate) = state.last_mut() {
 			innerstate
