@@ -15,7 +15,6 @@ use ::situation::COLOR_NORMAL;
 use ::situation::COLOR_KWD;
 
 use ::microparsers::predlen;
-use ::microparsers::prefixlen;
 use ::microparsers::is_whitespace;
 use ::microparsers::is_word;
 
@@ -124,13 +123,14 @@ impl Situation for SitCaseArm {
 				continue;
 			}
 			// Premature esac: Survive and rewrite.
-			let plen = prefixlen(&horizon[i..], b"esac");
-			if plen == 4 {
-				return Ok(WhatNow{
-					tri: Transition::Pop, pre: i, len: 0, alt: Some(b";; ")
-				});
-			} else if i + plen == horizon.len() && (i > 0 || is_horizon_lengthenable) {
-				return Ok(flush(i));
+			let len = predlen(&is_word, &horizon[i..]);
+			if i + len != horizon.len() || (i == 0 && !is_horizon_lengthenable) {
+				let word = &horizon[i..i+len];
+				if word == b"esac" {
+					return Ok(WhatNow{
+						tri: Transition::Pop, pre: i, len: 0, alt: Some(b";; ")
+					});
+				}
 			}
 			return Ok(keyword_or_command(0x100, &horizon, i, is_horizon_lengthenable));
 		}
@@ -192,21 +192,8 @@ fn test_sit_casearm() {
 		pre: 0, len: 0, alt: Some(b";; ")
 	});
 	sit_expect!(SitCaseArm{}, b"esac ", &found_the_esac_word);
+	sit_expect!(SitCaseArm{}, b"esac", &Ok(flush(0)), &found_the_esac_word);
+	sit_expect!(SitCaseArm{}, b"esacs", &Ok(flush(0)), &found_command);
+	sit_expect!(SitCaseArm{}, b" esac", &Ok(flush(1)));
 	sit_expect!(SitCaseArm{}, b"besac", &Ok(flush(0)), &found_command);
-
-	// BUG
-	//sit_expect!(SitCaseArm{}, b"esac", &Ok(flush(0)), &found_the_esac_word);
-	sit_expect!(SitCaseArm{}, b"esac", &found_the_esac_word);
-	let bogus = Ok(WhatNow{
-		tri: Transition::Pop,
-		pre: 1, len: 0, alt: Some(b";; ")
-	});
-	//sit_expect!(SitCaseArm{}, b" esac", &Ok(flush(1)));
-	sit_expect!(SitCaseArm{}, b" esac", &bogus);
-	let bogus2 = Ok(WhatNow{
-		tri: Transition::Pop,
-		pre: 0, len: 0, alt: Some(b";; ")
-	});
-	//sit_expect!(SitCaseArm{}, b"esacs", &Ok(flush(0)), &found_command);
-	sit_expect!(SitCaseArm{}, b"esacs", &bogus2);
 }
