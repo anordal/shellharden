@@ -45,9 +45,7 @@ impl Situation for SitIn {
 			) {
 				return res;
 			}
-			if i + len == horizon.len() {
-				break;
-			}
+			return Ok(flush(i + len));
 		}
 		Ok(flush(horizon.len()))
 	}
@@ -85,9 +83,7 @@ impl Situation for SitCase {
 			) {
 				return res;
 			}
-			if i + len == horizon.len() {
-				break;
-			}
+			return Ok(flush(i + len));
 		}
 		Ok(flush(horizon.len()))
 	}
@@ -153,6 +149,7 @@ fn test_sit_in() {
 	sit_expect!(SitIn{}, b"inn", &Ok(flush(0)), &Ok(flush(3)));
 	sit_expect!(SitIn{}, b" in", &Ok(flush(1)));
 	sit_expect!(SitIn{}, b"fin", &Ok(flush(0)), &Ok(flush(3)));
+	sit_expect!(SitIn{}, b"fin ", &Ok(flush(3)));
 }
 
 #[test]
@@ -169,6 +166,7 @@ fn test_sit_case() {
 	sit_expect!(SitCase{}, b"esacs", &Ok(flush(0)), &Ok(flush(5)));
 	sit_expect!(SitCase{}, b" esac", &Ok(flush(1)));
 	sit_expect!(SitCase{}, b"besac", &Ok(flush(0)), &Ok(flush(5)));
+	sit_expect!(SitCase{}, b"besac ", &Ok(flush(5)));
 }
 
 #[test]
@@ -189,4 +187,5 @@ fn test_sit_casearm() {
 	sit_expect!(SitCaseArm{}, b"esacs", &Ok(flush(0)), &found_command);
 	sit_expect!(SitCaseArm{}, b" esac", &Ok(flush(1)));
 	sit_expect!(SitCaseArm{}, b"besac", &Ok(flush(0)), &found_command);
+	sit_expect!(SitCaseArm{}, b"besac ", &found_command);
 }
