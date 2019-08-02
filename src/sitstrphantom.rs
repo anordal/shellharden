@@ -47,10 +47,9 @@ impl Situation for SitStrPhantom {
 						CommonStrCmdResult::OnlyWithQuotes(consult) => {
 							match consult.tri {
 								Transition::Flush | Transition::FlushPopOnEof => {
-									return Ok(WhatNow{
-										tri: Transition::FlushPopOnEof,
-										pre: 0, len: 0, alt: Some(b"\"")
-									});
+									if is_horizon_lengthenable {
+										return Ok(flush(0));
+									}
 								}
 								Transition::Pop | Transition::Replace(_) => {}
 								Transition::Push(_) => {
