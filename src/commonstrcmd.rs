@@ -115,27 +115,10 @@ pub fn common_str_cmd(
 			tri: Transition::Push(ext),
 			pre: i, len: 0, alt: None
 		});
-	} else if predlen(&is_decimal, &horizon[i+1 ..]) > 1 {
-		return CommonStrCmdResult::Err(UnsupportedSyntax {
-			typ: "Unsupported syntax: Syntactic pitfall",
-			ctx: horizon.to_owned(),
-			pos: i+2,
-			msg: "This does not mean what it looks like. You may be forgiven to think that the full string of \
-			numerals is the variable name. Only the fist is.\n\
-			\n\
-			Try this and be shocked: f() { echo \"$9\" \"$10\"; }; f a b c d e f g h i j\n\
-			\n\
-			Here is where braces should be used to disambiguate, \
-			e.g. \"${10}\" vs \"${1}0\".\n\
-			\n\
-			Syntactic pitfalls are deemed too dangerous to fix automatically\n\
-			(the purpose of Shellharden is to fix brittle code – code that mostly \
-			does what it looks like, as opposed to code that never does what it looks like):\n\
-			* Fixing what it does would be 100% subtle \
-			and might slip through code review unnoticed.\n\
-			* Fixing its look would make a likely bug look intentional."
-		});
-	} else if c == b'@' || c == b'*' || (c >= b'0' && c <= b'9') {
+	} else if c == b'@' || c == b'*' || is_decimal(c) {
+		if predlen(&is_decimal, &horizon[i+1 ..]) > 1 {
+			return bail_doubledigit(horizon, i+2);
+		}
 		let ext = Box::new(SitExtent{
 			len: 2,
 			color: COLOR_VAR,
@@ -212,4 +195,26 @@ fn pos_tailhazard(horizon: &[u8], end: u8) -> (usize, usize) {
 
 fn is_decimal(byte: u8) -> bool {
 	byte >= b'0' && byte <= b'9'
+}
+
+fn bail_doubledigit(context: &[u8], pos: usize) -> CommonStrCmdResult {
+	CommonStrCmdResult::Err(UnsupportedSyntax {
+		typ: "Unsupported syntax: Syntactic pitfall",
+		ctx: context.to_owned(),
+		pos,
+		msg: "This does not mean what it looks like. You may be forgiven to think that the full string of \
+		numerals is the variable name. Only the fist is.\n\
+		\n\
+		Try this and be shocked: f() { echo \"$9\" \"$10\"; }; f a b c d e f g h i j\n\
+		\n\
+		Here is where braces should be used to disambiguate, \
+		e.g. \"${10}\" vs \"${1}0\".\n\
+		\n\
+		Syntactic pitfalls are deemed too dangerous to fix automatically\n\
+		(the purpose of Shellharden is to fix brittle code – code that mostly \
+		does what it looks like, as opposed to code that never does what it looks like):\n\
+		* Fixing what it does would be 100% subtle \
+		and might slip through code review unnoticed.\n\
+		* Fixing its look would make a likely bug look intentional."
+	})
 }
