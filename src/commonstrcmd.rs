@@ -191,7 +191,7 @@ pub fn common_str_cmd(
 			CommonStrCmdResult::OnlyWithQuotes(wn)
 		};
 	}
-	CommonStrCmdResult::Ok(flush(i+1))
+	CommonStrCmdResult::None
 }
 
 fn if_needed<T>(needed: bool, val: T) -> Option<T> {
