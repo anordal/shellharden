@@ -34,10 +34,7 @@ impl Situation for SitStrPhantom {
 		} else if u16::from(horizon[mouthful]) != self.cmd_end_trigger {
 			match horizon[mouthful] {
 				b'\"' => {
-					return Ok(WhatNow{
-						tri: Transition::Replace(Box::new(SitStrDq{})),
-						pre: mouthful, len: 1, alt: Some(b"")
-					});
+					return become_real(mouthful);
 				}
 				b'$' | b'`' => {
 					match common_str_cmd(&horizon, mouthful, is_horizon_lengthenable, true) {
@@ -62,10 +59,7 @@ impl Situation for SitStrPhantom {
 				_ => {}
 			}
 		}
-		// Dutifully end the string.
-		Ok(WhatNow{
-			tri: Transition::Pop, pre: 0, len: 0, alt: Some(b"\"")
-		})
+		dutifully_end_the_string()
 	}
 	fn get_color(&self) -> u32{
 		0x00_ff0000
@@ -75,4 +69,66 @@ impl Situation for SitStrPhantom {
 fn is_phantomstringfood(c: u8) -> bool {
 	c >= b'+' && is_word(c)
 	&& c != b'?' && c != b'\\'
+}
+
+fn become_real(pre: usize) -> ParseResult {
+	Ok(WhatNow{
+		tri: Transition::Replace(Box::new(SitStrDq{})),
+		pre, len: 1, alt: Some(b"")
+	})
+}
+
+fn dutifully_end_the_string() -> ParseResult {
+	Ok(WhatNow{
+		tri: Transition::Pop, pre: 0, len: 0, alt: Some(b"\"")
+	})
+}
+
+#[cfg(test)]
+use ::testhelpers::*;
+#[cfg(test)]
+use sitcmd::SitNormal;
+#[cfg(test)]
+use sitextent::SitExtent;
+#[cfg(test)]
+use ::situation::COLOR_VAR;
+
+#[cfg(test)]
+fn subject() -> SitStrPhantom {
+	SitStrPhantom{cmd_end_trigger: 0}
+}
+
+#[test]
+fn test_sit_strphantom() {
+	let cod = dutifully_end_the_string();
+	let found_cmdsub = Ok(WhatNow{
+		tri: Transition::Push(Box::new(SitNormal{
+			end_trigger: u16::from(b')'), end_replace: None,
+		})), pre: 0, len: 2, alt: None
+	});
+	let found_specialvar = Ok(WhatNow{
+		tri: Transition::Push(Box::new(SitExtent{
+			len: 2, color: COLOR_VAR, end_insert: None,
+		})), pre: 0, len: 0, alt: None
+	});
+	sit_expect!(subject(), b"", &Ok(flush(0)), &cod);
+	sit_expect!(subject(), b"a", &Ok(flush(0)), &cod);
+	sit_expect!(subject(), b" ", &cod);
+	sit_expect!(subject(), b"\'", &cod);
+	sit_expect!(subject(), b"\"", &become_real(0));
+	sit_expect!(subject(), b"$", &Ok(flush(0)), &cod);
+	sit_expect!(subject(), b"$(", &Ok(flush(0)), &found_cmdsub);
+	sit_expect!(subject(), b"a$", &Ok(flush(0)), &cod);
+	sit_expect!(subject(), b"a$(", &Ok(flush(0)), &cod);
+	sit_expect!(subject(), b"$\'", &cod);
+	sit_expect!(subject(), b"$\"", &cod);
+	sit_expect!(subject(), b"$@", &found_specialvar);
+	sit_expect!(subject(), b"$*", &found_specialvar);
+	sit_expect!(subject(), b"$#", &found_specialvar);
+	sit_expect!(subject(), b"$?", &found_specialvar);
+
+	// TODO: Unimplemented special variables
+	sit_expect!(subject(), b"$-", &cod);
+	sit_expect!(subject(), b"$$", &cod);
+	sit_expect!(subject(), b"$!", &cod);
 }

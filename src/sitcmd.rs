@@ -94,3 +94,29 @@ impl Situation for SitArg {
 		COLOR_NORMAL
 	}
 }
+
+#[cfg(test)]
+use ::testhelpers::*;
+#[cfg(test)]
+use sitvec::SitVec;
+#[cfg(test)]
+use situation::COLOR_HERE;
+
+#[test]
+fn test_sit_arg() {
+	let found_heredoc = Ok(WhatNow{
+		tri: Transition::Push(Box::new(
+			SitVec{terminator: vec![b'\\'], color: COLOR_HERE}
+		)),
+		pre: 0, len: 8, alt: None
+	});
+	sit_expect!(SitArg{end_trigger: 0}, b"", &flush_or_pop(0));
+	sit_expect!(SitArg{end_trigger: 0}, b" ", &flush_or_pop(1));
+	sit_expect!(SitArg{end_trigger: 0}, b"arg", &flush_or_pop(3));
+	sit_expect!(SitArg{end_trigger: 0}, b"<<- \"\\\\\"\n", &found_heredoc);
+	sit_expect!(SitArg{end_trigger: 0}, b"a <<- \"\\\\\"", &Ok(flush(2)));
+	sit_expect!(SitArg{end_trigger: 0}, b"a <<- \"\\", &Ok(flush(2)));
+	sit_expect!(SitArg{end_trigger: 0}, b"a <<- ", &Ok(flush(2)));
+	sit_expect!(SitArg{end_trigger: 0}, b"a <", &Ok(flush(2)));
+	sit_expect!(SitArg{end_trigger: 0}, b"a ", &flush_or_pop(2));
+}
