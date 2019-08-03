@@ -1,20 +1,19 @@
 # Changelog
 
-This is a log of features and fixes to the source code.
-Documentation files are ignored, as are refactoring changes.
-For the interested, the commit history is readable too (I know the art of rebasing).
-
 ## 4.1.1
 
 * Allow "$*" (no need to rewrite it to "$@" as long as the quotes are on).
 * Recognise premature esac to avoid parse error (seen on rustup.sh).
 * Write this changelog.
+* Cargo Clippy compliant.
+* Unittests! Currently focused on corner cases that are hard to moduletest,
+  namely lookahead.
 * Corner cases in the keyword detection inside the `case` statement were fixed.
   This would manifest as false positive and false negative detection of the `in`
   and `esac` keywords, followed by a likely parse error.
   This stems from version 4.0 and was not seen in the wild AFAIK.
   The most glaring bug was false positive detection when prefixed.
-  Less so were the false negatives around asking for more lookahead.
+  Less so were the false negatives related to lookahead.
 * The special variables $$, $! and $- are now recognized.
 
 ## 4.1
