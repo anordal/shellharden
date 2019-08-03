@@ -13,8 +13,11 @@ echo "$8"
 echo "$9"
 echo "$@"
 echo "$@"
+echo "$-"
 echo $# # Expands to a number
 echo $? # Expands to a number
+echo $$ # Expands to a number
+echo $! # Expands to a number
 
 echo "$identifier_azAZ09"
 echo "$Identifier_azAZ09"
@@ -32,8 +35,11 @@ echo "${9}"
 echo "${1}"0
 echo "${10}"
 echo "${@}"
+echo "${-}"
 echo ${#} # Expands to a number
 echo ${?} # Expands to a number
+echo ${$} # Expands to a number
+echo ${!} # Expands to a number
 
 echo ${#array[@]} # Expands to a number
 echo "${array[0]}"
@@ -58,8 +64,11 @@ echo "$8"
 echo "$9"
 echo "$@"
 echo "$*"
+echo "$-"
 echo "$#" # Expands to a number
 echo "$?" # Expands to a number
+echo "$$" # Expands to a number
+echo "$!" # Expands to a number
 
 echo "${identifier_azAZ09}a"
 echo "${Identifier_azAZ09}a"
@@ -81,8 +90,11 @@ echo "${1}0"
 echo "${10}"
 echo "${@}"
 echo "${*}"
+echo "${-}"
 echo "${#}" # Expands to a number
 echo "${?}" # Expands to a number
+echo "${$}" # Expands to a number
+echo "${!}" # Expands to a number
 
 echo "${#array[@]}" # Expands to a number
 echo "${array[0]}"

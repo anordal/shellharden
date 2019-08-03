@@ -105,7 +105,7 @@ pub fn common_str_cmd(
 			tri: Transition::Push(sit),
 			pre: i, len: 2, alt: None
 		});
-	} else if c == b'#' || c == b'?' {
+	} else if is_variable_of_numeric_content(c) {
 		let ext = Box::new(SitExtent{
 			len: 2,
 			color: COLOR_VAR,
@@ -115,7 +115,7 @@ pub fn common_str_cmd(
 			tri: Transition::Push(ext),
 			pre: i, len: 0, alt: None
 		});
-	} else if c == b'@' || c == b'*' || is_decimal(c) {
+	} else if c == b'@' || c == b'*' || c == b'-' || is_decimal(c) {
 		if predlen(&is_decimal, &horizon[i+1 ..]) > 1 {
 			return bail_doubledigit(horizon, i+2);
 		}
@@ -160,7 +160,7 @@ pub fn common_str_cmd(
 			}
 		} else if idlen < pos_hazard {
 			rm_braces = !is_identifiertail(cand[pos_hazard]);
-		} else if idlen == 0 && (cand[0] == b'#' || cand[0] == b'?') {
+		} else if idlen == 0 && is_variable_of_numeric_content(cand[0]) {
 			is_number = true;
 		}
 		let wn = WhatNow{
@@ -195,6 +195,10 @@ fn pos_tailhazard(horizon: &[u8], end: u8) -> (usize, usize) {
 
 fn is_decimal(byte: u8) -> bool {
 	byte >= b'0' && byte <= b'9'
+}
+
+fn is_variable_of_numeric_content(c: u8) -> bool {
+	c == b'#' || c == b'?' || c == b'$' || c == b'!'
 }
 
 fn bail_doubledigit(context: &[u8], pos: usize) -> CommonStrCmdResult {

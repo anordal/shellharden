@@ -15,6 +15,7 @@ For the interested, the commit history is readable too (I know the art of rebasi
   This stems from version 4.0 and was not seen in the wild AFAIK.
   The most glaring bug was false positive detection when prefixed.
   Less so were the false negatives around asking for more lookahead.
+* The special variables $$, $! and $- are now recognized.
 
 ## 4.1
 

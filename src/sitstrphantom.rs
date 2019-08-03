@@ -126,9 +126,7 @@ fn test_sit_strphantom() {
 	sit_expect!(subject(), b"$*", &found_specialvar);
 	sit_expect!(subject(), b"$#", &found_specialvar);
 	sit_expect!(subject(), b"$?", &found_specialvar);
-
-	// TODO: Unimplemented special variables
-	sit_expect!(subject(), b"$-", &cod);
-	sit_expect!(subject(), b"$$", &cod);
-	sit_expect!(subject(), b"$!", &cod);
+	sit_expect!(subject(), b"$-", &found_specialvar);
+	sit_expect!(subject(), b"$$", &found_specialvar);
+	sit_expect!(subject(), b"$!", &found_specialvar);
 }

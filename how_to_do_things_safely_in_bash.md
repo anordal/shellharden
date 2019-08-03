@@ -76,7 +76,7 @@ There are exceptions where quoting is not necessary, but because it never hurts 
 
 The exceptions only matter in discussions of style – feel welcome to ignore them. For the sake of style neutrality, Shellharden does honor a few exceptions:
 
-* variables of invariably numeric content: `$?`, `$#` and array length `${#array[@]}`
+* variables of invariably numeric content: `$?`, `$$`, `$!`, `$#` and array length `${#array[@]}`
 * assignments: `a=$b`
 * the magical case command: `case $var in … esac`
 * the magical context between double-brackets (`[[` and `]]`) – this is a language of its own.
