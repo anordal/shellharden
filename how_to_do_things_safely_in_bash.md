@@ -488,8 +488,6 @@ Chances are that you don't know the substitute.
 * Logical operators: The usual suspects `&&` and `||` work just fine – outside commands – and can be grouped with group commands: `if { true || false; } && true; then echo 1; else echo 0; fi`.
 * Checking if a variable exists (`[[ -v varname ]]`): Yes, this is possibly a killer argument, but consider the programming style of always setting variables, so you don't need to check if they exist.
 
-Shellharden will not stop you from using quotes in syntactical contexts where it does not matter, but that would deviate from common practice.
-
 ### How to check if a variable exists
 
 A correct way to do this is not a feature of idiomatic POSIX/Bash scripting. Consider avoiding the problem when possible by always setting variables, so you don't need to check if they exist.
