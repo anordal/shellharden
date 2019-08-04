@@ -476,6 +476,17 @@ If you are following this guide, the usual arguments don't apply:
 
 Other concerns:
 
+*—LOL, is /bin/test an external command?*
+
+Time to dispel that myth. When in doubt, ask the `type` command:
+
+    > type test
+    test is a shell builtin
+    > type [
+    [ is a shell builtin
+    > type [[
+    [[ is a shell keyword
+
 *—What if I have n00b contributors?*
 
 This argument goes both ways: `[[` has a more forgiving syntax because it *is* syntax, not a command. **Quoting is required everywhere else.** The fewer exceptions, the lesser confusion. If you want to be pedagogical, use the `test` command – it is honest about being a command, not syntax.
