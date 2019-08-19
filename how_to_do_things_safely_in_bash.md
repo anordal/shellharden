@@ -478,7 +478,7 @@ Other concerns:
 
 *—LOL, is /bin/test an external command?*
 
-Time to dispel that myth. When in doubt, ask the `type` command:
+Let's get that myth out of the way. When in doubt, ask the `type` command:
 
     > type test
     test is a shell builtin
