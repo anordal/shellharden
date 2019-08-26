@@ -46,23 +46,19 @@ Prior art
 
 * I asked [this SO question][3], for a tool that could rewrite bash scripts with proper quoting. One answerer beat me to it. But if it was me, I would do a syntax highlighter in the same tool (as a way to see if the parser gets lost, and make the most out of the parser, because bash is like quantum mechanics – nobody really knows how it works).
 
-Install from package
---------------------
+Get it
+------
 
-Plan A: Distro package:
+Distro packages:
 
 * [Arch](https://www.archlinux.org/packages/community/x86_64/shellharden/)
 * [Homebrew](https://formulae.brew.sh/formula/shellharden)
 
-Plan B: The official shellharden [rust package](https://crates.io/crates/shellharden):
+Official [rust package](https://crates.io/crates/shellharden):
 
     cargo install shellharden
 
-Plan C: Use this docker image directly:
-
-    cat shellscript.sh | docker run -i --rm sbkg0002/shellharden:4.0 ''
-
-Shameless plug: Docker is the wrong tool for this job. For greater speed and (supposedly) security, [unpack the docker image](https://github.com/larsks/undocker) once and for all and use [selfdock](https://github.com/anordal/selfdock) instead.
+For those allergic to building from source, a few precompiled binaries are also available in the [releases](https://github.com/anordal/shellharden/releases).
 
 Build from source
 -----------------
