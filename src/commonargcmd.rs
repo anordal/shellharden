@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 - 2018 Andreas Nordal
+ * Copyright 2016 - 2019 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,6 @@
 
 use ::situation::Transition;
 use ::situation::WhatNow;
-use ::situation::ParseResult;
 use ::situation::flush;
 use ::situation::COLOR_KWD;
 use ::situation::COLOR_MAGIC;
@@ -112,7 +111,7 @@ pub fn common_arg_cmd(
 	horizon :&[u8],
 	i :usize,
 	is_horizon_lengthenable :bool,
-) -> Option<ParseResult> {
+) -> Option<WhatNow> {
 	if let Some(res) = find_command_enders(horizon, i, is_horizon_lengthenable) {
 		return Some(res);
 	}
@@ -124,25 +123,21 @@ pub fn common_no_cmd(
 	horizon :&[u8],
 	i :usize,
 	is_horizon_lengthenable :bool,
-) -> Option<ParseResult> {
+) -> Option<WhatNow> {
 	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable) {
 		return Some(res);
 	}
 	match common_str_cmd(&horizon, i, is_horizon_lengthenable, true) {
-		CommonStrCmdResult::None => {},
-		CommonStrCmdResult::Err(e) => { return Some(Err(e)); },
-		CommonStrCmdResult::Ok(consult) => {
-			return Some(Ok(consult));
-		},
+		CommonStrCmdResult::None => None,
+		CommonStrCmdResult::Some(x) => Some(x),
 		CommonStrCmdResult::OnlyWithQuotes(_) => {
-			return Some(Ok(WhatNow{
+			Some(WhatNow{
 				tri: Transition::Push(Box::new(SitStrPhantom{
 					cmd_end_trigger: end_trigger,
 				})), pre: i, len: 0, alt: Some(b"\"")
-			}));
+			})
 		},
 	}
-	None
 }
 
 pub fn common_quoting_unneeded(
@@ -150,7 +145,7 @@ pub fn common_quoting_unneeded(
 	horizon :&[u8],
 	i :usize,
 	is_horizon_lengthenable :bool,
-) -> Option<ParseResult> {
+) -> Option<WhatNow> {
 	if let Some(res) = find_command_enders(horizon, i, is_horizon_lengthenable) {
 		return Some(res);
 	}
@@ -162,26 +157,25 @@ pub fn common_no_cmd_quoting_unneeded(
 	horizon :&[u8],
 	i :usize,
 	is_horizon_lengthenable :bool,
-) -> Option<ParseResult> {
+) -> Option<WhatNow> {
 	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable) {
 		return Some(res);
 	}
 	match common_str_cmd(&horizon, i, is_horizon_lengthenable, false) {
-		CommonStrCmdResult::None => {},
-		CommonStrCmdResult::Err(e) => { return Some(Err(e)); },
-		CommonStrCmdResult::Ok(x)
-		| CommonStrCmdResult::OnlyWithQuotes(x) => {
+		CommonStrCmdResult::None => None,
+		CommonStrCmdResult::Some(x) => Some(x),
+		CommonStrCmdResult::OnlyWithQuotes(x) => {
 			if horizon[i] == b'`' {
-				return Some(Ok(WhatNow{
+				Some(WhatNow{
 					tri: Transition::Push(Box::new(SitNormal{
 						end_trigger: u16::from(b'`'), end_replace: None
 					})), pre: i, len: 1, alt: None
-				}))
+				})
+			} else {
+				Some(x)
 			}
-			return Some(Ok(x));
 		},
 	}
-	None
 }
 
 // Does not pop on eof → Callers must use flush_or_pop
@@ -189,19 +183,19 @@ fn find_command_enders(
 	horizon :&[u8],
 	i :usize,
 	is_horizon_lengthenable :bool,
-) -> Option<ParseResult> {
+) -> Option<WhatNow> {
 	let plen = prefixlen(&horizon[i..], b">&");
 	if plen == 2 {
-		return Some(Ok(flush(i + 2)));
+		return Some(flush(i + 2));
 	}
 	if i + plen == horizon.len() && (i > 0 || is_horizon_lengthenable) {
-		return Some(Ok(flush(i)));
+		return Some(flush(i));
 	}
 	let a = horizon[i];
 	if a == b'\n' || a == b';' || a == b'|' || a == b'&' {
-		return Some(Ok(WhatNow{
+		return Some(WhatNow{
 			tri: Transition::Pop, pre: i, len: 0, alt: None
-		}));
+		});
 	}
 	None
 }
@@ -211,46 +205,46 @@ fn find_usual_suspects(
 	horizon :&[u8],
 	i :usize,
 	is_horizon_lengthenable :bool,
-) -> Option<ParseResult> {
+) -> Option<WhatNow> {
 	let a = horizon[i];
 	if u16::from(a) == end_trigger {
-		return Some(Ok(WhatNow{
+		return Some(WhatNow{
 			tri: Transition::Pop, pre: i, len: 0, alt: None
-		}));
+		});
 	}
 	if a == b'#' {
-		return Some(Ok(WhatNow{
+		return Some(WhatNow{
 			tri: Transition::Push(Box::new(SitComment{})),
 			pre: i, len: 1, alt: None
-		}));
+		});
 	}
 	if a == b'\'' {
-		return Some(Ok(WhatNow{
+		return Some(WhatNow{
 			tri: Transition::Push(Box::new(SitUntilByte{
 				until: b'\'', color: 0x00_ffff00, end_replace: None
 			})),
 			pre: i, len: 1, alt: None
-		}));
+		});
 	}
 	if a == b'\"' {
-		return Some(Ok(WhatNow{
+		return Some(WhatNow{
 			tri: Transition::Push(Box::new(SitStrDq{})),
 			pre: i, len: 1, alt: None
-		}));
+		});
 	}
 	if a == b'$' {
 		if i+1 >= horizon.len() {
 			if i > 0 || is_horizon_lengthenable {
-				return Some(Ok(flush(i)));
+				return Some(flush(i));
 			}
 			return None;
 		}
 		let b = horizon[i+1];
 		if b == b'\'' {
-			return Some(Ok(WhatNow{
+			return Some(WhatNow{
 				tri: Transition::Push(Box::new(SitStrSqEsc{})),
 				pre: i, len: 2, alt: None
-			}));
+			});
 		} else if b == b'*' {
 			// $* → "$@" but not "$*" → "$@"
 			let ext = Box::new(SitExtent{
@@ -258,26 +252,26 @@ fn find_usual_suspects(
 				color: COLOR_VAR,
 				end_insert: None
 			});
-			return Some(Ok(WhatNow{
+			return Some(WhatNow{
 				tri: Transition::Push(ext),
 				pre: i, len: 2, alt: Some(b"\"$@\"")
-			}));
+			});
 		}
 	}
 	let (ate, delimiter) = find_heredoc(&horizon[i ..]);
 	if i + ate == horizon.len() {
 		if i > 0 || is_horizon_lengthenable {
-			return Some(Ok(flush(i)));
+			return Some(flush(i));
 		}
 	} else if !delimiter.is_empty() {
-		return Some(Ok(WhatNow{
+		return Some(WhatNow{
 			tri: Transition::Push(Box::new(
 				SitVec{terminator: delimiter, color: COLOR_HERE}
 			)),
 			pre: i, len: ate, alt: None
-		}));
+		});
 	} else if ate > 0 {
-		return Some(Ok(flush(i + ate)));
+		return Some(flush(i + ate));
 	}
 	None
 }

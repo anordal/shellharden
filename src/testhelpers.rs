@@ -1,5 +1,5 @@
 
-use ::situation::ParseResult;
+use ::situation::WhatNow;
 use ::situation::Situation;
 use ::situation::Transition;
 use ::situation::Transition::Flush;
@@ -8,27 +8,18 @@ use ::situation::Transition::Replace;
 use ::situation::Transition::Push;
 use ::situation::Transition::Pop;
 
-pub fn whatnow_eq(a: &ParseResult, b: &ParseResult) -> bool {
-	match (a, b) {
-		(Ok(a), Ok(b)) => {
-			if a.pre != b.pre {
-				eprintln!("WhatNow.pre: {} != {}", a.pre, b.pre);
-				false
-			} else if a.len != b.len {
-				eprintln!("WhatNow.len: {} != {}", a.len, b.len);
-				false
-			} else if a.alt != b.alt {
-				eprintln!("WhatNow.alt mismatch");
-				false
-			} else {
-				transition_eq(&a.tri, &b.tri)
-			}
-		},
-		(Err(_), Err(_)) => true,
-		_ => {
-			eprintln!("ParseResult mismatch");
-			false
-		}
+pub fn whatnow_eq(a: &WhatNow, b: &WhatNow) -> bool {
+	if a.pre != b.pre {
+		eprintln!("WhatNow.pre: {} != {}", a.pre, b.pre);
+		false
+	} else if a.len != b.len {
+		eprintln!("WhatNow.len: {} != {}", a.len, b.len);
+		false
+	} else if a.alt != b.alt {
+		eprintln!("WhatNow.alt mismatch");
+		false
+	} else {
+		transition_eq(&a.tri, &b.tri)
 	}
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 - 2018 Andreas Nordal
+ * Copyright 2016 - 2019 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 use ::syntaxerror::UnsupportedSyntax;
 
 pub trait Situation {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult;
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow;
 	fn get_color(&self) -> u32;
 }
 
@@ -19,6 +19,7 @@ pub enum Transition {
 	Replace(Box<Situation>),
 	Push(Box<Situation>),
 	Pop,
+	Err(UnsupportedSyntax),
 }
 
 pub struct WhatNow {
@@ -32,10 +33,8 @@ pub fn flush(i: usize) -> WhatNow {
 	WhatNow{tri: Transition::Flush, pre: i, len: 0, alt: None}
 }
 
-pub type ParseResult = Result<WhatNow, UnsupportedSyntax>;
-
-pub fn flush_or_pop(i: usize) -> Result<WhatNow, UnsupportedSyntax> {
-	Ok(WhatNow{tri: Transition::FlushPopOnEof, pre: i, len: 0, alt: None})
+pub fn flush_or_pop(i: usize) -> WhatNow {
+	WhatNow{tri: Transition::FlushPopOnEof, pre: i, len: 0, alt: None}
 }
 
 pub const COLOR_NORMAL: u32 = 0x00_000000;

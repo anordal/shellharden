@@ -112,9 +112,9 @@ fn stackmachine(
 	loop {
 		let horizon :&[u8] = &buf[pos .. buf.len()];
 		let is_horizon_lengthenable = pos > 0 && !eof;
-		let whatnow :WhatNow = try!(state.last_mut().unwrap().as_mut().whatnow(
+		let whatnow :WhatNow = state.last_mut().unwrap().as_mut().whatnow(
 			&horizon, is_horizon_lengthenable
-		).map_err(Error::Syntax));
+		);
 
 		if whatnow.alt.is_some() {
 			out.change = true;
@@ -128,6 +128,9 @@ fn stackmachine(
 		let progress = whatnow.pre + whatnow.len;
 
 		match (whatnow.tri, eof) {
+			(Transition::Err(e), _) => {
+				return Err(Error::Syntax(e));
+			}
 			(Transition::Flush, _) | (Transition::FlushPopOnEof, false) => {
 				if progress == 0 {
 					break;

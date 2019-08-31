@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Andreas Nordal
+ * Copyright 2017 - 2019 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,6 @@
 use ::situation::Situation;
 use ::situation::Transition;
 use ::situation::WhatNow;
-use ::situation::ParseResult;
 use ::situation::flush;
 
 use ::commonstrcmd::CommonStrCmdResult;
@@ -25,11 +24,11 @@ pub struct SitStrPhantom {
 }
 
 impl Situation for SitStrPhantom {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> ParseResult {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		let mouthful = predlen(&is_phantomstringfood, &horizon);
 		if mouthful == horizon.len() {
 			if is_horizon_lengthenable {
-				return Ok(flush(0));
+				return flush(0);
 			}
 		} else if u16::from(horizon[mouthful]) != self.cmd_end_trigger {
 			match horizon[mouthful] {
@@ -39,18 +38,17 @@ impl Situation for SitStrPhantom {
 				b'$' | b'`' => {
 					match common_str_cmd(&horizon, mouthful, is_horizon_lengthenable, true) {
 						CommonStrCmdResult::None => {},
-						CommonStrCmdResult::Err(e) => { return Err(e); },
-						CommonStrCmdResult::Ok(consult) |
+						CommonStrCmdResult::Some(consult) |
 						CommonStrCmdResult::OnlyWithQuotes(consult) => {
 							match consult.tri {
 								Transition::Flush | Transition::FlushPopOnEof => {
 									if is_horizon_lengthenable {
-										return Ok(flush(0));
+										return flush(0);
 									}
 								}
 								Transition::Pop | Transition::Replace(_) => {}
-								Transition::Push(_) => {
-									return Ok(consult);
+								Transition::Push(_) | Transition::Err(_) => {
+									return consult;
 								}
 							}
 						},
@@ -71,17 +69,17 @@ fn is_phantomstringfood(c: u8) -> bool {
 	&& c != b'?' && c != b'\\'
 }
 
-fn become_real(pre: usize) -> ParseResult {
-	Ok(WhatNow{
+fn become_real(pre: usize) -> WhatNow {
+	WhatNow{
 		tri: Transition::Replace(Box::new(SitStrDq{})),
 		pre, len: 1, alt: Some(b"")
-	})
+	}
 }
 
-fn dutifully_end_the_string() -> ParseResult {
-	Ok(WhatNow{
+fn dutifully_end_the_string() -> WhatNow {
+	WhatNow{
 		tri: Transition::Pop, pre: 0, len: 0, alt: Some(b"\"")
-	})
+	}
 }
 
 #[cfg(test)]
@@ -101,25 +99,25 @@ fn subject() -> SitStrPhantom {
 #[test]
 fn test_sit_strphantom() {
 	let cod = dutifully_end_the_string();
-	let found_cmdsub = Ok(WhatNow{
+	let found_cmdsub = WhatNow{
 		tri: Transition::Push(Box::new(SitNormal{
 			end_trigger: u16::from(b')'), end_replace: None,
 		})), pre: 0, len: 2, alt: None
-	});
-	let found_specialvar = Ok(WhatNow{
+	};
+	let found_specialvar = WhatNow{
 		tri: Transition::Push(Box::new(SitExtent{
 			len: 2, color: COLOR_VAR, end_insert: None,
 		})), pre: 0, len: 0, alt: None
-	});
-	sit_expect!(subject(), b"", &Ok(flush(0)), &cod);
-	sit_expect!(subject(), b"a", &Ok(flush(0)), &cod);
+	};
+	sit_expect!(subject(), b"", &flush(0), &cod);
+	sit_expect!(subject(), b"a", &flush(0), &cod);
 	sit_expect!(subject(), b" ", &cod);
 	sit_expect!(subject(), b"\'", &cod);
 	sit_expect!(subject(), b"\"", &become_real(0));
-	sit_expect!(subject(), b"$", &Ok(flush(0)), &cod);
-	sit_expect!(subject(), b"$(", &Ok(flush(0)), &found_cmdsub);
-	sit_expect!(subject(), b"a$", &Ok(flush(0)), &cod);
-	sit_expect!(subject(), b"a$(", &Ok(flush(0)), &cod);
+	sit_expect!(subject(), b"$", &flush(0), &cod);
+	sit_expect!(subject(), b"$(", &flush(0), &found_cmdsub);
+	sit_expect!(subject(), b"a$", &flush(0), &cod);
+	sit_expect!(subject(), b"a$(", &flush(0), &cod);
 	sit_expect!(subject(), b"$\'", &cod);
 	sit_expect!(subject(), b"$\"", &cod);
 	sit_expect!(subject(), b"$@", &found_specialvar);

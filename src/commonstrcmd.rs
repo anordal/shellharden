@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 - 2018 Andreas Nordal
+ * Copyright 2016 - 2019 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,8 +27,7 @@ use ::sitvec::SitVec;
 
 pub enum CommonStrCmdResult {
 	None,
-	Err(UnsupportedSyntax),
-	Ok(WhatNow),
+	Some(WhatNow),
 	OnlyWithQuotes(WhatNow),
 }
 
@@ -48,7 +47,7 @@ pub fn common_str_cmd(
 	}
 	if horizon[i] == b'\\' {
 		let esc = Box::new(SitExtent{len: 1, color: 0x01_ff0080, end_insert: None});
-		return CommonStrCmdResult::Ok(WhatNow{
+		return CommonStrCmdResult::Some(WhatNow{
 			tri: Transition::Push(esc), pre: i, len: 1, alt: None
 		});
 	}
@@ -57,7 +56,7 @@ pub fn common_str_cmd(
 	}
 	if i+1 >= horizon.len() {
 		if i > 0 || is_horizon_lengthenable {
-			return CommonStrCmdResult::Ok(flush(i));
+			return CommonStrCmdResult::Some(flush(i));
 		}
 		return CommonStrCmdResult::None;
 	}
@@ -67,7 +66,7 @@ pub fn common_str_cmd(
 		let (idlen, pos_hazard) = pos_tailhazard(cand, b')');
 		if pos_hazard == cand.len() {
 			if i > 0 || is_horizon_lengthenable {
-				return CommonStrCmdResult::Ok(flush(i));
+				return CommonStrCmdResult::Some(flush(i));
 			}
 		} else if idlen == 3 && pos_hazard >= 4 && cand[.. 3].eq(b"pwd") {
 			let tailhazard = is_identifiertail(cand[pos_hazard]);
@@ -91,7 +90,7 @@ pub fn common_str_cmd(
 				terminator: vec!{b')', b')'},
 				color: COLOR_MAGIC,
 			});
-			return CommonStrCmdResult::Ok(WhatNow{
+			return CommonStrCmdResult::Some(WhatNow{
 				tri: Transition::Push(sit),
 				pre: i, len: 3,
 				alt: None
@@ -111,7 +110,7 @@ pub fn common_str_cmd(
 			color: COLOR_VAR,
 			end_insert: None
 		});
-		return CommonStrCmdResult::Ok(WhatNow{
+		return CommonStrCmdResult::Some(WhatNow{
 			tri: Transition::Push(ext),
 			pre: i, len: 0, alt: None
 		});
@@ -135,7 +134,7 @@ pub fn common_str_cmd(
 			let (_, pos_hazard) = pos_tailhazard(cand, b'\"');
 			if pos_hazard == cand.len() {
 				if i > 0 || is_horizon_lengthenable {
-					return CommonStrCmdResult::Ok(flush(i));
+					return CommonStrCmdResult::Some(flush(i));
 				}
 				tailhazard = true;
 			} else {
@@ -156,7 +155,7 @@ pub fn common_str_cmd(
 		let mut is_number = false;
 		if pos_hazard == cand.len() {
 			if i > 0 || is_horizon_lengthenable {
-				return CommonStrCmdResult::Ok(flush(i));
+				return CommonStrCmdResult::Some(flush(i));
 			}
 		} else if idlen < pos_hazard {
 			rm_braces = !is_identifiertail(cand[pos_hazard]);
@@ -169,7 +168,7 @@ pub fn common_str_cmd(
 			})), pre: i, len: 2, alt: if_needed(rm_braces, b"$")
 		};
 		return if is_number {
-			CommonStrCmdResult::Ok(wn)
+			CommonStrCmdResult::Some(wn)
 		} else {
 			CommonStrCmdResult::OnlyWithQuotes(wn)
 		};
@@ -202,23 +201,25 @@ fn is_variable_of_numeric_content(c: u8) -> bool {
 }
 
 fn bail_doubledigit(context: &[u8], pos: usize) -> CommonStrCmdResult {
-	CommonStrCmdResult::Err(UnsupportedSyntax {
-		typ: "Unsupported syntax: Syntactic pitfall",
-		ctx: context.to_owned(),
-		pos,
-		msg: "This does not mean what it looks like. You may be forgiven to think that the full string of \
-		numerals is the variable name. Only the fist is.\n\
-		\n\
-		Try this and be shocked: f() { echo \"$9\" \"$10\"; }; f a b c d e f g h i j\n\
-		\n\
-		Here is where braces should be used to disambiguate, \
-		e.g. \"${10}\" vs \"${1}0\".\n\
-		\n\
-		Syntactic pitfalls are deemed too dangerous to fix automatically\n\
-		(the purpose of Shellharden is to fix brittle code – code that mostly \
-		does what it looks like, as opposed to code that never does what it looks like):\n\
-		* Fixing what it does would be 100% subtle \
-		and might slip through code review unnoticed.\n\
-		* Fixing its look would make a likely bug look intentional."
+	CommonStrCmdResult::Some(WhatNow{
+		tri: Transition::Err(UnsupportedSyntax{
+			typ: "Unsupported syntax: Syntactic pitfall",
+			ctx: context.to_owned(),
+			pos,
+			msg: "This does not mean what it looks like. You may be forgiven to think that the full string of \
+			numerals is the variable name. Only the fist is.\n\
+			\n\
+			Try this and be shocked: f() { echo \"$9\" \"$10\"; }; f a b c d e f g h i j\n\
+			\n\
+			Here is where braces should be used to disambiguate, \
+			e.g. \"${10}\" vs \"${1}0\".\n\
+			\n\
+			Syntactic pitfalls are deemed too dangerous to fix automatically\n\
+			(the purpose of Shellharden is to fix brittle code – code that mostly \
+			does what it looks like, as opposed to code that never does what it looks like):\n\
+			* Fixing what it does would be 100% subtle \
+			and might slip through code review unnoticed.\n\
+			* Fixing its look would make a likely bug look intentional."
+		}), pre: 0, len: 0, alt: None
 	})
 }

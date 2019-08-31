@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Andreas Nordal
+ * Copyright 2016 - 2019 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,6 @@ use ::situation::Situation;
 use ::situation::Transition;
 use ::situation::WhatNow;
 use ::situation::flush;
-use ::situation::ParseResult;
 
 use ::microparsers::predlen;
 
@@ -21,13 +20,13 @@ pub struct SitUntilByte {
 }
 
 impl Situation for SitUntilByte {
-	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> ParseResult {
+	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
 		let len = predlen(&|x| x != self.until, &horizon);
-		Ok(if len < horizon.len() {
+		if len < horizon.len() {
 			WhatNow{tri: Transition::Pop, pre: len, len: 1, alt: self.end_replace}
 		} else {
 			flush(len)
-		})
+		}
 	}
 	fn get_color(&self) -> u32{
 		self.color
