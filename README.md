@@ -77,7 +77,7 @@ Build from source
 
 ### Build docker image
 
-    docker build -t shellgarden .
+    docker build -t shellharden .
 
 ### Fuzz test
 
