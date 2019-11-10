@@ -38,6 +38,16 @@ pub fn common_str_cmd(
 	ctx_cmd: bool,
 ) -> CommonStrCmdResult {
 	if horizon[i] == b'`' {
+		let found_pwd = find_pwd(
+			&horizon, i, 1, b'`', is_horizon_lengthenable
+		);
+		match &found_pwd {
+			&CommonStrCmdResult::None => {},
+			&CommonStrCmdResult::Some(_) |
+			&CommonStrCmdResult::OnlyWithQuotes(_) => {
+				return found_pwd;
+			}
+		}
 		let cmd = Box::new(SitNormal{
 			end_trigger: u16::from(b'`'), end_replace: Some(b")"),
 		});
@@ -62,30 +72,19 @@ pub fn common_str_cmd(
 	}
 	let c = horizon[i+1];
 	if c == b'(' {
-		let cand: &[u8] = &horizon[i+2 ..];
-		let (idlen, pos_hazard) = pos_tailhazard(cand, b')');
-		if pos_hazard == cand.len() {
-			if i > 0 || is_horizon_lengthenable {
-				return CommonStrCmdResult::Some(flush(i));
+		let found_pwd = find_pwd(
+			&horizon, i, 2, b')', is_horizon_lengthenable
+		);
+		match &found_pwd {
+			&CommonStrCmdResult::None => {},
+			&CommonStrCmdResult::Some(_) |
+			&CommonStrCmdResult::OnlyWithQuotes(_) => {
+				return found_pwd;
 			}
-		} else if idlen == 3 && pos_hazard >= 4 && cand[.. 3].eq(b"pwd") {
-			let tailhazard = is_identifiertail(cand[pos_hazard]);
-			let replacement: &'static [u8] = if tailhazard {
-				b"${PWD}"
-			} else {
-				b"$PWD"
-			};
-			let sit = Box::new(SitExtent{
-				len: 0,
-				color: COLOR_VAR,
-				end_insert: None,
-			});
-			return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
-				tri: Transition::Push(sit),
-				pre: i, len: 6,
-				alt: Some(replacement)
-			});
-		} else if !cand.is_empty() && cand[0] == b'(' {
+		}
+		if i+2 >= horizon.len() {
+			// Reachable, but already handled by find_pwd.
+		} else if horizon[i+2] == b'(' {
 			let sit = Box::new(SitVec{
 				terminator: vec!{b')', b')'},
 				color: COLOR_MAGIC,
@@ -96,7 +95,6 @@ pub fn common_str_cmd(
 				alt: None
 			});
 		}
-
 		let sit = Box::new(SitNormal{
 			end_trigger: u16::from(b')'), end_replace: None,
 		});
@@ -178,6 +176,40 @@ pub fn common_str_cmd(
 
 fn if_needed<T>(needed: bool, val: T) -> Option<T> {
 	if needed { Some(val) } else { None }
+}
+
+fn find_pwd(
+	horizon: &[u8],
+	i: usize,
+	candidate_offset: usize,
+	end: u8,
+	is_horizon_lengthenable: bool,
+) -> CommonStrCmdResult {
+	let cand: &[u8] = &horizon[i + candidate_offset ..];
+	let (idlen, pos_hazard) = pos_tailhazard(cand, end);
+	if pos_hazard == cand.len() {
+		if i > 0 || is_horizon_lengthenable {
+			return CommonStrCmdResult::Some(flush(i));
+		}
+	} else if idlen == 3 && pos_hazard >= 4 && cand[.. 3].eq(b"pwd") {
+		let tailhazard = is_identifiertail(cand[pos_hazard]);
+		let replacement: &'static [u8] = if tailhazard {
+			b"${PWD}"
+		} else {
+			b"$PWD"
+		};
+		let sit = Box::new(SitExtent{
+			len: 0,
+			color: COLOR_VAR,
+			end_insert: None,
+		});
+		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
+			tri: Transition::Push(sit),
+			pre: i, len: candidate_offset + idlen + 1,
+			alt: Some(replacement)
+		});
+	}
+	CommonStrCmdResult::None
 }
 
 fn pos_tailhazard(horizon: &[u8], end: u8) -> (usize, usize) {
