@@ -66,7 +66,7 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 		let mut fill :usize = 0;
 		let mut buf = [0; BUFSIZE];
 
-		let mut state :Vec<Box<Situation>> = vec!{Box::new(SitNormal{
+		let mut state :Vec<Box<dyn Situation>> = vec!{Box::new(SitNormal{
 			end_trigger: 0x100, end_replace: None,
 		})};
 
@@ -102,7 +102,7 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 }
 
 fn stackmachine(
-	state: &mut Vec<Box<Situation>>,
+	state: &mut Vec<Box<dyn Situation>>,
 	out: &mut FileOut,
 	buf: &[u8],
 	eof: bool,

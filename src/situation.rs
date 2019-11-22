@@ -16,8 +16,8 @@ pub trait Situation {
 pub enum Transition {
 	Flush,
 	FlushPopOnEof,
-	Replace(Box<Situation>),
-	Push(Box<Situation>),
+	Replace(Box<dyn Situation>),
+	Push(Box<dyn Situation>),
 	Pop,
 	Err(UnsupportedSyntax),
 }

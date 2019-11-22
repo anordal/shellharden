@@ -42,7 +42,7 @@ fn transition_eq(a: &Transition, b: &Transition) -> bool {
 }
 
 // FIXME: Compare vtable pointers.
-fn sit_eq(a: &Situation, b: &Situation) -> bool {
+fn sit_eq(a: &dyn Situation, b: &dyn Situation) -> bool {
 	if a.get_color() != b.get_color() {
 		eprintln!("Situation.color: {} != {}", a.get_color(), b.get_color());
 		false
