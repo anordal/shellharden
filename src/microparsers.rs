@@ -49,7 +49,7 @@ pub fn is_whitespace(c: u8) -> bool {
 
 pub fn is_word(byte: u8) -> bool {
 	match byte {
-		0 ... b' ' => false,
+		0 ..= b' ' => false,
 		b'&' => false,
 		b'(' => false,
 		b')' => false,
