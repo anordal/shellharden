@@ -21,7 +21,7 @@ pub struct SitUntilByte {
 
 impl Situation for SitUntilByte {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
-		let len = predlen(&|x| x != self.until, &horizon);
+		let len = predlen(|x| x != self.until, &horizon);
 		if len < horizon.len() {
 			WhatNow{tri: Transition::Pop, pre: len, len: 1, alt: self.end_replace}
 		} else {

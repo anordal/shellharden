@@ -113,7 +113,7 @@ pub fn common_str_cmd(
 			pre: i, len: 0, alt: None
 		});
 	} else if c == b'@' || c == b'*' || c == b'-' || is_decimal(c) {
-		if predlen(&is_decimal, &horizon[i+1 ..]) > 1 {
+		if predlen(is_decimal, &horizon[i+1 ..]) > 1 {
 			return bail_doubledigit(horizon, i+2);
 		}
 		let ext = Box::new(SitExtent{
@@ -218,7 +218,7 @@ fn pos_tailhazard(horizon: &[u8], end: u8) -> (usize, usize) {
 	if pos < horizon.len() && horizon[pos] == end {
 		pos += 1;
 		if pos < horizon.len() {
-			pos += predlen(&|x| x == b'\"', &horizon[pos ..]);
+			pos += predlen(|x| x == b'\"', &horizon[pos ..]);
 		}
 	}
 	(idlen, pos)

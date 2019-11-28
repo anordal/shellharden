@@ -14,7 +14,7 @@ pub fn prefixlen(a: &[u8], b: &[u8]) -> usize {
 	i
 }
 
-pub fn predlen(pred: &Fn(u8) -> bool, horizon: &[u8]) -> usize {
+pub fn predlen(pred: impl Fn(u8) -> bool, horizon: &[u8]) -> usize {
 	let mut i: usize = 0;
 	while i < horizon.len() && pred(horizon[i]) {
 		i += 1;
@@ -37,7 +37,7 @@ pub fn is_identifiertail(c: u8) -> bool {
 
 pub fn identifierlen(horizon: &[u8]) -> usize {
 	if !horizon.is_empty() && is_identifierhead(horizon[0]) {
-		1 + predlen(&is_identifiertail, &horizon[1 ..])
+		1 + predlen(is_identifiertail, &horizon[1 ..])
 	} else {
 		0
 	}

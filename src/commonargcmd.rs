@@ -63,7 +63,7 @@ pub fn keyword_or_command(
 			};
 		}
 	}
-	let len = len + predlen(&is_word, &horizon[i+len..]);
+	let len = len + predlen(is_word, &horizon[i+len..]);
 	if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
 		return flush(i);
 	}
@@ -277,13 +277,13 @@ fn find_usual_suspects(
 }
 
 fn find_heredoc(horizon: &[u8]) -> (usize, Vec<u8>) {
-	let mut ate = predlen(&|x| x == b'<', &horizon);
+	let mut ate = predlen(|x| x == b'<', &horizon);
 	let mut found = Vec::<u8>::new();
 	if ate != 2 {
 		return (ate, found);
 	}
-	ate += predlen(&|x| x == b'-', &horizon[ate ..]);
-	ate += predlen(&is_whitespace, &horizon[ate ..]);
+	ate += predlen(|x| x == b'-', &horizon[ate ..]);
+	ate += predlen(is_whitespace, &horizon[ate ..]);
 
 	// Lex one word.
 	let herein = &horizon[ate ..];

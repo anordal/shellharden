@@ -20,7 +20,7 @@ pub struct SitVarIdent {
 
 impl Situation for SitVarIdent {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
-		let len = predlen(&is_identifiertail, &horizon);
+		let len = predlen(is_identifiertail, &horizon);
 		if len < horizon.len() {
 			return WhatNow{tri: Transition::Pop, pre: len, len: 0, alt: self.end_insert};
 		}

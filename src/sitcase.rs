@@ -25,7 +25,7 @@ pub struct SitIn {}
 impl Situation for SitIn {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, _) in horizon.iter().enumerate() {
-			let len = predlen(&is_word, &horizon[i..]);
+			let len = predlen(is_word, &horizon[i..]);
 			if len == 0 {
 				continue;
 			}
@@ -58,7 +58,7 @@ struct SitCase {}
 impl Situation for SitCase {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, &a) in horizon.iter().enumerate() {
-			let len = predlen(&is_word, &horizon[i..]);
+			let len = predlen(is_word, &horizon[i..]);
 			if len == 0 {
 				if a == b')' {
 					return WhatNow{
@@ -111,7 +111,7 @@ impl Situation for SitCaseArm {
 				continue;
 			}
 			// Premature esac: Survive and rewrite.
-			let len = predlen(&is_word, &horizon[i..]);
+			let len = predlen(is_word, &horizon[i..]);
 			if i + len != horizon.len() || (i == 0 && !is_horizon_lengthenable) {
 				let word = &horizon[i..i+len];
 				if word == b"esac" {
