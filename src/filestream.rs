@@ -17,7 +17,7 @@ pub enum InputSource<'a> {
 
 impl<'a> InputSource<'a> {
 	pub fn open_file(path: &std::ffi::OsString) -> Result<InputSource, std::io::Error> {
-		Ok(InputSource::File(try!(std::fs::File::open(path))))
+		Ok(InputSource::File(std::fs::File::open(path)?))
 	}
 	pub fn open_stdin(stdin: &std::io::Stdin) -> InputSource {
 		InputSource::Stdin(stdin.lock())
@@ -32,8 +32,8 @@ impl<'a> InputSource<'a> {
 		match *self {
 			InputSource::Stdin(_) => panic!("filesize of stdin"),
 			InputSource::File (ref mut fh) => {
-				let off :u64 = try!(fh.seek(std::io::SeekFrom::End(0)));
-				try!(fh.seek(std::io::SeekFrom::Start(0)));
+				let off :u64 = fh.seek(std::io::SeekFrom::End(0))?;
+				fh.seek(std::io::SeekFrom::Start(0))?;
 				Ok(off)
 			},
 		}
@@ -63,7 +63,7 @@ impl<'a> FileOut<'a> {
 	}
 	pub fn write_all(&mut self, buf: &[u8]) -> Result<(), std::io::Error> {
 		match self.sink {
-			OutputSink::Stdout(ref mut fh) => try!(fh.write_all(&buf)),
+			OutputSink::Stdout(ref mut fh) => fh.write_all(&buf)?,
 			OutputSink::Soak(ref mut vec) => vec.extend_from_slice(buf),
 			OutputSink::None => {},
 		}
@@ -71,7 +71,7 @@ impl<'a> FileOut<'a> {
 	}
 	pub fn write_fmt(&mut self, args: std::fmt::Arguments) -> Result<(), std::io::Error> {
 		match self.sink {
-			OutputSink::Stdout(ref mut fh) => try!(fh.write_fmt(args)),
+			OutputSink::Stdout(ref mut fh) => fh.write_fmt(args)?,
 			OutputSink::Soak(ref mut buf) => {
 				// TODO: Format directly to vec<u8>
 				let mut s = String::new();
@@ -87,14 +87,13 @@ impl<'a> FileOut<'a> {
 	pub fn commit(&mut self, path: &std::ffi::OsString) -> Result<(), std::io::Error> {
 		if self.change {
 			if let OutputSink::Soak(ref vec) = self.sink {
-				let mut overwrite = try!(
-					std::fs::OpenOptions::new()
+				std::fs::OpenOptions::new()
 					.write(true)
 					.truncate(true)
 					.create(false)
-					.open(path)
-				);
-				try!(overwrite.write_all(vec));
+					.open(path)?
+					.write_all(vec)?
+				;
 			}
 		}
 		Ok(())

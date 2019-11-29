@@ -51,13 +51,13 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 		let mut fi: InputSource = if path.is_empty() {
 			InputSource::open_stdin(&stdin)
 		} else {
-			try!(InputSource::open_file(path).map_err(Error::Stdio))
+			InputSource::open_file(path).map_err(Error::Stdio)?
 		};
 
 		fo = if sett.osel == OutputSelector::CHECK {
 			FileOut::open_none()
 		} else if sett.replace && !path.is_empty() {
-			FileOut::open_soak(try!(fi.size().map_err(Error::Stdio)) * 9 / 8)
+			FileOut::open_soak(fi.size().map_err(Error::Stdio)? * 9 / 8)
 		} else {
 			FileOut::open_stdout(&stdout)
 		};
@@ -71,10 +71,10 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 		})};
 
 		loop {
-			let bytes = try!(fi.read(&mut buf[fill ..]).map_err(Error::Stdio));
+			let bytes = fi.read(&mut buf[fill ..]).map_err(Error::Stdio)?;
 			fill += bytes;
 			let eof = bytes == 0;
-			let consumed = try!(stackmachine(&mut state, &mut fo, &buf[0 .. fill], eof, &sett));
+			let consumed = stackmachine(&mut state, &mut fo, &buf[0 .. fill], eof, &sett)?;
 			let remain = fill - consumed;
 			if eof {
 				assert!(remain == 0);
@@ -123,7 +123,7 @@ fn stackmachine(
 			}
 		}
 
-		try!(out.write_all(&horizon[.. whatnow.pre]).map_err(Error::Stdio));
+		out.write_all(&horizon[.. whatnow.pre]).map_err(Error::Stdio)?;
 		let replaceable = &horizon[whatnow.pre .. whatnow.pre + whatnow.len];
 		let progress = whatnow.pre + whatnow.len;
 
@@ -147,10 +147,10 @@ fn stackmachine(
 					color_pre = COLOR_NORMAL;
 					color_final = COLOR_NORMAL;
 				};
-				try!(write_transition(
+				write_transition(
 					out, sett, replaceable, whatnow.alt,
 					color_pre, color_final, color_final,
-				).map_err(Error::Stdio));
+				).map_err(Error::Stdio)?;
 				state[ix] = newstate;
 			}
 			(Transition::Push(newstate), _) => {
@@ -164,10 +164,10 @@ fn stackmachine(
 					color_final = COLOR_NORMAL;
 				};
 				state.push(newstate);
-				try!(write_transition(
+				write_transition(
 					out, sett, replaceable, whatnow.alt,
 					color_pre, color_final, color_final,
-				).map_err(Error::Stdio));
+				).map_err(Error::Stdio)?;
 			}
 			(Transition::Pop, _) | (Transition::FlushPopOnEof, true) => {
 				let color_pre;
@@ -180,10 +180,10 @@ fn stackmachine(
 					color_final = COLOR_NORMAL;
 				};
 				state.pop();
-				try!(write_transition(
+				write_transition(
 					out, sett, replaceable, whatnow.alt,
 					color_pre, color_pre, color_final,
-				).map_err(Error::Stdio));
+				).map_err(Error::Stdio)?;
 			}
 		}
 		pos += progress;
@@ -201,7 +201,7 @@ fn write_transition(
 	color_final: u32,
 ) -> Result<(), std::io::Error> {
 	let mut color_cur = color_pre;
-	try!(match (alternative, sett.osel) {
+	match (alternative, sett.osel) {
 		(Some(replacement), OutputSelector::DIFF) => {
 			write_diff(out, &mut color_cur, color_transition, replaceable, &replacement)
 		},
@@ -211,9 +211,9 @@ fn write_transition(
 		(_, _) => {
 			write_colored_slice(out, &mut color_cur, color_transition, replaceable)
 		},
-	});
+	}?;
 	if color_cur != color_final {
-		try!(write_color(out, color_final));
+		write_color(out, color_final)?;
 	}
 	Ok(())
 }
@@ -234,12 +234,12 @@ fn write_diff(
 		let color_next;
 		if let Some(pivot_b) = remain_b.iter().position(|&b| b == a) {
 			color_next = color_neutral;
-			try!(write_colored_slice(out, &mut color_cur, color_b, &remain_b[0 .. pivot_b]));
+			write_colored_slice(out, &mut color_cur, color_b, &remain_b[0 .. pivot_b])?;
 			remain_b = &remain_b[pivot_b+1 ..];
 		} else {
 			color_next = color_a;
 		}
-		try!(write_colored_slice(out, &mut color_cur, color_next, &remain_a[i ..= i]));
+		write_colored_slice(out, &mut color_cur, color_next, &remain_a[i ..= i])?;
 	}
 	write_colored_slice(out, &mut color_cur, color_b, &remain_b)
 }
@@ -254,7 +254,7 @@ fn write_colored_slice(
 		return Ok(());
 	}
 	if *color_cur != color {
-		try!(write_color(out, color));
+		write_color(out, color)?;
 		*color_cur = color;
 	}
 	out.write_all(slice)
