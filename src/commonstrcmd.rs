@@ -41,10 +41,10 @@ pub fn common_str_cmd(
 		let found_pwd = find_pwd(
 			&horizon, i, 1, b'`', is_horizon_lengthenable
 		);
-		match &found_pwd {
-			&CommonStrCmdResult::None => {},
-			&CommonStrCmdResult::Some(_) |
-			&CommonStrCmdResult::OnlyWithQuotes(_) => {
+		match found_pwd {
+			CommonStrCmdResult::None => {},
+			CommonStrCmdResult::Some(_) |
+			CommonStrCmdResult::OnlyWithQuotes(_) => {
 				return found_pwd;
 			}
 		}
@@ -75,10 +75,10 @@ pub fn common_str_cmd(
 		let found_pwd = find_pwd(
 			&horizon, i, 2, b')', is_horizon_lengthenable
 		);
-		match &found_pwd {
-			&CommonStrCmdResult::None => {},
-			&CommonStrCmdResult::Some(_) |
-			&CommonStrCmdResult::OnlyWithQuotes(_) => {
+		match found_pwd {
+			CommonStrCmdResult::None => {},
+			CommonStrCmdResult::Some(_) |
+			CommonStrCmdResult::OnlyWithQuotes(_) => {
 				return found_pwd;
 			}
 		}
