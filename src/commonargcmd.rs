@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 - 2019 Andreas Nordal
+ * Copyright 2016 - 2020 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,22 +48,17 @@ pub fn keyword_or_command(
 			})), pre: i, len: 1, alt: None
 		};
 	}
-	let mut len = identifierlen(&horizon[i..]);
-	if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
+	let (found, len) = find_lvalue(&horizon[i..]);
+	if found == Tri::Maybe && (i > 0 || is_horizon_lengthenable) {
 		return flush(i);
 	}
-	if len > 0 && i + len < horizon.len() {
-		if horizon[i + len] == b'+' && i + len + 1 < horizon.len() {
-			len += 1;
-		}
-		if horizon[i + len] == b'=' {
-			return WhatNow{
-				tri: Transition::Push(Box::new(SitRvalue{end_trigger})),
-				pre: i + len + 1, len: 0, alt: None
-			};
-		}
+	if found == Tri::Yes {
+		return WhatNow{
+			tri: Transition::Push(Box::new(SitRvalue{end_trigger})),
+			pre: i + len, len: 0, alt: None
+		};
 	}
-	let len = len + predlen(is_word, &horizon[i+len..]);
+	let len = predlen(is_word, &horizon[i..]);
 	if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
 		return flush(i);
 	}
@@ -276,6 +271,51 @@ fn find_usual_suspects(
 	None
 }
 
+#[derive(PartialEq)]
+#[derive(Clone)]
+#[derive(Copy)]
+enum Tri {
+	No,
+	Maybe,
+	Yes,
+}
+
+fn find_lvalue(horizon: &[u8]) -> (Tri, usize) {
+	let mut ate = identifierlen(&horizon);
+	if ate == 0 {
+		return (Tri::No, ate);
+	}
+
+	#[derive(Clone)]
+	#[derive(Copy)]
+	enum Lex {
+		Ident,
+		Brack,
+		Pluss,
+	}
+	let mut state = Lex::Ident;
+
+	loop {
+		if ate == horizon.len() {
+			return (Tri::Maybe, ate);
+		}
+		let byte :u8 = horizon[ate];
+		ate += 1;
+
+		// TODO: Recursion: Expression tracker
+		match (state, byte) {
+			(Lex::Ident, b'=') => return (Tri::Yes, ate),
+			(Lex::Pluss, b'=') => return (Tri::Yes, ate),
+			(Lex::Ident, b'[') => state = Lex::Brack,
+			(Lex::Brack, b']') => state = Lex::Ident,
+			(Lex::Ident, b'+') => state = Lex::Pluss,
+			(Lex::Ident, _) => return (Tri::No, ate),
+			(Lex::Pluss, _) => return (Tri::No, ate),
+			(Lex::Brack, _) => {},
+		}
+	}
+}
+
 fn find_heredoc(horizon: &[u8]) -> (usize, Vec<u8>) {
 	let mut ate = predlen(|x| x == b'<', &horizon);
 	let mut found = Vec::<u8>::new();
@@ -333,4 +373,21 @@ fn find_heredoc(horizon: &[u8]) -> (usize, Vec<u8>) {
 		ate += 1;
 	}
 	(ate, found)
+}
+
+#[test]
+fn test_find_lvalue() {
+	assert!(find_lvalue(b"") == (Tri::No, 0));
+	assert!(find_lvalue(b"=") == (Tri::No, 0));
+	assert!(find_lvalue(b"[]") == (Tri::No, 0));
+	assert!(find_lvalue(b"esa") == (Tri::Maybe, 3));
+	assert!(find_lvalue(b"esa+") == (Tri::Maybe, 4));
+	assert!(find_lvalue(b"esa[]") == (Tri::Maybe, 5));
+	assert!(find_lvalue(b"esa[]+") == (Tri::Maybe, 6));
+	assert!(find_lvalue(b"esa ") == (Tri::No, 4));
+	assert!(find_lvalue(b"esa]") == (Tri::No, 4));
+	assert!(find_lvalue(b"esa=") == (Tri::Yes, 4));
+	assert!(find_lvalue(b"esa+=") == (Tri::Yes, 5));
+	assert!(find_lvalue(b"esa[]=") == (Tri::Yes, 6));
+	assert!(find_lvalue(b"esa[]+=") == (Tri::Yes, 7));
 }

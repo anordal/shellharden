@@ -97,9 +97,62 @@ impl Situation for SitArg {
 #[cfg(test)]
 use ::testhelpers::*;
 #[cfg(test)]
+use sitrvalue::SitRvalue;
+#[cfg(test)]
+use sitextent::SitExtent;
+#[cfg(test)]
 use sitvec::SitVec;
 #[cfg(test)]
+use situation::COLOR_KWD;
+#[cfg(test)]
 use situation::COLOR_HERE;
+
+#[cfg(test)]
+fn mk_assignment(pre: usize) -> WhatNow {
+	WhatNow{
+		tri: Transition::Push(Box::new(SitRvalue{end_trigger: 0})),
+		pre, len: 0, alt: None
+	}
+}
+
+#[cfg(test)]
+fn mk_cmd(pre: usize) -> WhatNow {
+	WhatNow{
+		tri: Transition::Push(Box::new(SitCmd{end_trigger: 0})),
+		pre, len: 0, alt: None
+	}
+}
+
+#[cfg(test)]
+fn mk_kwd(pre: usize) -> WhatNow {
+	WhatNow{
+		tri: Transition::Push(Box::new(SitExtent{
+			len: 0,
+			color: COLOR_KWD,
+			end_insert: None
+		})), pre, len: 0, alt: None
+	}
+}
+
+#[test]
+fn test_sit_normal() {
+	let subj = || {
+		SitNormal{end_trigger: 0, end_replace: None}
+	};
+
+	sit_expect!(subj(), b"esa", &flush(0), &mk_cmd(0));
+	sit_expect!(subj(), b"esa=", &mk_assignment(4));
+	sit_expect!(subj(), b"esac", &flush(0), &mk_kwd(0));
+	sit_expect!(subj(), b"esac=", &mk_assignment(5));
+	sit_expect!(subj(), b"esack", &flush(0), &mk_cmd(0));
+	sit_expect!(subj(), b"esack=", &mk_assignment(6));
+	sit_expect!(subj(), b";esa", &flush(1));
+	sit_expect!(subj(), b";esa=", &mk_assignment(5));
+	sit_expect!(subj(), b";esac", &flush(1));
+	sit_expect!(subj(), b";esac=", &mk_assignment(6));
+	sit_expect!(subj(), b";esack", &flush(1));
+	sit_expect!(subj(), b";esack=", &mk_assignment(7));
+}
 
 #[test]
 fn test_sit_arg() {
@@ -109,13 +162,17 @@ fn test_sit_arg() {
 		)),
 		pre: 0, len: 8, alt: None
 	};
-	sit_expect!(SitArg{end_trigger: 0}, b"", &flush_or_pop(0));
-	sit_expect!(SitArg{end_trigger: 0}, b" ", &flush_or_pop(1));
-	sit_expect!(SitArg{end_trigger: 0}, b"arg", &flush_or_pop(3));
-	sit_expect!(SitArg{end_trigger: 0}, b"<<- \"\\\\\"\n", &found_heredoc);
-	sit_expect!(SitArg{end_trigger: 0}, b"a <<- \"\\\\\"", &flush(2));
-	sit_expect!(SitArg{end_trigger: 0}, b"a <<- \"\\", &flush(2));
-	sit_expect!(SitArg{end_trigger: 0}, b"a <<- ", &flush(2));
-	sit_expect!(SitArg{end_trigger: 0}, b"a <", &flush(2));
-	sit_expect!(SitArg{end_trigger: 0}, b"a ", &flush_or_pop(2));
+	let subj = || {
+		SitArg{end_trigger: 0}
+	};
+
+	sit_expect!(subj(), b"", &flush_or_pop(0));
+	sit_expect!(subj(), b" ", &flush_or_pop(1));
+	sit_expect!(subj(), b"arg", &flush_or_pop(3));
+	sit_expect!(subj(), b"<<- \"\\\\\"\n", &found_heredoc);
+	sit_expect!(subj(), b"a <<- \"\\\\\"", &flush(2));
+	sit_expect!(subj(), b"a <<- \"\\", &flush(2));
+	sit_expect!(subj(), b"a <<- ", &flush(2));
+	sit_expect!(subj(), b"a <", &flush(2));
+	sit_expect!(subj(), b"a ", &flush_or_pop(2));
 }
