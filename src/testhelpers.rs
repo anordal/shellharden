@@ -26,18 +26,39 @@ pub fn whatnow_eq(a: &WhatNow, b: &WhatNow) -> bool {
 fn transition_eq(a: &Transition, b: &Transition) -> bool {
 	match (a, b) {
 		(Flush, Flush) => true,
+		(Flush, _) => {
+			eprintln!("Transition mismatch; Lhs={}", "Flush");
+			false
+		},
 		(FlushPopOnEof, FlushPopOnEof) => true,
+		(FlushPopOnEof, _) => {
+			eprintln!("Transition mismatch; Lhs={}", "FlushPopOnEof");
+			false
+		},
 		(Replace(a), Replace(b)) => {
 			sit_eq(a.as_ref(), b.as_ref())
+		},
+		(Replace(_), _) => {
+			eprintln!("Transition mismatch; Lhs={}", "Replace");
+			false
 		},
 		(Push(a), Push(b)) => {
 			sit_eq(a.as_ref(), b.as_ref())
 		},
-		(Pop, Pop) => true,
-		_ => {
-			eprintln!("Transition mismatch");
+		(Push(_), _) => {
+			eprintln!("Transition mismatch; Lhs={}", "Push");
 			false
-		}
+		},
+		(Pop, Pop) => true,
+		(Pop, _) => {
+			eprintln!("Transition mismatch; Lhs={}", "Pop");
+			false
+		},
+		(Transition::Err(_), Transition::Err(_)) => true,
+		(Transition::Err(_), _) => {
+			eprintln!("Transition mismatch; Lhs={}", "Err");
+			false
+		},
 	}
 }
 
