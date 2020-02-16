@@ -13,11 +13,15 @@ use ::situation::flush;
 use ::situation::flush_or_pop;
 use ::situation::COLOR_NORMAL;
 use ::situation::COLOR_CMD;
+use ::situation::COLOR_MAGIC;
 
 use ::microparsers::is_whitespace;
 
 use ::commonargcmd::keyword_or_command;
 use ::commonargcmd::common_arg_cmd;
+use ::commonargcmd::find_lvalue;
+use ::commonargcmd::Tri;
+use ::sitrvalue::SitRvalue;
 
 pub struct SitNormal {
 	pub end_trigger :u16,
@@ -94,10 +98,36 @@ impl Situation for SitArg {
 	}
 }
 
+pub struct SitDeclare {
+	pub end_trigger :u16,
+}
+
+impl Situation for SitDeclare {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
+		for (i, _) in horizon.iter().enumerate() {
+			let (found, len) = find_lvalue(&horizon[i..]);
+			if found == Tri::Maybe && (i > 0 || is_horizon_lengthenable) {
+				return flush(i);
+			}
+			if found == Tri::Yes {
+				return WhatNow{
+					tri: Transition::Push(Box::new(SitRvalue{end_trigger: self.end_trigger})),
+					pre: i + len, len: 0, alt: None
+				};
+			}
+			if let Some(res) = common_arg_cmd(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+				return res;
+			}
+		}
+		flush_or_pop(horizon.len())
+	}
+	fn get_color(&self) -> u32 {
+		COLOR_MAGIC
+	}
+}
+
 #[cfg(test)]
 use ::testhelpers::*;
-#[cfg(test)]
-use sitrvalue::SitRvalue;
 #[cfg(test)]
 use sitextent::SitExtent;
 #[cfg(test)]

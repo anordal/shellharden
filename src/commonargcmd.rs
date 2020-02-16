@@ -26,6 +26,7 @@ use ::commonstrcmd::common_str_cmd;
 use ::sitcase::SitIn;
 use ::sitcmd::SitNormal;
 use ::sitcmd::SitCmd;
+use ::sitcmd::SitDeclare;
 use ::sitcomment::SitComment;
 use ::sitextent::SitExtent;
 use ::sitrvalue::SitRvalue;
@@ -93,6 +94,12 @@ pub fn keyword_or_command(
 				color: COLOR_KWD,
 				end_insert: None
 			})), pre: i, len: 0, alt: None
+		},
+		b"declare" |
+		b"local" |
+		b"readonly" => WhatNow{
+			tri: Transition::Push(Box::new(SitDeclare{end_trigger})),
+			pre: i, len, alt: None
 		},
 		_ => WhatNow{
 			tri: Transition::Push(Box::new(SitCmd{end_trigger})),
@@ -274,13 +281,13 @@ fn find_usual_suspects(
 #[derive(PartialEq)]
 #[derive(Clone)]
 #[derive(Copy)]
-enum Tri {
+pub enum Tri {
 	No,
 	Maybe,
 	Yes,
 }
 
-fn find_lvalue(horizon: &[u8]) -> (Tri, usize) {
+pub fn find_lvalue(horizon: &[u8]) -> (Tri, usize) {
 	let mut ate = identifierlen(&horizon);
 	if ate == 0 {
 		return (Tri::No, ate);
