@@ -72,39 +72,39 @@ fn main() {
 			if comparable.starts_with(opt_trigger) {
 				match comparable {
 					"--suggest" => {
-						sett.osel=OutputSelector::DIFF;
-						sett.syntax=false;
-						sett.replace=false;
+						sett.osel = OutputSelector::DIFF;
+						sett.syntax = false;
+						sett.replace = false;
 						continue;
 					},
 					"--syntax" => {
-						sett.osel=OutputSelector::ORIGINAL;
-						sett.syntax=true;
-						sett.replace=false;
+						sett.osel = OutputSelector::ORIGINAL;
+						sett.syntax = true;
+						sett.replace = false;
 						continue;
 					},
 					"--syntax-suggest" => {
-						sett.osel=OutputSelector::DIFF;
-						sett.syntax=true;
-						sett.replace=false;
+						sett.osel = OutputSelector::DIFF;
+						sett.syntax = true;
+						sett.replace = false;
 						continue;
 					},
 					"--transform" => {
-						sett.osel=OutputSelector::TRANSFORM;
-						sett.syntax=false;
-						sett.replace=false;
+						sett.osel = OutputSelector::TRANSFORM;
+						sett.syntax = false;
+						sett.replace = false;
 						continue;
 					},
 					"--check" => {
-						sett.osel=OutputSelector::CHECK;
-						sett.syntax=false;
-						sett.replace=false;
+						sett.osel = OutputSelector::CHECK;
+						sett.syntax = false;
+						sett.replace = false;
 						continue;
 					},
 					"--replace" => {
-						sett.osel=OutputSelector::TRANSFORM;
-						sett.syntax=false;
-						sett.replace=true;
+						sett.osel = OutputSelector::TRANSFORM;
+						sett.syntax = false;
+						sett.replace = true;
 						continue;
 					},
 					"--help" | "-h" => {
@@ -157,13 +157,13 @@ mod commonargcmd;
 mod commonstrcmd;
 mod microparsers;
 mod sitcase;
-mod sitcomment;
 mod sitcmd;
-mod sitrvalue;
-mod sitvec;
-mod sitvarident;
-mod sitstrsqesc;
-mod situntilbyte;
+mod sitcomment;
 mod sitextent;
+mod sitrvalue;
 mod sitstrdq;
 mod sitstrphantom;
+mod sitstrsqesc;
+mod situntilbyte;
+mod sitvarident;
+mod sitvec;
