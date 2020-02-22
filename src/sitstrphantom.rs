@@ -6,18 +6,18 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use ::situation::Situation;
-use ::situation::Transition;
-use ::situation::WhatNow;
-use ::situation::flush;
+use crate::situation::Situation;
+use crate::situation::Transition;
+use crate::situation::WhatNow;
+use crate::situation::flush;
 
-use ::commonstrcmd::CommonStrCmdResult;
-use ::commonstrcmd::common_str_cmd;
+use crate::commonstrcmd::CommonStrCmdResult;
+use crate::commonstrcmd::common_str_cmd;
 
-use ::microparsers::predlen;
-use ::microparsers::is_word;
+use crate::microparsers::predlen;
+use crate::microparsers::is_word;
 
-use ::sitstrdq::SitStrDq;
+use crate::sitstrdq::SitStrDq;
 
 pub struct SitStrPhantom {
 	pub cmd_end_trigger: u16,
@@ -83,13 +83,13 @@ fn dutifully_end_the_string() -> WhatNow {
 }
 
 #[cfg(test)]
-use ::testhelpers::*;
+use crate::testhelpers::*;
 #[cfg(test)]
-use sitcmd::SitNormal;
+use crate::sitcmd::SitNormal;
 #[cfg(test)]
-use sitextent::SitExtent;
+use crate::sitextent::SitExtent;
 #[cfg(test)]
-use ::situation::COLOR_VAR;
+use crate::situation::COLOR_VAR;
 
 #[cfg(test)]
 fn subject() -> SitStrPhantom {

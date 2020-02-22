@@ -6,13 +6,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use ::situation::Situation;
-use ::situation::Transition;
-use ::situation::WhatNow;
-use ::situation::flush;
+use crate::situation::Situation;
+use crate::situation::Transition;
+use crate::situation::WhatNow;
+use crate::situation::flush;
 
-use commonstrcmd::CommonStrCmdResult;
-use commonstrcmd::common_str_cmd;
+use crate::commonstrcmd::CommonStrCmdResult;
+use crate::commonstrcmd::common_str_cmd;
 
 pub struct SitStrDq {}
 
@@ -36,13 +36,13 @@ impl Situation for SitStrDq {
 }
 
 #[cfg(test)]
-use ::testhelpers::*;
+use crate::testhelpers::*;
 #[cfg(test)]
-use sitcmd::SitNormal;
+use crate::sitcmd::SitNormal;
 #[cfg(test)]
-use sitvec::SitVec;
+use crate::sitvec::SitVec;
 #[cfg(test)]
-use situation::COLOR_MAGIC;
+use crate::situation::COLOR_MAGIC;
 
 #[test]
 fn test_sit_strdq() {

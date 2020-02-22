@@ -6,22 +6,22 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use ::situation::Situation;
-use ::situation::Transition;
-use ::situation::WhatNow;
-use ::situation::flush;
-use ::situation::flush_or_pop;
-use ::situation::COLOR_NORMAL;
-use ::situation::COLOR_CMD;
-use ::situation::COLOR_MAGIC;
+use crate::situation::Situation;
+use crate::situation::Transition;
+use crate::situation::WhatNow;
+use crate::situation::flush;
+use crate::situation::flush_or_pop;
+use crate::situation::COLOR_NORMAL;
+use crate::situation::COLOR_CMD;
+use crate::situation::COLOR_MAGIC;
 
-use ::microparsers::is_whitespace;
+use crate::microparsers::is_whitespace;
 
-use ::commonargcmd::keyword_or_command;
-use ::commonargcmd::common_arg_cmd;
-use ::commonargcmd::find_lvalue;
-use ::commonargcmd::Tri;
-use ::sitrvalue::SitRvalue;
+use crate::commonargcmd::keyword_or_command;
+use crate::commonargcmd::common_arg_cmd;
+use crate::commonargcmd::find_lvalue;
+use crate::commonargcmd::Tri;
+use crate::sitrvalue::SitRvalue;
 
 pub struct SitNormal {
 	pub end_trigger :u16,
@@ -127,15 +127,15 @@ impl Situation for SitDeclare {
 }
 
 #[cfg(test)]
-use ::testhelpers::*;
+use crate::testhelpers::*;
 #[cfg(test)]
-use sitextent::SitExtent;
+use crate::sitextent::SitExtent;
 #[cfg(test)]
-use sitvec::SitVec;
+use crate::sitvec::SitVec;
 #[cfg(test)]
-use situation::COLOR_KWD;
+use crate::situation::COLOR_KWD;
 #[cfg(test)]
-use situation::COLOR_HERE;
+use crate::situation::COLOR_HERE;
 
 #[cfg(test)]
 fn mk_assignment(pre: usize) -> WhatNow {

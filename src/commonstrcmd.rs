@@ -6,24 +6,24 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use ::situation::Transition;
-use ::situation::WhatNow;
-use ::situation::flush;
-use ::situation::COLOR_VAR;
-use ::situation::COLOR_MAGIC;
+use crate::situation::Transition;
+use crate::situation::WhatNow;
+use crate::situation::flush;
+use crate::situation::COLOR_VAR;
+use crate::situation::COLOR_MAGIC;
 
-use ::microparsers::predlen;
-use ::microparsers::is_identifierhead;
-use ::microparsers::is_identifiertail;
-use ::microparsers::identifierlen;
+use crate::microparsers::predlen;
+use crate::microparsers::is_identifierhead;
+use crate::microparsers::is_identifiertail;
+use crate::microparsers::identifierlen;
 
-use ::syntaxerror::UnsupportedSyntax;
+use crate::syntaxerror::UnsupportedSyntax;
 
-use ::sitcmd::SitNormal;
-use ::sitextent::SitExtent;
-use ::situntilbyte::SitUntilByte;
-use ::sitvarident::SitVarIdent;
-use ::sitvec::SitVec;
+use crate::sitcmd::SitNormal;
+use crate::sitextent::SitExtent;
+use crate::situntilbyte::SitUntilByte;
+use crate::sitvarident::SitVarIdent;
+use crate::sitvec::SitVec;
 
 pub enum CommonStrCmdResult {
 	None,

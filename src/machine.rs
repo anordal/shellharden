@@ -8,17 +8,17 @@
 
 use std::io;
 
-use ::syntaxerror::UnsupportedSyntax;
+use crate::syntaxerror::UnsupportedSyntax;
 
-use ::filestream::InputSource;
-use ::filestream::FileOut;
+use crate::filestream::InputSource;
+use crate::filestream::FileOut;
 
-use ::situation::Situation;
-use ::situation::Transition;
-use ::situation::WhatNow;
-use ::situation::COLOR_NORMAL;
+use crate::situation::Situation;
+use crate::situation::Transition;
+use crate::situation::WhatNow;
+use crate::situation::COLOR_NORMAL;
 
-use ::sitcmd::SitNormal;
+use crate::sitcmd::SitNormal;
 
 #[derive(Clone)]
 #[derive(Copy)]

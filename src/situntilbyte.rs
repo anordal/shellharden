@@ -6,12 +6,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use ::situation::Situation;
-use ::situation::Transition;
-use ::situation::WhatNow;
-use ::situation::flush;
+use crate::situation::Situation;
+use crate::situation::Transition;
+use crate::situation::WhatNow;
+use crate::situation::flush;
 
-use ::microparsers::predlen;
+use crate::microparsers::predlen;
 
 pub struct SitUntilByte {
 	pub until: u8,

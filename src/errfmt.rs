@@ -8,7 +8,7 @@
 
 use std::io::Write;
 
-use ::syntaxerror::UnsupportedSyntax;
+use crate::syntaxerror::UnsupportedSyntax;
 
 fn stderr_write_or_panic(lock: &mut std::io::StderrLock, bytes: &[u8]) {
 	if let Err(e) = lock.write_all(bytes) {

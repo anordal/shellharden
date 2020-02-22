@@ -6,7 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use ::syntaxerror::UnsupportedSyntax;
+use crate::syntaxerror::UnsupportedSyntax;
 
 pub trait Situation {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow;

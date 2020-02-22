@@ -10,7 +10,7 @@ use std::env;
 use std::process;
 
 mod machine;
-use machine::OutputSelector;
+use crate::machine::OutputSelector;
 
 mod errfmt;
 mod filestream;

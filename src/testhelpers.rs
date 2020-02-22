@@ -1,12 +1,12 @@
 
-use ::situation::WhatNow;
-use ::situation::Situation;
-use ::situation::Transition;
-use ::situation::Transition::Flush;
-use ::situation::Transition::FlushPopOnEof;
-use ::situation::Transition::Replace;
-use ::situation::Transition::Push;
-use ::situation::Transition::Pop;
+use crate::situation::WhatNow;
+use crate::situation::Situation;
+use crate::situation::Transition;
+use crate::situation::Transition::Flush;
+use crate::situation::Transition::FlushPopOnEof;
+use crate::situation::Transition::Replace;
+use crate::situation::Transition::Push;
+use crate::situation::Transition::Pop;
 
 pub fn whatnow_eq(a: &WhatNow, b: &WhatNow) -> bool {
 	if a.pre != b.pre {

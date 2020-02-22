@@ -6,35 +6,35 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use ::situation::Transition;
-use ::situation::WhatNow;
-use ::situation::flush;
-use ::situation::COLOR_KWD;
-use ::situation::COLOR_MAGIC;
-use ::situation::COLOR_HERE;
-use ::situation::COLOR_VAR;
+use crate::situation::Transition;
+use crate::situation::WhatNow;
+use crate::situation::flush;
+use crate::situation::COLOR_KWD;
+use crate::situation::COLOR_MAGIC;
+use crate::situation::COLOR_HERE;
+use crate::situation::COLOR_VAR;
 
-use ::microparsers::prefixlen;
-use ::microparsers::predlen;
-use ::microparsers::identifierlen;
-use ::microparsers::is_whitespace;
-use ::microparsers::is_word;
+use crate::microparsers::prefixlen;
+use crate::microparsers::predlen;
+use crate::microparsers::identifierlen;
+use crate::microparsers::is_whitespace;
+use crate::microparsers::is_word;
 
-use ::commonstrcmd::CommonStrCmdResult;
-use ::commonstrcmd::common_str_cmd;
+use crate::commonstrcmd::CommonStrCmdResult;
+use crate::commonstrcmd::common_str_cmd;
 
-use ::sitcase::SitIn;
-use ::sitcmd::SitNormal;
-use ::sitcmd::SitCmd;
-use ::sitcmd::SitDeclare;
-use ::sitcomment::SitComment;
-use ::sitextent::SitExtent;
-use ::sitrvalue::SitRvalue;
-use ::sitstrdq::SitStrDq;
-use ::sitstrphantom::SitStrPhantom;
-use ::sitstrsqesc::SitStrSqEsc;
-use ::situntilbyte::SitUntilByte;
-use ::sitvec::SitVec;
+use crate::sitcase::SitIn;
+use crate::sitcmd::SitNormal;
+use crate::sitcmd::SitCmd;
+use crate::sitcmd::SitDeclare;
+use crate::sitcomment::SitComment;
+use crate::sitextent::SitExtent;
+use crate::sitrvalue::SitRvalue;
+use crate::sitstrdq::SitStrDq;
+use crate::sitstrphantom::SitStrPhantom;
+use crate::sitstrsqesc::SitStrSqEsc;
+use crate::situntilbyte::SitUntilByte;
+use crate::sitvec::SitVec;
 
 pub fn keyword_or_command(
 	end_trigger :u16,

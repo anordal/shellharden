@@ -6,13 +6,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use ::situation::Situation;
-use ::situation::Transition;
-use ::situation::WhatNow;
-use ::situation::COLOR_VAR;
+use crate::situation::Situation;
+use crate::situation::Transition;
+use crate::situation::WhatNow;
+use crate::situation::COLOR_VAR;
 
-use ::microparsers::predlen;
-use ::microparsers::is_identifiertail;
+use crate::microparsers::predlen;
+use crate::microparsers::is_identifiertail;
 
 pub struct SitVarIdent {
 	pub end_insert: Option<&'static [u8]>,

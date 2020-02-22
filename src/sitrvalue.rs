@@ -6,15 +6,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use ::situation::Situation;
-use ::situation::Transition;
-use ::situation::WhatNow;
-use ::situation::flush;
-use ::situation::flush_or_pop;
-use ::situation::COLOR_NORMAL;
+use crate::situation::Situation;
+use crate::situation::Transition;
+use crate::situation::WhatNow;
+use crate::situation::flush;
+use crate::situation::flush_or_pop;
+use crate::situation::COLOR_NORMAL;
 
-use ::commonargcmd::common_quoting_unneeded;
-use ::commonargcmd::common_no_cmd;
+use crate::commonargcmd::common_quoting_unneeded;
+use crate::commonargcmd::common_no_cmd;
 
 pub struct SitRvalue {
 	pub end_trigger :u16,

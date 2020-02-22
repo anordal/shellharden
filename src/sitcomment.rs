@@ -6,11 +6,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use ::situation::Situation;
-use ::situation::Transition;
-use ::situation::WhatNow;
-use ::situation::flush_or_pop;
-use ::situation::COLOR_CMT;
+use crate::situation::Situation;
+use crate::situation::Transition;
+use crate::situation::WhatNow;
+use crate::situation::flush_or_pop;
+use crate::situation::COLOR_CMT;
 
 // Unlike SitUntilByte, does not swallow the end byte, and pops on eof.
 pub struct SitComment {}

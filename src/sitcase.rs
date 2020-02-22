@@ -6,19 +6,19 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use ::situation::Situation;
-use ::situation::Transition;
-use ::situation::WhatNow;
-use ::situation::flush;
-use ::situation::COLOR_NORMAL;
-use ::situation::COLOR_KWD;
+use crate::situation::Situation;
+use crate::situation::Transition;
+use crate::situation::WhatNow;
+use crate::situation::flush;
+use crate::situation::COLOR_NORMAL;
+use crate::situation::COLOR_KWD;
 
-use ::microparsers::predlen;
-use ::microparsers::is_whitespace;
-use ::microparsers::is_word;
+use crate::microparsers::predlen;
+use crate::microparsers::is_whitespace;
+use crate::microparsers::is_word;
 
-use ::commonargcmd::keyword_or_command;
-use ::commonargcmd::common_no_cmd_quoting_unneeded;
+use crate::commonargcmd::keyword_or_command;
+use crate::commonargcmd::common_no_cmd_quoting_unneeded;
 
 pub struct SitIn {}
 
@@ -130,9 +130,9 @@ impl Situation for SitCaseArm {
 }
 
 #[cfg(test)]
-use ::testhelpers::*;
+use crate::testhelpers::*;
 #[cfg(test)]
-use ::sitcmd::SitCmd;
+use crate::sitcmd::SitCmd;
 
 #[test]
 fn test_sit_in() {
