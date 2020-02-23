@@ -76,54 +76,54 @@ fn main() {
 						sett.syntax = false;
 						sett.replace = false;
 						continue;
-					},
+					}
 					"--syntax" => {
 						sett.osel = OutputSelector::ORIGINAL;
 						sett.syntax = true;
 						sett.replace = false;
 						continue;
-					},
+					}
 					"--syntax-suggest" => {
 						sett.osel = OutputSelector::DIFF;
 						sett.syntax = true;
 						sett.replace = false;
 						continue;
-					},
+					}
 					"--transform" => {
 						sett.osel = OutputSelector::TRANSFORM;
 						sett.syntax = false;
 						sett.replace = false;
 						continue;
-					},
+					}
 					"--check" => {
 						sett.osel = OutputSelector::CHECK;
 						sett.syntax = false;
 						sett.replace = false;
 						continue;
-					},
+					}
 					"--replace" => {
 						sett.osel = OutputSelector::TRANSFORM;
 						sett.syntax = false;
 						sett.replace = true;
 						continue;
-					},
+					}
 					"--help" | "-h" => {
 						help();
 						continue;
-					},
+					}
 					"--version" => {
 						println!(env!("CARGO_PKG_VERSION"));
 						continue;
-					},
+					}
 					"--" => {
 						opt_trigger = "\x00";
 						continue;
-					},
+					}
 					_ => {
 						errfmt::blame_path(&arg, "No such option.");
 						exit_code = 3;
 						break;
-					},
+					}
 				}
 			}
 		}
@@ -133,14 +133,14 @@ fn main() {
 			match e {
 				machine::Error::Stdio(ref fail) => {
 					errfmt::blame_path_io(&arg, &fail);
-				},
+				}
 				machine::Error::Syntax(ref fail) => {
 					errfmt::blame_syntax(&arg, &fail);
-				},
+				}
 				machine::Error::Check => {
 					exit_code = 2;
 					break;
-				},
+				}
 			};
 		}
 	}

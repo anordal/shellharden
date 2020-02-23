@@ -23,9 +23,9 @@ impl Situation for SitStrDq {
 				return WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None};
 			}
 			match common_str_cmd(&horizon, i, is_horizon_lengthenable, false) {
-				CommonStrCmdResult::None => {},
+				CommonStrCmdResult::None => {}
 				CommonStrCmdResult::Some(x) |
-				CommonStrCmdResult::OnlyWithQuotes(x) => { return x; },
+				CommonStrCmdResult::OnlyWithQuotes(x) => { return x; }
 			}
 		}
 		flush(horizon.len())

@@ -37,7 +37,7 @@ impl Situation for SitStrPhantom {
 				}
 				b'$' | b'`' => {
 					match common_str_cmd(&horizon, mouthful, is_horizon_lengthenable, true) {
-						CommonStrCmdResult::None => {},
+						CommonStrCmdResult::None => {}
 						CommonStrCmdResult::Some(consult) |
 						CommonStrCmdResult::OnlyWithQuotes(consult) => {
 							match consult.tri {
@@ -51,7 +51,7 @@ impl Situation for SitStrPhantom {
 									return consult;
 								}
 							}
-						},
+						}
 					}
 				}
 				_ => {}

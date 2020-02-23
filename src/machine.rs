@@ -204,13 +204,13 @@ fn write_transition(
 	match (alternative, sett.osel) {
 		(Some(replacement), OutputSelector::DIFF) => {
 			write_diff(out, &mut color_cur, color_transition, replaceable, &replacement)
-		},
+		}
 		(Some(replacement), OutputSelector::TRANSFORM) => {
 			write_colored_slice(out, &mut color_cur, color_transition, replacement)
-		},
+		}
 		(_, _) => {
 			write_colored_slice(out, &mut color_cur, color_transition, replaceable)
-		},
+		}
 	}?;
 	if color_cur != color_final {
 		write_color(out, color_final)?;

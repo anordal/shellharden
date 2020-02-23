@@ -138,7 +138,7 @@ pub fn common_no_cmd(
 					cmd_end_trigger: end_trigger,
 				})), pre: i, len: 0, alt: Some(b"\"")
 			})
-		},
+		}
 	}
 }
 
@@ -176,7 +176,7 @@ pub fn common_no_cmd_quoting_unneeded(
 			} else {
 				Some(x)
 			}
-		},
+		}
 	}
 }
 
@@ -318,7 +318,7 @@ pub fn find_lvalue(horizon: &[u8]) -> (Tri, usize) {
 			(Lex::Ident, b'+') => state = Lex::Pluss,
 			(Lex::Ident, _) => return (Tri::No, ate),
 			(Lex::Pluss, _) => return (Tri::No, ate),
-			(Lex::Brack, _) => {},
+			(Lex::Brack, _) => {}
 		}
 	}
 }
@@ -363,7 +363,7 @@ fn find_heredoc(horizon: &[u8]) -> (usize, Vec<u8>) {
 			(DelimiterSyntax::WORDESC, _) => {
 				found.push(byte);
 				DelimiterSyntax::WORD
-			},
+			}
 			(DelimiterSyntax::DQESC, b'\n') => DelimiterSyntax::DQ,
 			(DelimiterSyntax::DQESC, _) => {
 				if byte != b'\"' && byte != b'\\' {
@@ -371,11 +371,11 @@ fn find_heredoc(horizon: &[u8]) -> (usize, Vec<u8>) {
 				}
 				found.push(byte);
 				DelimiterSyntax::DQ
-			},
+			}
 			(_, _) => {
 				found.push(byte);
 				state
-			},
+			}
 		};
 		ate += 1;
 	}

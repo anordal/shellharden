@@ -35,7 +35,7 @@ impl<'a> InputSource<'a> {
 				let off :u64 = fh.seek(std::io::SeekFrom::End(0))?;
 				fh.seek(std::io::SeekFrom::Start(0))?;
 				Ok(off)
-			},
+			}
 		}
 	}
 }
@@ -65,7 +65,7 @@ impl<'a> FileOut<'a> {
 		match self.sink {
 			OutputSink::Stdout(ref mut fh) => fh.write_all(&buf)?,
 			OutputSink::Soak(ref mut vec) => vec.extend_from_slice(buf),
-			OutputSink::None => {},
+			OutputSink::None => {}
 		}
 		Ok(())
 	}
@@ -79,8 +79,8 @@ impl<'a> FileOut<'a> {
 					panic!("fmt::Error");
 				}
 				buf.extend_from_slice(s.as_bytes());
-			},
-			OutputSink::None => {},
+			}
+			OutputSink::None => {}
 		}
 		Ok(())
 	}
