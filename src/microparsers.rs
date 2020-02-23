@@ -22,12 +22,14 @@ pub fn predlen(pred: impl Fn(u8) -> bool, horizon: &[u8]) -> usize {
 	i
 }
 
+#[rustfmt::skip]
 pub fn is_identifierhead(c: u8) -> bool {
 	(c >= b'a' && c <= b'z')
 	|| (c >= b'A' && c <= b'Z')
 	|| (c == b'_')
 }
 
+#[rustfmt::skip]
 pub fn is_identifiertail(c: u8) -> bool {
 	(c >= b'a' && c <= b'z')
 	|| (c >= b'A' && c <= b'Z')
@@ -58,6 +60,6 @@ pub fn is_word(byte: u8) -> bool {
 		b'>' => false,
 		b'`' => false,
 		b'|' => false,
-		_ => true
+		_ => true,
 	}
 }
