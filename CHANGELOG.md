@@ -1,6 +1,19 @@
 # Changelog
 
+## 4.1.2
+
+*One refactoring, plenty of necessary fixes*
+
+* Fix old bug: Wrong quoting of associative array assignments (#31)
+* More permissive: Allow unquoted arguments to local, declare and readonly (#30)
+* Consistency: Rewrite `` `pwd` `` → `$PWD` directly, not via `$(pwd)`
+* Compatibility with newer Rust: rustc 1.37 through 1.41 and 2018 edition
+* Less code: Collapse nested enums in oft-used return type
+* Maintainers: Cargo.lock is now included (#28)
+
 ## 4.1.1
+
+*More testing*
 
 * Allow "$*" (no need to rewrite it to "$@" as long as the quotes are on).
 * Recognise premature esac to avoid parse error (seen on rustup.sh).
