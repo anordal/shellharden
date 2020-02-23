@@ -25,7 +25,7 @@ impl Situation for SitExtent {
 		self.len -= horizon.len();
 		flush(horizon.len())
 	}
-	fn get_color(&self) -> u32{
+	fn get_color(&self) -> u32 {
 		self.color
 	}
 }

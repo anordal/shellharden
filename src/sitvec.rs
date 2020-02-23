@@ -31,7 +31,7 @@ impl Situation for SitVec {
 			flush(1)
 		}
 	}
-	fn get_color(&self) -> u32{
+	fn get_color(&self) -> u32 {
 		self.color
 	}
 }

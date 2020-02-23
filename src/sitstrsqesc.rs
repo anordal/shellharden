@@ -28,7 +28,7 @@ impl Situation for SitStrSqEsc {
 		}
 		flush(horizon.len())
 	}
-	fn get_color(&self) -> u32{
+	fn get_color(&self) -> u32 {
 		0x00_ff8000
 	}
 }

@@ -28,7 +28,7 @@ impl Situation for SitUntilByte {
 			flush(len)
 		}
 	}
-	fn get_color(&self) -> u32{
+	fn get_color(&self) -> u32 {
 		self.color
 	}
 }

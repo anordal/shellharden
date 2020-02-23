@@ -59,7 +59,7 @@ impl Situation for SitStrPhantom {
 		}
 		dutifully_end_the_string()
 	}
-	fn get_color(&self) -> u32{
+	fn get_color(&self) -> u32 {
 		0x00_ff0000
 	}
 }

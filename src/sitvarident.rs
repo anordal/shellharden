@@ -29,7 +29,7 @@ impl Situation for SitVarIdent {
 			pre: horizon.len(), len: 0, alt: self.end_insert
 		}
 	}
-	fn get_color(&self) -> u32{
+	fn get_color(&self) -> u32 {
 		COLOR_VAR
 	}
 }
