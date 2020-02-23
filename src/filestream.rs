@@ -6,7 +6,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use std;
 use std::io::{Read, Seek, Write};
 use std::fmt::{Write as FmtWrite};
 
