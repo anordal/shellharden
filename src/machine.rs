@@ -15,7 +15,6 @@ use crate::filestream::FileOut;
 
 use crate::situation::Situation;
 use crate::situation::Transition;
-use crate::situation::WhatNow;
 use crate::situation::COLOR_NORMAL;
 
 use crate::sitcmd::SitNormal;
@@ -111,9 +110,11 @@ fn stackmachine(
 	loop {
 		let horizon :&[u8] = &buf[pos .. buf.len()];
 		let is_horizon_lengthenable = pos > 0 && !eof;
-		let whatnow :WhatNow = state.last_mut().unwrap().as_mut().whatnow(
-			&horizon, is_horizon_lengthenable
-		);
+		let stacksize_pre = state.len();
+		let statebox: &mut Box<dyn Situation> = state.last_mut().unwrap();
+		let curstate = statebox.as_mut();
+		let curcolor = curstate.get_color();
+		let whatnow = curstate.whatnow(&horizon, is_horizon_lengthenable);
 
 		if whatnow.alt.is_some() {
 			out.change = true;
@@ -136,55 +137,33 @@ fn stackmachine(
 				}
 			}
 			(Transition::Replace(newstate), _) => {
-				let ix = state.len() - 1;
-				let color_pre;
-				let color_final;
-				if sett.syntax {
-					color_pre = state[ix].get_color();
-					color_final = newstate.get_color();
-				} else {
-					color_pre = COLOR_NORMAL;
-					color_final = COLOR_NORMAL;
-				};
-				write_transition(
-					out, sett, replaceable, whatnow.alt,
-					color_pre, color_final, color_final,
-				).map_err(Error::Stdio)?;
-				state[ix] = newstate;
+				*statebox = newstate;
 			}
 			(Transition::Push(newstate), _) => {
-				let color_pre;
-				let color_final;
-				if sett.syntax {
-					color_pre = state[state.len() - 1].get_color();
-					color_final = newstate.get_color();
-				} else {
-					color_pre = COLOR_NORMAL;
-					color_final = COLOR_NORMAL;
-				};
 				state.push(newstate);
-				write_transition(
-					out, sett, replaceable, whatnow.alt,
-					color_pre, color_final, color_final,
-				).map_err(Error::Stdio)?;
 			}
 			(Transition::Pop, _) | (Transition::FlushPopOnEof, true) => {
-				let color_pre;
-				let color_final;
-				if sett.syntax {
-					color_pre = state[state.len() - 1].get_color();
-					color_final = state[state.len() - 2].get_color();
-				} else {
-					color_pre = COLOR_NORMAL;
-					color_final = COLOR_NORMAL;
-				};
 				state.pop();
-				write_transition(
-					out, sett, replaceable, whatnow.alt,
-					color_pre, color_pre, color_final,
-				).map_err(Error::Stdio)?;
 			}
 		}
+
+		let color_pre;
+		let color_post;
+		let color_trans;
+		if sett.syntax {
+			color_pre = curcolor;
+			color_post = state.last().unwrap().as_ref().get_color();
+			color_trans = if state.len() < stacksize_pre { color_pre } else { color_post };
+		} else {
+			color_pre = COLOR_NORMAL;
+			color_post = COLOR_NORMAL;
+			color_trans = COLOR_NORMAL;
+		};
+		write_transition(
+			out, sett, replaceable, whatnow.alt,
+			color_pre, color_trans, color_post,
+		).map_err(Error::Stdio)?;
+
 		pos += progress;
 	}
 	Ok(pos)
