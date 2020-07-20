@@ -240,20 +240,21 @@ fn write_colored_slice(
 
 #[allow(clippy::verbose_bit_mask)]
 fn write_color(out :&mut FileOut, code :u32) -> Result<(), std::io::Error> {
-	if code == COLOR_NORMAL {
-		return out.write_all(b"\x1b[m");
-	}
-
-	let bold : &str = if (code >> 24) & 1 == 1 { ";1" } else { "" };
-	let ital : &str = if (code >> 25) & 1 == 1 { ";3" } else { "" };
+	let zero = if (code >> 24) & 3 != 0 { "0" } else { "" };
+	let bold = if (code >> 24) & 1 != 0 { ";1" } else { "" };
+	let ital = if (code >> 25) & 1 != 0 { ";3" } else { "" };
 
 	if code & 0x00_ffffff == 0 {
-		write!(out, "\x1b[0{}{}m", bold, ital)
+		return write!(out, "\x1b[{}{}{}m", zero, bold, ital);
+	}
+
+	let fg = (code >> 28) == 0;
+	let b = code & 0xff;
+	let g = (code >> 8) & 0xff;
+	let r = (code >> 16) & 0xff;
+	if fg {
+		write!(out, "\x1b[0{}{};38;2;{};{};{}m", bold, ital, r, g, b)
 	} else {
-		let b = code & 0xff;
-		let g = (code >> 8) & 0xff;
-		let r = (code >> 16) & 0xff;
-		let bg = (code >> 28) & 0xf;
-		write!(out, "\x1b[0{}{};{}8;2;{};{};{}m", bold, ital, bg+3, r, g, b)
+		write!(out, "\x1b[30;4{}m", (r >> 7) | (g >> 6) | (b >> 5))
 	}
 }
