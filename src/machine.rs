@@ -67,12 +67,15 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 		let mut state :Vec<Box<dyn Situation>> = vec!{Box::new(SitNormal{
 			end_trigger: 0x100, end_replace: None,
 		})};
+		let mut color_cur = COLOR_NORMAL;
 
 		loop {
 			let bytes = fi.read(&mut buf[fill ..]).map_err(Error::Stdio)?;
 			fill += bytes;
 			let eof = bytes == 0;
-			let consumed = stackmachine(&mut state, &mut fo, &buf[0 .. fill], eof, &sett)?;
+			let consumed = stackmachine(
+				&mut state, &mut fo, &mut color_cur, &buf[0 .. fill], eof, &sett
+			)?;
 			let remain = fill - consumed;
 			if eof {
 				assert!(remain == 0);
@@ -85,6 +88,9 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 				buf[i] = buf[consumed + i];
 			}
 			fill = remain;
+		}
+		if color_cur != COLOR_NORMAL {
+			write_color(&mut fo, COLOR_NORMAL).map_err(Error::Stdio)?;
 		}
 		if state.len() != 1 {
 			return Err(Error::Syntax(UnsupportedSyntax{
@@ -102,6 +108,7 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 fn stackmachine(
 	state: &mut Vec<Box<dyn Situation>>,
 	out: &mut FileOut,
+	color_cur: &mut u32,
 	buf: &[u8],
 	eof: bool,
 	sett: &Settings,
@@ -113,7 +120,7 @@ fn stackmachine(
 		let stacksize_pre = state.len();
 		let statebox: &mut Box<dyn Situation> = state.last_mut().unwrap();
 		let curstate = statebox.as_mut();
-		let curcolor = curstate.get_color();
+		let color_pre = if sett.syntax { curstate.get_color() } else { COLOR_NORMAL };
 		let whatnow = curstate.whatnow(&horizon, is_horizon_lengthenable);
 
 		if whatnow.alt.is_some() {
@@ -123,7 +130,9 @@ fn stackmachine(
 			}
 		}
 
-		out.write_all(&horizon[.. whatnow.pre]).map_err(Error::Stdio)?;
+		write_colored_slice(
+			out, color_cur, color_pre, &horizon[.. whatnow.pre]
+		).map_err(Error::Stdio)?;
 		let replaceable = &horizon[whatnow.pre .. whatnow.pre + whatnow.len];
 		let progress = whatnow.pre + whatnow.len;
 
@@ -147,21 +156,13 @@ fn stackmachine(
 			}
 		}
 
-		let color_pre;
-		let color_post;
-		let color_trans;
-		if sett.syntax {
-			color_pre = curcolor;
-			color_post = state.last().unwrap().as_ref().get_color();
-			color_trans = if state.len() < stacksize_pre { color_pre } else { color_post };
+		let color_trans = if !sett.syntax || state.len() < stacksize_pre {
+			color_pre
 		} else {
-			color_pre = COLOR_NORMAL;
-			color_post = COLOR_NORMAL;
-			color_trans = COLOR_NORMAL;
+			state.last().unwrap().as_ref().get_color()
 		};
 		write_transition(
-			out, sett, replaceable, whatnow.alt,
-			color_pre, color_trans, color_post,
+			out, color_cur, color_trans, sett, replaceable, whatnow.alt
 		).map_err(Error::Stdio)?;
 
 		pos += progress;
@@ -171,28 +172,23 @@ fn stackmachine(
 
 fn write_transition(
 	out: &mut FileOut,
+	color_cur: &mut u32,
+	color_trans: u32,
 	sett: &Settings,
 	replaceable: &[u8],
 	alternative: Option<&[u8]>,
-	color_pre: u32,
-	color_transition: u32,
-	color_final: u32,
 ) -> Result<(), std::io::Error> {
-	let mut color_cur = color_pre;
 	match (alternative, sett.osel) {
 		(Some(replacement), OutputSelector::DIFF) => {
-			write_diff(out, &mut color_cur, color_transition, replaceable, &replacement)
+			write_diff(out, color_cur, color_trans, replaceable, &replacement)
 		}
 		(Some(replacement), OutputSelector::TRANSFORM) => {
-			write_colored_slice(out, &mut color_cur, color_transition, replacement)
+			write_colored_slice(out, color_cur, color_trans, replacement)
 		}
 		(_, _) => {
-			write_colored_slice(out, &mut color_cur, color_transition, replaceable)
+			write_colored_slice(out, color_cur, color_trans, replaceable)
 		}
 	}?;
-	if color_cur != color_final {
-		write_color(out, color_final)?;
-	}
 	Ok(())
 }
 
