@@ -1,5 +1,7 @@
 <img src="img/logo.png" align="right"/>
 
+[![Build and test status](https://github.com/anordal/shellharden/workflows/build-and-tests/badge.svg?branch=master)](https://github.com/anordal/shellharden/actions)
+
 Shellharden
 ===========
 
@@ -51,10 +53,9 @@ Get it
 
 Distro packages:
 
-* [Arch](https://www.archlinux.org/packages/community/x86_64/shellharden/)
-* [Homebrew](https://formulae.brew.sh/formula/shellharden)
+[![Packaging status](https://repology.org/badge/vertical-allrepos/shellharden.svg)](https://repology.org/project/shellharden/versions)
 
-Official [rust package](https://crates.io/crates/shellharden):
+[Official rust package](https://crates.io/crates/shellharden):
 
     cargo install shellharden
 
