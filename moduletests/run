@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 set -e
 
-if test $# -lt 1; then
-	echo "Usage: $0 target/debug/shellharden test/original/*"
+if test $# -ne 2; then
+	echo "Usage: $0 target/debug/shellharden moduletests/"
 	exit 1
 fi
 exe="$1"
-shift
+dir="$2"
 
 pass=()
 fail=()
-for i in "$@"; do
+for i in "${dir%/}"/original/*; do
 	printf '\n——— \e[1m%s\e[m ———\n' "$i"
-	expect="$(dirname "$(dirname "$i")")/expected/$(basename "$i")"
+	expect="${i%/original/*}/expected/${i##*/}"
 	if diff -u "$expect" <("$exe" --transform "$i" 2>&1); then
 		pass+=("$i")
 	else
