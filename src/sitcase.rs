@@ -8,6 +8,7 @@
 
 use crate::situation::Situation;
 use crate::situation::Transition;
+use crate::sitextent::SitExtent;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::COLOR_NORMAL;
@@ -73,9 +74,7 @@ impl Situation for SitCase {
 			}
 			let word = &horizon[i..i+len];
 			if word == b"esac" {
-				return WhatNow{
-					tri: Transition::Pop, pre: i, len: 0, alt: None
-				};
+				return pop_kw(i, len);
 			}
 			if let Some(res) = common_no_cmd_quoting_unneeded(
 				0x100, horizon, i, is_horizon_lengthenable
@@ -129,6 +128,16 @@ impl Situation for SitCaseArm {
 	}
 }
 
+fn pop_kw(pre: usize, len: usize) -> WhatNow {
+	WhatNow{
+		tri: Transition::Replace(Box::new(SitExtent{
+			len,
+			color: COLOR_KWD,
+			end_insert: None
+		})), pre, len: 0, alt: None
+	}
+}
+
 #[cfg(test)]
 use crate::testhelpers::*;
 #[cfg(test)]
@@ -156,12 +165,8 @@ fn test_sit_case() {
 	sit_expect!(SitCase{}, b"", &flush(0));
 	sit_expect!(SitCase{}, b" ", &flush(1));
 	sit_expect!(SitCase{}, b"esa", &flush(0), &flush(3));
-	let found_the_esac_word = WhatNow{
-		tri: Transition::Pop,
-		pre: 0, len: 0, alt: None
-	};
-	sit_expect!(SitCase{}, b"esac ", &found_the_esac_word);
-	sit_expect!(SitCase{}, b"esac", &flush(0), &found_the_esac_word);
+	sit_expect!(SitCase{}, b"esac ", &pop_kw(0, 4));
+	sit_expect!(SitCase{}, b"esac", &flush(0), &pop_kw(0, 4));
 	sit_expect!(SitCase{}, b"esacs", &flush(0), &flush(5));
 	sit_expect!(SitCase{}, b" esac", &flush(1));
 	sit_expect!(SitCase{}, b"besac", &flush(0), &flush(5));

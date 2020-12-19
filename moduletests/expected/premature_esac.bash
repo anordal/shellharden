@@ -5,3 +5,4 @@ rustup() {
 			false
 	;; esac
 }
+case i in *)case i in *);;esac;;esac
