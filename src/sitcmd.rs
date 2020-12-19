@@ -154,13 +154,13 @@ fn mk_cmd(pre: usize) -> WhatNow {
 }
 
 #[cfg(test)]
-fn mk_kwd(pre: usize) -> WhatNow {
+fn mk_kwd(len: usize) -> WhatNow {
 	WhatNow{
 		tri: Transition::Push(Box::new(SitExtent{
 			len: 0,
 			color: COLOR_KWD,
 			end_insert: None
-		})), pre, len: 0, alt: None
+		})), pre: 0, len, alt: None
 	}
 }
 
@@ -170,18 +170,18 @@ fn test_sit_normal() {
 		SitNormal{end_trigger: 0, end_replace: None}
 	};
 
-	sit_expect!(subj(), b"esa", &flush(0), &mk_cmd(0));
-	sit_expect!(subj(), b"esa=", &mk_assignment(4));
-	sit_expect!(subj(), b"esac", &flush(0), &mk_kwd(0));
-	sit_expect!(subj(), b"esac=", &mk_assignment(5));
-	sit_expect!(subj(), b"esack", &flush(0), &mk_cmd(0));
-	sit_expect!(subj(), b"esack=", &mk_assignment(6));
-	sit_expect!(subj(), b";esa", &flush(1));
-	sit_expect!(subj(), b";esa=", &mk_assignment(5));
-	sit_expect!(subj(), b";esac", &flush(1));
-	sit_expect!(subj(), b";esac=", &mk_assignment(6));
-	sit_expect!(subj(), b";esack", &flush(1));
-	sit_expect!(subj(), b";esack=", &mk_assignment(7));
+	sit_expect!(subj(), b"fo", &flush(0), &mk_cmd(0));
+	sit_expect!(subj(), b"fo=", &mk_assignment(3));
+	sit_expect!(subj(), b"for", &flush(0), &mk_kwd(3));
+	sit_expect!(subj(), b"for=", &mk_assignment(4));
+	sit_expect!(subj(), b"fork", &flush(0), &mk_cmd(0));
+	sit_expect!(subj(), b"fork=", &mk_assignment(5));
+	sit_expect!(subj(), b";fo", &flush(1));
+	sit_expect!(subj(), b";fo=", &mk_assignment(4));
+	sit_expect!(subj(), b";for", &flush(1));
+	sit_expect!(subj(), b";for=", &mk_assignment(5));
+	sit_expect!(subj(), b";fork", &flush(1));
+	sit_expect!(subj(), b";fork=", &mk_assignment(6));
 }
 
 #[test]

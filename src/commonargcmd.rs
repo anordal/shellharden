@@ -79,7 +79,6 @@ pub fn keyword_or_command(
 		b"done" |
 		b"elif" |
 		b"else" |
-		b"esac" |
 		b"fi" |
 		b"for" |
 		b"if" |
@@ -90,10 +89,10 @@ pub fn keyword_or_command(
 		b"{" |
 		b"}" => WhatNow{
 			tri: Transition::Push(Box::new(SitExtent{
-				len,
+				len: 0,
 				color: COLOR_KWD,
 				end_insert: None
-			})), pre: i, len: 0, alt: None
+			})), pre: i, len, alt: None
 		},
 		b"declare" |
 		b"local" |
