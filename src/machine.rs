@@ -251,6 +251,6 @@ fn write_color(out :&mut FileOut, code :u32) -> Result<(), std::io::Error> {
 	if fg {
 		write!(out, "\x1b[0{}{};38;2;{};{};{}m", bold, ital, r, g, b)
 	} else {
-		write!(out, "\x1b[30;4{}m", (r >> 7) | (g >> 6) | (b >> 5))
+		write!(out, "\x1b[0;4{}m", (r >> 7) | (g >> 6) | (b >> 5))
 	}
 }
