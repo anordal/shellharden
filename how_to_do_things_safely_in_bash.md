@@ -610,11 +610,15 @@ Good (C/POSIX), minus error handling:
 If the shell is needed, let arguments be arguments. You might think this was cumbersome – writing a special-purpose shellscript to its own file and invoking that – until you have seen this trick:
 
 * Bad (python3): `subprocess.check_call('docker exec {} bash -ec "printf %s {} > {}"'.format(instance, content, path))`
-* Good (python3): `subprocess.check_call(['docker', 'exec', instance, 'bash', '-ec', 'printf %s "$0" > "$1"', content, path])`
+* Good (python3): `subprocess.check_call(['docker', 'exec', instance, 'bash', '-ec', 'printf %s "$0" > "$1"', , 'bash', content, path])`
 
 Can you spot the shellscript?
 
 That's right, the printf command with the redirection. Note the correctly quoted numbered arguments. Embedding a static shellscript is fine.
+
+Note that the second argument to `bash -c` is bound to `$0` not `$1` as a
+any reasonable person would expect. We simply set that to "bash" here but
+you can use whatever you want.
 
 The examples run in Docker because they wouldn't be as useful otherwise, but Docker is also a fine example of a command that runs other commands based on arguments. This is unlike Ssh, as we will see.
 
