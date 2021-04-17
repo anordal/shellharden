@@ -217,9 +217,7 @@ fn pos_tailhazard(horizon: &[u8], end: u8) -> (usize, usize) {
 	let mut pos = idlen;
 	if pos < horizon.len() && horizon[pos] == end {
 		pos += 1;
-		if pos < horizon.len() {
-			pos += predlen(|x| x == b'\"', &horizon[pos ..]);
-		}
+		pos += predlen(|x| x == b'\"', &horizon[pos ..]);
 	}
 	(idlen, pos)
 }
