@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 - 2020 Andreas Nordal
+ * Copyright 2016 - 2021 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,6 +95,7 @@ pub fn keyword_or_command(
 			})), pre: i, len, alt: None
 		},
 		b"declare" |
+		b"export" |
 		b"local" |
 		b"readonly" => WhatNow{
 			tri: Transition::Push(Box::new(SitDeclare{end_trigger})),
