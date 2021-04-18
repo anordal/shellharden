@@ -37,6 +37,10 @@ pub fn flush_or_pop(i: usize) -> WhatNow {
 	WhatNow{tri: Transition::FlushPopOnEof, pre: i, len: 0, alt: None}
 }
 
+pub fn if_needed<T>(needed: bool, val: T) -> Option<T> {
+	if needed { Some(val) } else { None }
+}
+
 pub const COLOR_NORMAL: u32 = 0x00_000000;
 const COLOR_BOLD : u32 = 0x01_000000;
 const COLOR_ITAL : u32 = 0x02_000000;

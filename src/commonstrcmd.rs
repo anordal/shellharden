@@ -9,6 +9,7 @@
 use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
+use crate::situation::if_needed;
 use crate::situation::COLOR_VAR;
 use crate::situation::COLOR_MAGIC;
 
@@ -172,10 +173,6 @@ pub fn common_str_cmd(
 		};
 	}
 	CommonStrCmdResult::None
-}
-
-fn if_needed<T>(needed: bool, val: T) -> Option<T> {
-	if needed { Some(val) } else { None }
 }
 
 fn find_pwd(
