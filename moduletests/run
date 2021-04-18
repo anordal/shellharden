@@ -10,15 +10,30 @@ dir="$2"
 
 pass=()
 fail=()
-for i in "${dir%/}"/original/*; do
-	expect="${i%/original/*}/expected/${i##*/}"
-	if diff=$(diff -u "$expect" <("$exe" --transform "$i" 2>&1)); then
-		pass+=("$i")
+expect(){
+	local original=$1
+	local expected=$2
+	if diff=$(diff -u -- "$expected" <("$exe" --transform -- "$original" 2>&1)); then
+		pass+=("$original")
 	else
-		fail+=("$i")
-		printf '\n——— \e[1m%s\e[m ———\n%s\n' "$i" "$diff"
+		fail+=("$original")
+		printf '\n——— \e[1m%s\e[m ———\n%s\n' "$original" "$diff"
 	fi
+}
+
+for i in "${dir%/}"/original/*; do
+	expect "$i" "${i%/original/*}/expected/${i##*/}"
 done
+
+for i in "${dir%/}"/expected/*; do
+	case ${i##*/} in
+		error_*|unsupp_*)
+			continue
+		;;
+	esac
+	expect "$i" "$i"
+done
+expect "$0" "$0"
 
 echo
 echo Passes:
