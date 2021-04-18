@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 - 2019 Andreas Nordal
+ * Copyright 2016 - 2021 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@ use crate::syntaxerror::UnsupportedSyntax;
 
 use crate::sitcmd::SitNormal;
 use crate::sitextent::SitExtent;
-use crate::situntilbyte::SitUntilByte;
+use crate::sitvarbrace::SitVarBrace;
 use crate::sitvarident::SitVarIdent;
 use crate::sitvec::SitVec;
 
@@ -162,9 +162,8 @@ pub fn common_str_cmd(
 			rm_braces = !is_identifiertail(cand[pos_hazard]);
 		}
 		let wn = WhatNow{
-			tri: Transition::Push(Box::new(SitUntilByte{
-				until: b'}', color: COLOR_VAR, end_replace: if_needed(rm_braces, b"")
-			})), pre: i, len: 2, alt: if_needed(rm_braces, b"$")
+			tri: Transition::Push(Box::new(SitVarBrace::new(rm_braces))),
+			pre: i, len: 2, alt: if_needed(rm_braces, b"$"),
 		};
 		return if is_number {
 			CommonStrCmdResult::Some(wn)

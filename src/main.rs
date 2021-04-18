@@ -165,5 +165,6 @@ mod sitstrdq;
 mod sitstrphantom;
 mod sitstrsqesc;
 mod situntilbyte;
+mod sitvarbrace;
 mod sitvarident;
 mod sitvec;
