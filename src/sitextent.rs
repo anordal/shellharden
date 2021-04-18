@@ -14,13 +14,12 @@ use crate::situation::flush;
 pub struct SitExtent{
 	pub len : usize,
 	pub color: u32,
-	pub end_insert :Option<&'static [u8]>,
 }
 
 impl Situation for SitExtent {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
 		if horizon.len() >= self.len {
-			return WhatNow{tri: Transition::Pop, pre: self.len, len: 0, alt: self.end_insert};
+			return WhatNow{tri: Transition::Pop, pre: self.len, len: 0, alt: None};
 		}
 		self.len -= horizon.len();
 		flush(horizon.len())

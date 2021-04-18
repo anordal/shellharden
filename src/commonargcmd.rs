@@ -88,11 +88,8 @@ pub fn keyword_or_command(
 		b"while" |
 		b"{" |
 		b"}" => WhatNow{
-			tri: Transition::Push(Box::new(SitExtent{
-				len: 0,
-				color: COLOR_KWD,
-				end_insert: None
-			})), pre: i, len, alt: None
+			tri: Transition::Push(Box::new(SitExtent{len: 0, color: COLOR_KWD})),
+			pre: i, len, alt: None,
 		},
 		b"declare" |
 		b"export" |
@@ -223,7 +220,7 @@ fn find_usual_suspects(
 	if a == b'\'' {
 		return Some(WhatNow{
 			tri: Transition::Push(Box::new(SitUntilByte{
-				until: b'\'', color: 0x00_ffff00, end_replace: None
+				until: b'\'', color: 0x00_ffff00,
 			})),
 			pre: i, len: 1, alt: None
 		});
@@ -249,11 +246,7 @@ fn find_usual_suspects(
 			});
 		} else if b == b'*' {
 			// $* → "$@" but not "$*" → "$@"
-			let ext = Box::new(SitExtent{
-				len: 0,
-				color: COLOR_VAR,
-				end_insert: None
-			});
+			let ext = Box::new(SitExtent{len: 0, color: COLOR_VAR});
 			return Some(WhatNow{
 				tri: Transition::Push(ext),
 				pre: i, len: 2, alt: Some(b"\"$@\"")

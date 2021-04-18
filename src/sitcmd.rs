@@ -156,11 +156,8 @@ fn mk_cmd(pre: usize) -> WhatNow {
 #[cfg(test)]
 fn mk_kwd(len: usize) -> WhatNow {
 	WhatNow{
-		tri: Transition::Push(Box::new(SitExtent{
-			len: 0,
-			color: COLOR_KWD,
-			end_insert: None
-		})), pre: 0, len, alt: None
+		tri: Transition::Push(Box::new(SitExtent{len: 0, color: COLOR_KWD})),
+		pre: 0, len, alt: None,
 	}
 }
 

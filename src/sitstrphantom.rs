@@ -105,9 +105,8 @@ fn test_sit_strphantom() {
 		})), pre: 0, len: 2, alt: None
 	};
 	let found_specialvar = WhatNow{
-		tri: Transition::Push(Box::new(SitExtent{
-			len: 2, color: COLOR_VAR, end_insert: None,
-		})), pre: 0, len: 0, alt: None
+		tri: Transition::Push(Box::new(SitExtent{len: 2, color: COLOR_VAR})),
+		pre: 0, len: 0, alt: None,
 	};
 	sit_expect!(subject(), b"", &flush(0), &cod);
 	sit_expect!(subject(), b"a", &flush(0), &cod);

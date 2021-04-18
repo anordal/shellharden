@@ -57,7 +57,7 @@ pub fn common_str_cmd(
 		});
 	}
 	if horizon[i] == b'\\' {
-		let esc = Box::new(SitExtent{len: 1, color: 0x01_ff0080, end_insert: None});
+		let esc = Box::new(SitExtent{len: 1, color: 0x01_ff0080});
 		return CommonStrCmdResult::Some(WhatNow{
 			tri: Transition::Push(esc), pre: i, len: 1, alt: None
 		});
@@ -104,11 +104,7 @@ pub fn common_str_cmd(
 			pre: i, len: 2, alt: None
 		});
 	} else if is_variable_of_numeric_content(c) {
-		let ext = Box::new(SitExtent{
-			len: 2,
-			color: COLOR_VAR,
-			end_insert: None
-		});
+		let ext = Box::new(SitExtent{len: 2, color: COLOR_VAR});
 		return CommonStrCmdResult::Some(WhatNow{
 			tri: Transition::Push(ext),
 			pre: i, len: 0, alt: None
@@ -117,11 +113,7 @@ pub fn common_str_cmd(
 		if predlen(is_decimal, &horizon[i+1 ..]) > 1 {
 			return bail_doubledigit(horizon, i+2);
 		}
-		let ext = Box::new(SitExtent{
-			len: 2,
-			color: COLOR_VAR,
-			end_insert: None
-		});
+		let ext = Box::new(SitExtent{len: 2, color: COLOR_VAR});
 		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
 			tri: Transition::Push(ext),
 			pre: i, len: 0, alt: None
@@ -194,11 +186,7 @@ fn find_pwd(
 		} else {
 			b"$PWD"
 		};
-		let sit = Box::new(SitExtent{
-			len: 0,
-			color: COLOR_VAR,
-			end_insert: None,
-		});
+		let sit = Box::new(SitExtent{len: 0, color: COLOR_VAR});
 		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
 			tri: Transition::Push(sit),
 			pre: i, len: candidate_offset + idlen + 1,

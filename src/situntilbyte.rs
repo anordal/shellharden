@@ -16,14 +16,13 @@ use crate::microparsers::predlen;
 pub struct SitUntilByte {
 	pub until: u8,
 	pub color: u32,
-	pub end_replace :Option<&'static [u8]>,
 }
 
 impl Situation for SitUntilByte {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
 		let len = predlen(|x| x != self.until, &horizon);
 		if len < horizon.len() {
-			WhatNow{tri: Transition::Pop, pre: len, len: 1, alt: self.end_replace}
+			WhatNow{tri: Transition::Pop, pre: len, len: 1, alt: None}
 		} else {
 			flush(len)
 		}

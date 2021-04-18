@@ -12,7 +12,6 @@ use crate::situation::WhatNow;
 use crate::situation::flush_or_pop;
 use crate::situation::COLOR_CMT;
 
-// Unlike SitUntilByte, does not swallow the end byte, and pops on eof.
 pub struct SitComment {}
 
 impl Situation for SitComment {

@@ -19,7 +19,7 @@ impl Situation for SitStrSqEsc {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, &a) in horizon.iter().enumerate() {
 			if a == b'\\' {
-				let esc = Box::new(SitExtent{len: 1, color: 0x01_ff0080, end_insert: None});
+				let esc = Box::new(SitExtent{len: 1, color: 0x01_ff0080});
 				return WhatNow{tri: Transition::Push(esc), pre: i, len: 1, alt: None};
 			}
 			if a == b'\'' {
