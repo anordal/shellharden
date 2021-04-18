@@ -155,10 +155,10 @@ pub fn common_str_cmd(
 			if i > 0 || is_horizon_lengthenable {
 				return CommonStrCmdResult::Some(flush(i));
 			}
+		} else if idlen == 0 {
+			is_number = is_variable_of_numeric_content(cand[0]);
 		} else if idlen < pos_hazard {
 			rm_braces = !is_identifiertail(cand[pos_hazard]);
-		} else if idlen == 0 && is_variable_of_numeric_content(cand[0]) {
-			is_number = true;
 		}
 		let wn = WhatNow{
 			tri: Transition::Push(Box::new(SitUntilByte{
