@@ -11,12 +11,12 @@ dir="$2"
 pass=()
 fail=()
 for i in "${dir%/}"/original/*; do
-	printf '\n——— \e[1m%s\e[m ———\n' "$i"
 	expect="${i%/original/*}/expected/${i##*/}"
-	if diff -u "$expect" <("$exe" --transform "$i" 2>&1); then
+	if diff=$(diff -u "$expect" <("$exe" --transform "$i" 2>&1)); then
 		pass+=("$i")
 	else
 		fail+=("$i")
+		printf '\n——— \e[1m%s\e[m ———\n%s\n' "$i" "$diff"
 	fi
 done
 
