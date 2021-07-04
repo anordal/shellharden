@@ -42,6 +42,9 @@ pub fn keyword_or_command(
 	i: usize,
 	is_horizon_lengthenable: bool,
 ) -> WhatNow {
+	if horizon[i] == b'#' {
+		return push_comment(i);
+	}
 	let (found, len) = find_lvalue(&horizon[i..]);
 	if found == Tri::Maybe && (i > 0 || is_horizon_lengthenable) {
 		return flush(i);
@@ -122,7 +125,31 @@ pub fn common_arg(
 	common_expr(end_trigger, horizon, i, is_horizon_lengthenable)
 }
 
+pub fn common_cmd(
+	end_trigger :u16,
+	horizon :&[u8],
+	i :usize,
+	is_horizon_lengthenable :bool,
+) -> Option<WhatNow> {
+	if let Some(res) = find_command_enders(horizon, i, is_horizon_lengthenable) {
+		return Some(res);
+	}
+	common_token(end_trigger, horizon, i, is_horizon_lengthenable)
+}
+
 pub fn common_expr(
+	end_trigger :u16,
+	horizon :&[u8],
+	i :usize,
+	is_horizon_lengthenable :bool,
+) -> Option<WhatNow> {
+	if horizon[i] == b'#' {
+		return Some(push_comment(i));
+	}
+	common_token(end_trigger, horizon, i, is_horizon_lengthenable)
+}
+
+fn common_token(
 	end_trigger :u16,
 	horizon :&[u8],
 	i :usize,
@@ -144,7 +171,7 @@ pub fn common_expr(
 	}
 }
 
-pub fn common_arg_quoting_unneeded(
+pub fn common_cmd_quoting_unneeded(
 	end_trigger :u16,
 	horizon :&[u8],
 	i :usize,
@@ -153,10 +180,22 @@ pub fn common_arg_quoting_unneeded(
 	if let Some(res) = find_command_enders(horizon, i, is_horizon_lengthenable) {
 		return Some(res);
 	}
-	common_expr_quoting_unneeded(end_trigger, horizon, i, is_horizon_lengthenable)
+	common_token_quoting_unneeded(end_trigger, horizon, i, is_horizon_lengthenable)
 }
 
 pub fn common_expr_quoting_unneeded(
+	end_trigger :u16,
+	horizon :&[u8],
+	i :usize,
+	is_horizon_lengthenable :bool,
+) -> Option<WhatNow> {
+	if horizon[i] == b'#' {
+		return Some(push_comment(i));
+	}
+	common_token_quoting_unneeded(end_trigger, horizon, i, is_horizon_lengthenable)
+}
+
+fn common_token_quoting_unneeded(
 	end_trigger :u16,
 	horizon :&[u8],
 	i :usize,
@@ -216,12 +255,6 @@ fn find_usual_suspects(
 			tri: Transition::Pop, pre: i, len: 0, alt: None
 		});
 	}
-	if a == b'#' {
-		return Some(WhatNow{
-			tri: Transition::Push(Box::new(SitComment{})),
-			pre: i, len: 1, alt: None
-		});
-	}
 	if a == b'\'' {
 		return Some(WhatNow{
 			tri: Transition::Push(Box::new(SitUntilByte{
@@ -274,6 +307,13 @@ fn find_usual_suspects(
 		return Some(flush(i + ate));
 	}
 	None
+}
+
+fn push_comment(pre: usize) -> WhatNow {
+	WhatNow{
+		tri: Transition::Push(Box::new(SitComment{})),
+		pre, len: 1, alt: None
+	}
 }
 
 #[derive(PartialEq)]

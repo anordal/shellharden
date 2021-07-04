@@ -15,7 +15,7 @@ use crate::situation::COLOR_NORMAL;
 
 use crate::microparsers::is_whitespace;
 
-use crate::commonargcmd::common_arg_quoting_unneeded;
+use crate::commonargcmd::common_cmd_quoting_unneeded;
 use crate::commonargcmd::common_expr;
 
 pub struct SitRvalue {
@@ -31,7 +31,7 @@ impl Situation for SitRvalue {
 					pre: i, len: 1, alt: None
 				};
 			}
-			if let Some(res) = common_arg_quoting_unneeded(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_cmd_quoting_unneeded(self.end_trigger, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 			if is_whitespace(a) {
