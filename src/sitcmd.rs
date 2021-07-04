@@ -58,7 +58,10 @@ pub struct SitCmd {
 impl Situation for SitCmd {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, &a) in horizon.iter().enumerate() {
-			if a == b' ' || a == b'\t' {
+			if let Some(res) = common_arg_cmd(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+				return res;
+			}
+			if is_whitespace(a) {
 				return WhatNow{
 					tri: Transition::Replace(Box::new(SitArg{end_trigger: self.end_trigger})),
 					pre: i, len: 1, alt: None
@@ -68,9 +71,6 @@ impl Situation for SitCmd {
 				return WhatNow{
 					tri: Transition::Pop, pre: i, len: 0, alt: None
 				};
-			}
-			if let Some(res) = common_arg_cmd(self.end_trigger, horizon, i, is_horizon_lengthenable) {
-				return res;
 			}
 		}
 		flush_or_pop(horizon.len())

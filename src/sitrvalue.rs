@@ -13,6 +13,8 @@ use crate::situation::flush;
 use crate::situation::flush_or_pop;
 use crate::situation::COLOR_NORMAL;
 
+use crate::microparsers::is_whitespace;
+
 use crate::commonargcmd::common_quoting_unneeded;
 use crate::commonargcmd::common_no_cmd;
 
@@ -23,11 +25,6 @@ pub struct SitRvalue {
 impl Situation for SitRvalue {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, &a) in horizon.iter().enumerate() {
-			if a == b' ' || a == b'\t' {
-				return WhatNow{
-					tri: Transition::Pop, pre: i, len: 1, alt: None
-				};
-			}
 			if a == b'(' {
 				return WhatNow{
 					tri: Transition::Push(Box::new(SitArray{})),
@@ -36,6 +33,11 @@ impl Situation for SitRvalue {
 			}
 			if let Some(res) = common_quoting_unneeded(self.end_trigger, horizon, i, is_horizon_lengthenable) {
 				return res;
+			}
+			if is_whitespace(a) {
+				return WhatNow{
+					tri: Transition::Pop, pre: i, len: 1, alt: None
+				};
 			}
 		}
 		flush_or_pop(horizon.len())
