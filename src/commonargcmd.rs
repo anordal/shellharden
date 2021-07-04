@@ -79,6 +79,7 @@ pub fn keyword_or_command(
 		b"else" |
 		b"fi" |
 		b"for" |
+		b"function" |
 		b"if" |
 		b"select" |
 		b"then" |

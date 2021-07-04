@@ -43,11 +43,12 @@ true \
 >([[ $ivar ]])
 ([[ $ivar ]])
 { [[ $ivar ]] } [[ $ivar ]]
-f() { [[ $ivar ]] }
 f()
 {
 	[[ $ivar ]]
 }
+f(){ [[ $ivar ]] }
+function f(){ [[ $ivar ]] }
 
 oddvar="$(
 	case true in
