@@ -161,6 +161,16 @@ fn mk_kwd(len: usize) -> WhatNow {
 	}
 }
 
+#[cfg(test)]
+fn mk_magic(pre: usize) -> WhatNow {
+	WhatNow{
+		tri: Transition::Push(Box::new(
+			SitVec{terminator: vec!{}, color: COLOR_MAGIC}
+		)),
+		pre, len: 2, alt: None
+	}
+}
+
 #[test]
 fn test_sit_normal() {
 	let subj = || {
@@ -179,6 +189,8 @@ fn test_sit_normal() {
 	sit_expect!(subj(), b";for=", &mk_assignment(5));
 	sit_expect!(subj(), b";fork", &flush(1));
 	sit_expect!(subj(), b";fork=", &mk_assignment(6));
+	sit_expect!(subj(), b"((", &flush(0), &mk_magic(0));
+	sit_expect!(subj(), b"[[", &flush(0), &mk_magic(0));
 }
 
 #[test]

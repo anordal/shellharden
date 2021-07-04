@@ -42,13 +42,6 @@ pub fn keyword_or_command(
 	i: usize,
 	is_horizon_lengthenable: bool,
 ) -> WhatNow {
-	if horizon[i] == b'(' {
-		return WhatNow{
-			tri: Transition::Push(Box::new(SitNormal{
-				end_trigger: u16::from(b')'), end_replace: None
-			})), pre: i, len: 1, alt: None
-		};
-	}
 	let (found, len) = find_lvalue(&horizon[i..]);
 	if found == Tri::Maybe && (i > 0 || is_horizon_lengthenable) {
 		return flush(i);
@@ -60,11 +53,23 @@ pub fn keyword_or_command(
 		};
 	}
 	let len = predlen(is_word, &horizon[i..]);
+	let len = if len != 0 { len } else { prefixlen(&horizon[i..], b"((") };
 	if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
 		return flush(i);
 	}
 	let word = &horizon[i..i+len];
 	match word {
+		b"(" => WhatNow{
+			tri: Transition::Push(Box::new(SitNormal{
+				end_trigger: u16::from(b')'), end_replace: None
+			})), pre: i, len: 1, alt: None
+		},
+		b"((" => WhatNow{
+			tri: Transition::Push(Box::new(
+				SitVec{terminator: vec!{b')', b')'}, color: COLOR_MAGIC}
+			)),
+			pre: i, len, alt: None
+		},
 		b"[[" => WhatNow{
 			tri: Transition::Push(Box::new(
 				SitVec{terminator: vec!{b']', b']'}, color: COLOR_MAGIC}
