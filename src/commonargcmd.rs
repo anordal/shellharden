@@ -110,7 +110,7 @@ pub fn keyword_or_command(
 	}
 }
 
-pub fn common_arg_cmd(
+pub fn common_arg(
 	end_trigger :u16,
 	horizon :&[u8],
 	i :usize,
@@ -119,10 +119,10 @@ pub fn common_arg_cmd(
 	if let Some(res) = find_command_enders(horizon, i, is_horizon_lengthenable) {
 		return Some(res);
 	}
-	common_no_cmd(end_trigger, horizon, i, is_horizon_lengthenable)
+	common_expr(end_trigger, horizon, i, is_horizon_lengthenable)
 }
 
-pub fn common_no_cmd(
+pub fn common_expr(
 	end_trigger :u16,
 	horizon :&[u8],
 	i :usize,
@@ -144,7 +144,7 @@ pub fn common_no_cmd(
 	}
 }
 
-pub fn common_quoting_unneeded(
+pub fn common_arg_quoting_unneeded(
 	end_trigger :u16,
 	horizon :&[u8],
 	i :usize,
@@ -153,10 +153,10 @@ pub fn common_quoting_unneeded(
 	if let Some(res) = find_command_enders(horizon, i, is_horizon_lengthenable) {
 		return Some(res);
 	}
-	common_no_cmd_quoting_unneeded(end_trigger, horizon, i, is_horizon_lengthenable)
+	common_expr_quoting_unneeded(end_trigger, horizon, i, is_horizon_lengthenable)
 }
 
-pub fn common_no_cmd_quoting_unneeded(
+pub fn common_expr_quoting_unneeded(
 	end_trigger :u16,
 	horizon :&[u8],
 	i :usize,

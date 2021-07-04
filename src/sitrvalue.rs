@@ -15,8 +15,8 @@ use crate::situation::COLOR_NORMAL;
 
 use crate::microparsers::is_whitespace;
 
-use crate::commonargcmd::common_quoting_unneeded;
-use crate::commonargcmd::common_no_cmd;
+use crate::commonargcmd::common_arg_quoting_unneeded;
+use crate::commonargcmd::common_expr;
 
 pub struct SitRvalue {
 	pub end_trigger :u16,
@@ -31,7 +31,7 @@ impl Situation for SitRvalue {
 					pre: i, len: 1, alt: None
 				};
 			}
-			if let Some(res) = common_quoting_unneeded(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_arg_quoting_unneeded(self.end_trigger, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 			if is_whitespace(a) {
@@ -52,7 +52,7 @@ struct SitArray {}
 impl Situation for SitArray {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, _) in horizon.iter().enumerate() {
-			if let Some(res) = common_no_cmd(u16::from(b')'), horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_expr(u16::from(b')'), horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 		}

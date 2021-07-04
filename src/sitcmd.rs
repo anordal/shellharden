@@ -18,7 +18,7 @@ use crate::situation::COLOR_MAGIC;
 use crate::microparsers::is_whitespace;
 
 use crate::commonargcmd::keyword_or_command;
-use crate::commonargcmd::common_arg_cmd;
+use crate::commonargcmd::common_arg;
 use crate::commonargcmd::find_lvalue;
 use crate::commonargcmd::Tri;
 use crate::sitrvalue::SitRvalue;
@@ -58,7 +58,7 @@ pub struct SitCmd {
 impl Situation for SitCmd {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, &a) in horizon.iter().enumerate() {
-			if let Some(res) = common_arg_cmd(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_arg(self.end_trigger, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 			if is_whitespace(a) {
@@ -87,7 +87,7 @@ struct SitArg {
 impl Situation for SitArg {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, _) in horizon.iter().enumerate() {
-			if let Some(res) = common_arg_cmd(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_arg(self.end_trigger, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 		}
@@ -115,7 +115,7 @@ impl Situation for SitDeclare {
 					pre: i + len, len: 0, alt: None
 				};
 			}
-			if let Some(res) = common_arg_cmd(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_arg(self.end_trigger, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 		}

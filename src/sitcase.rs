@@ -19,7 +19,7 @@ use crate::microparsers::is_whitespace;
 use crate::microparsers::is_word;
 
 use crate::commonargcmd::keyword_or_command;
-use crate::commonargcmd::common_no_cmd_quoting_unneeded;
+use crate::commonargcmd::common_expr_quoting_unneeded;
 
 pub struct SitIn {}
 
@@ -40,7 +40,7 @@ impl Situation for SitIn {
 					pre: i + len, len: 0, alt: None
 				};
 			}
-			if let Some(res) = common_no_cmd_quoting_unneeded(
+			if let Some(res) = common_expr_quoting_unneeded(
 				0x100, horizon, i, is_horizon_lengthenable
 			) {
 				return res;
@@ -76,7 +76,7 @@ impl Situation for SitCase {
 			if word == b"esac" {
 				return pop_kw(i, len);
 			}
-			if let Some(res) = common_no_cmd_quoting_unneeded(
+			if let Some(res) = common_expr_quoting_unneeded(
 				0x100, horizon, i, is_horizon_lengthenable
 			) {
 				return res;
