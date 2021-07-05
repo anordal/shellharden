@@ -10,7 +10,6 @@ use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::COLOR_KWD;
-use crate::situation::COLOR_MAGIC;
 use crate::situation::COLOR_HERE;
 use crate::situation::COLOR_VAR;
 
@@ -29,6 +28,7 @@ use crate::sitcmd::SitCmd;
 use crate::sitcmd::SitDeclare;
 use crate::sitcomment::SitComment;
 use crate::sitextent::SitExtent;
+use crate::sitmagic::push_magic;
 use crate::sitrvalue::SitRvalue;
 use crate::sitstrdq::SitStrDq;
 use crate::sitstrphantom::SitStrPhantom;
@@ -67,18 +67,8 @@ pub fn keyword_or_command(
 				end_trigger: u16::from(b')'), end_replace: None
 			})), pre: i, len: 1, alt: None
 		},
-		b"((" => WhatNow{
-			tri: Transition::Push(Box::new(
-				SitVec{terminator: vec!{b')', b')'}, color: COLOR_MAGIC}
-			)),
-			pre: i, len, alt: None
-		},
-		b"[[" => WhatNow{
-			tri: Transition::Push(Box::new(
-				SitVec{terminator: vec!{b']', b']'}, color: COLOR_MAGIC}
-			)),
-			pre: i, len, alt: None
-		},
+		b"((" => push_magic(i, 1, b')'),
+		b"[[" => push_magic(i, 1, b']'),
 		b"case" => WhatNow{
 			tri: Transition::Push(Box::new(SitIn{})),
 			pre: i, len, alt: None
@@ -195,7 +185,7 @@ pub fn common_expr_quoting_unneeded(
 	common_token_quoting_unneeded(end_trigger, horizon, i, is_horizon_lengthenable)
 }
 
-fn common_token_quoting_unneeded(
+pub fn common_token_quoting_unneeded(
 	end_trigger :u16,
 	horizon :&[u8],
 	i :usize,

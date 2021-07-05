@@ -160,6 +160,7 @@ mod sitcase;
 mod sitcmd;
 mod sitcomment;
 mod sitextent;
+mod sitmagic;
 mod sitrvalue;
 mod sitstrdq;
 mod sitstrphantom;

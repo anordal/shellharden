@@ -40,9 +40,7 @@ use crate::testhelpers::*;
 #[cfg(test)]
 use crate::sitcmd::SitNormal;
 #[cfg(test)]
-use crate::sitvec::SitVec;
-#[cfg(test)]
-use crate::situation::COLOR_MAGIC;
+use crate::sitmagic::push_magic;
 
 #[test]
 fn test_sit_strdq() {
@@ -51,15 +49,9 @@ fn test_sit_strdq() {
 			end_trigger: u16::from(b')'), end_replace: None,
 		})), pre: 0, len: 2, alt: None
 	};
-	let found_math = WhatNow{
-		tri: Transition::Push(Box::new(SitVec{
-			terminator: vec!{b')', b')'},
-			color: COLOR_MAGIC,
-		})), pre: 0, len: 3, alt: None
-	};
 	sit_expect!(SitStrDq{}, b"", &flush(0));
 	sit_expect!(SitStrDq{}, b"$", &flush(0), &flush(1));
 	sit_expect!(SitStrDq{}, b"$(", &flush(0), &found_cmdsub);
 	sit_expect!(SitStrDq{}, b"$( ", &found_cmdsub);
-	sit_expect!(SitStrDq{}, b"$((", &found_math);
+	sit_expect!(SitStrDq{}, b"$((", &push_magic(0, 2, b')'));
 }

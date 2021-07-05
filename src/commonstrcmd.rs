@@ -11,7 +11,6 @@ use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::if_needed;
 use crate::situation::COLOR_VAR;
-use crate::situation::COLOR_MAGIC;
 
 use crate::microparsers::predlen;
 use crate::microparsers::is_identifierhead;
@@ -22,9 +21,9 @@ use crate::syntaxerror::UnsupportedSyntax;
 
 use crate::sitcmd::SitNormal;
 use crate::sitextent::SitExtent;
+use crate::sitmagic::push_magic;
 use crate::sitvarbrace::SitVarBrace;
 use crate::sitvarident::SitVarIdent;
-use crate::sitvec::SitVec;
 
 pub enum CommonStrCmdResult {
 	None,
@@ -86,15 +85,7 @@ pub fn common_str_cmd(
 		if i+2 >= horizon.len() {
 			// Reachable, but already handled by find_pwd.
 		} else if horizon[i+2] == b'(' {
-			let sit = Box::new(SitVec{
-				terminator: vec!{b')', b')'},
-				color: COLOR_MAGIC,
-			});
-			return CommonStrCmdResult::Some(WhatNow{
-				tri: Transition::Push(sit),
-				pre: i, len: 3,
-				alt: None
-			});
+			return CommonStrCmdResult::Some(push_magic(i, 2, b')'));
 		}
 		let sit = Box::new(SitNormal{
 			end_trigger: u16::from(b')'), end_replace: None,
