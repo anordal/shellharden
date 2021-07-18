@@ -50,4 +50,4 @@ pub const COLOR_CMD   : u32 = 0x00_c00080;
 pub const COLOR_MAGIC : u32 = 0x00_c000c0;
 pub const COLOR_VAR   : u32 = 0x00_007fff;
 pub const COLOR_HERE  : u32 = 0x00_802000;
-pub const COLOR_CMT   : u32 = 0x00_283020 | COLOR_BOLD | COLOR_ITAL;
+pub const COLOR_CMT   : u32 = 0x00_789060 | COLOR_BOLD | COLOR_ITAL;
