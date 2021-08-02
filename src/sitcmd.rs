@@ -13,16 +13,12 @@ use crate::situation::flush;
 use crate::situation::flush_or_pop;
 use crate::situation::COLOR_NORMAL;
 use crate::situation::COLOR_CMD;
-use crate::situation::COLOR_MAGIC;
 
 use crate::microparsers::is_whitespace;
 
 use crate::commonargcmd::keyword_or_command;
 use crate::commonargcmd::common_arg;
 use crate::commonargcmd::common_cmd;
-use crate::commonargcmd::find_lvalue;
-use crate::commonargcmd::Tri;
-use crate::sitrvalue::SitRvalue;
 
 pub struct SitNormal {
 	pub end_trigger :u16,
@@ -99,40 +95,14 @@ impl Situation for SitArg {
 	}
 }
 
-pub struct SitDeclare {
-	pub end_trigger :u16,
-}
-
-impl Situation for SitDeclare {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, _) in horizon.iter().enumerate() {
-			let (found, len) = find_lvalue(&horizon[i..]);
-			if found == Tri::Maybe && (i > 0 || is_horizon_lengthenable) {
-				return flush(i);
-			}
-			if found == Tri::Yes {
-				return WhatNow{
-					tri: Transition::Push(Box::new(SitRvalue{end_trigger: self.end_trigger})),
-					pre: i + len, len: 0, alt: None
-				};
-			}
-			if let Some(res) = common_arg(self.end_trigger, horizon, i, is_horizon_lengthenable) {
-				return res;
-			}
-		}
-		flush_or_pop(horizon.len())
-	}
-	fn get_color(&self) -> u32 {
-		COLOR_MAGIC
-	}
-}
-
 #[cfg(test)]
 use crate::testhelpers::*;
 #[cfg(test)]
 use crate::sitextent::SitExtent;
 #[cfg(test)]
 use crate::sitmagic::push_magic;
+#[cfg(test)]
+use crate::sitrvalue::SitRvalue;
 #[cfg(test)]
 use crate::sitvec::SitVec;
 #[cfg(test)]

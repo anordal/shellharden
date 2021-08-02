@@ -25,7 +25,6 @@ use crate::commonstrcmd::common_str_cmd;
 use crate::sitcase::SitIn;
 use crate::sitcmd::SitNormal;
 use crate::sitcmd::SitCmd;
-use crate::sitcmd::SitDeclare;
 use crate::sitcomment::SitComment;
 use crate::sitextent::SitExtent;
 use crate::sitmagic::push_magic;
@@ -75,14 +74,18 @@ pub fn keyword_or_command(
 			pre: i, len, alt: None
 		},
 		b"!" |
+		b"declare" |
 		b"do" |
 		b"done" |
 		b"elif" |
 		b"else" |
+		b"export" |
 		b"fi" |
 		b"for" |
 		b"function" |
 		b"if" |
+		b"local" |
+		b"readonly" |
 		b"select" |
 		b"then" |
 		b"until" |
@@ -91,13 +94,6 @@ pub fn keyword_or_command(
 		b"}" => WhatNow{
 			tri: Transition::Push(Box::new(SitExtent{len: 0, color: COLOR_KWD})),
 			pre: i, len, alt: None,
-		},
-		b"declare" |
-		b"export" |
-		b"local" |
-		b"readonly" => WhatNow{
-			tri: Transition::Push(Box::new(SitDeclare{end_trigger})),
-			pre: i, len, alt: None
 		},
 		_ => WhatNow{
 			tri: Transition::Push(Box::new(SitCmd{end_trigger})),
