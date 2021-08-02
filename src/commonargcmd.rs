@@ -57,6 +57,7 @@ pub fn keyword_or_command(
 	}
 	let len = predlen(is_word, &horizon[i..]);
 	let len = if len != 0 { len } else { prefixlen(&horizon[i..], b"((") };
+	let len = if len != 0 { len } else { prefixlen(&horizon[i..], b"!") };
 	if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
 		return flush(i);
 	}
@@ -73,6 +74,7 @@ pub fn keyword_or_command(
 			tri: Transition::Push(Box::new(SitIn{})),
 			pre: i, len, alt: None
 		},
+		b"!" |
 		b"do" |
 		b"done" |
 		b"elif" |

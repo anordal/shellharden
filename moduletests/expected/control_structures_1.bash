@@ -3,7 +3,7 @@ let ivar be the test pilot
 #
 # Ivar is in command position.
 #
-[[ $ivar ]] && [[ $ivar ]] || [[ $ivar ]]; [[ $ivar ]] & [[ $ivar ]] | [[ $ivar ]]
+[[ $ivar ]] && [[ $ivar ]] || ! [[ $ivar ]]; [[ $ivar ]] & [[ $ivar ]] | [[ $ivar ]]
 
 if [[ $ivar ]]; then [[ $ivar ]]; elif [[ $ivar ]]; then [[ $ivar ]]; else [[ $ivar ]]; fi
 if [[ $ivar ]]
