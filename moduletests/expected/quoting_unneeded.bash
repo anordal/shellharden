@@ -10,6 +10,7 @@ spacestar=$IFS
 spacestar+=$asterisk
 a=(a b)
 b=${a[@]}
+c=$*
 
 # In the case expression
 case $spacestar in

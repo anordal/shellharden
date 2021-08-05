@@ -9,6 +9,7 @@
 use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
+use crate::situation::if_needed;
 use crate::situation::COLOR_KWD;
 use crate::situation::COLOR_HERE;
 use crate::situation::COLOR_VAR;
@@ -144,7 +145,7 @@ fn common_token(
 	i :usize,
 	is_horizon_lengthenable :bool,
 ) -> Option<WhatNow> {
-	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable) {
+	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable, true) {
 		return Some(res);
 	}
 	match common_str_cmd(&horizon, i, is_horizon_lengthenable, true) {
@@ -190,7 +191,7 @@ pub fn common_token_quoting_unneeded(
 	i :usize,
 	is_horizon_lengthenable :bool,
 ) -> Option<WhatNow> {
-	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable) {
+	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable, false) {
 		return Some(res);
 	}
 	match common_str_cmd(&horizon, i, is_horizon_lengthenable, false) {
@@ -237,6 +238,7 @@ fn find_usual_suspects(
 	horizon :&[u8],
 	i :usize,
 	is_horizon_lengthenable :bool,
+	quoting_needed : bool,
 ) -> Option<WhatNow> {
 	let a = horizon[i];
 	if u16::from(a) == end_trigger {
@@ -276,7 +278,7 @@ fn find_usual_suspects(
 			let ext = Box::new(SitExtent{len: 0, color: COLOR_VAR});
 			return Some(WhatNow{
 				tri: Transition::Push(ext),
-				pre: i, len: 2, alt: Some(b"\"$@\"")
+				pre: i, len: 2, alt: if_needed(quoting_needed, b"\"$@\"")
 			});
 		}
 	}
