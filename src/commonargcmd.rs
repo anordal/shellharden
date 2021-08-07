@@ -198,15 +198,18 @@ pub fn common_token_quoting_unneeded(
 		CommonStrCmdResult::None => None,
 		CommonStrCmdResult::Some(x) => Some(x),
 		CommonStrCmdResult::OnlyWithQuotes(x) => {
-			if horizon[i] == b'`' {
-				Some(WhatNow{
-					tri: Transition::Push(Box::new(SitNormal{
-						end_trigger: u16::from(b'`'), end_replace: None
-					})), pre: i, len: 1, alt: None
-				})
-			} else {
-				Some(x)
+			if let Some(replacement) = x.alt {
+				if replacement.len() >= x.len {
+					if horizon[i] == b'`' {
+						return Some(WhatNow{
+							tri: Transition::Push(Box::new(SitNormal{
+								end_trigger: u16::from(b'`'), end_replace: None
+							})), pre: i, len: 1, alt: None
+						});
+					}
+				}
 			}
+			Some(x)
 		}
 	}
 }

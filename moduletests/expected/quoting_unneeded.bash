@@ -11,6 +11,7 @@ spacestar+=$asterisk
 a=(a b)
 b=${a[@]}
 c=$*
+pwd=`pwd`hazard
 
 # In the case expression
 case $spacestar in
@@ -62,6 +63,7 @@ echo $? + $# - ${#a[@]} = $(($?+$#-${#a[@]}))
 a=`uname -a`
 
 # Counterexamples
+pwd=$PWD; case $PWD in esac
 pwd=$PWD
 pwd+=$PWD
 files=("$(ls)")

@@ -26,6 +26,11 @@ pub struct SitIn {}
 impl Situation for SitIn {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, _) in horizon.iter().enumerate() {
+			if let Some(res) = common_expr_quoting_unneeded(
+				0x100, horizon, i, is_horizon_lengthenable
+			) {
+				return res;
+			}
 			let len = predlen(is_word, &horizon[i..]);
 			if len == 0 {
 				continue;
@@ -39,11 +44,6 @@ impl Situation for SitIn {
 					tri: Transition::Replace(Box::new(SitCase{})),
 					pre: i + len, len: 0, alt: None
 				};
-			}
-			if let Some(res) = common_expr_quoting_unneeded(
-				0x100, horizon, i, is_horizon_lengthenable
-			) {
-				return res;
 			}
 			return flush(i + len);
 		}
