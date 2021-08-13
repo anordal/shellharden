@@ -128,7 +128,6 @@ fn main() {
 			}
 		}
 		if let Err(e) = machine::treatfile(&arg, &sett) {
-			println!("\x1b[m");
 			exit_code = 1;
 			match e {
 				machine::Error::Stdio(ref fail) => {

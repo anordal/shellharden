@@ -7,11 +7,13 @@
  */
 
 use std::io;
+use std::io::Write;
 
 use crate::syntaxerror::UnsupportedSyntax;
 
 use crate::filestream::InputSource;
 use crate::filestream::FileOut;
+use crate::filestream::OutputSink;
 
 use crate::situation::Situation;
 use crate::situation::Transition;
@@ -60,8 +62,18 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 
 	let mut color_cur = COLOR_NORMAL;
 
-	treatfile_fallible(&mut fi, &mut fo, &mut color_cur, &sett)?;
-	fo.commit(path).map_err(Error::Stdio)
+	let res = treatfile_fallible(&mut fi, &mut fo, &mut color_cur, &sett);
+	if color_cur != COLOR_NORMAL {
+		write_color(&mut fo, COLOR_NORMAL).map_err(Error::Stdio)?;
+	}
+	if let Ok(_) = res {
+		fo.commit(path).map_err(Error::Stdio)
+	} else {
+		if let OutputSink::Stdout(mut stdout) = fo.sink {
+			let _ = stdout.write_all(b"\n");
+		}
+		res
+	}
 }
 
 fn treatfile_fallible(
@@ -95,9 +107,6 @@ fn treatfile_fallible(
 			buf[i] = buf[consumed + i];
 		}
 		fill = remain;
-	}
-	if *color_cur != COLOR_NORMAL {
-		write_color(fo, COLOR_NORMAL).map_err(Error::Stdio)?;
 	}
 	if state.len() != 1 {
 		return Err(Error::Syntax(UnsupportedSyntax{

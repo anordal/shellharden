@@ -39,14 +39,14 @@ impl<'a> InputSource<'a> {
 	}
 }
 
-enum OutputSink<'a> {
+pub enum OutputSink<'a> {
 	Stdout(std::io::StdoutLock<'a>),
 	Soak(Vec<u8>),
 	None,
 }
 
 pub struct FileOut<'a> {
-	sink :OutputSink<'a>,
+	pub sink :OutputSink<'a>,
 	pub change :bool,
 }
 

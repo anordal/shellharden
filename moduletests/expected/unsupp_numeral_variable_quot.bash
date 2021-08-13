@@ -1,4 +1,4 @@
-echo "[m
+echo "
 moduletests/original/unsupp_numeral_variable_quot.bash: Unsupported syntax: Syntactic pitfall
 $10"
   ^
