@@ -42,67 +42,73 @@ pub enum Error {
 }
 
 pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error> {
-	let stdout = io::stdout(); // TODO: not here
-	let mut fo: FileOut;
-	{
-		let stdin = io::stdin(); // TODO: not here
-		let mut fi: InputSource = if path.is_empty() {
-			InputSource::open_stdin(&stdin)
-		} else {
-			InputSource::open_file(path).map_err(Error::Stdio)?
-		};
+	let stdin = io::stdin();
+	let mut fi: InputSource = if path.is_empty() {
+		InputSource::open_stdin(&stdin)
+	} else {
+		InputSource::open_file(path).map_err(Error::Stdio)?
+	};
 
-		fo = if sett.osel == OutputSelector::CHECK {
-			FileOut::open_none()
-		} else if sett.replace && !path.is_empty() {
-			FileOut::open_soak(fi.size().map_err(Error::Stdio)? * 9 / 8)
-		} else {
-			FileOut::open_stdout(&stdout)
-		};
+	let stdout = io::stdout();
+	let mut fo: FileOut = if sett.osel == OutputSelector::CHECK {
+		FileOut::open_none()
+	} else if sett.replace && !path.is_empty() {
+		FileOut::open_soak(fi.size().map_err(Error::Stdio)? * 9 / 8)
+	} else {
+		FileOut::open_stdout(&stdout)
+	};
 
-		const BUFSIZE :usize = 128;
-		let mut fill :usize = 0;
-		let mut buf = [0; BUFSIZE];
+	let mut color_cur = COLOR_NORMAL;
 
-		let mut state :Vec<Box<dyn Situation>> = vec!{Box::new(SitNormal{
-			end_trigger: 0x100, end_replace: None,
-		})};
-		let mut color_cur = COLOR_NORMAL;
-
-		loop {
-			let bytes = fi.read(&mut buf[fill ..]).map_err(Error::Stdio)?;
-			fill += bytes;
-			let eof = bytes == 0;
-			let consumed = stackmachine(
-				&mut state, &mut fo, &mut color_cur, &buf[0 .. fill], eof, &sett
-			)?;
-			let remain = fill - consumed;
-			if eof {
-				assert!(remain == 0);
-				break;
-			}
-			if fo.change && sett.osel == OutputSelector::CHECK {
-				return Err(Error::Check);
-			}
-			for i in 0 .. remain {
-				buf[i] = buf[consumed + i];
-			}
-			fill = remain;
-		}
-		if color_cur != COLOR_NORMAL {
-			write_color(&mut fo, COLOR_NORMAL).map_err(Error::Stdio)?;
-		}
-		if state.len() != 1 {
-			return Err(Error::Syntax(UnsupportedSyntax{
-				typ: "Unexpected end of file",
-				ctx: buf[0 .. fill].to_owned(),
-				pos: fill,
-				msg: "The file's end was reached without closing all sytactic scopes.\n\
-				Either, the parser got lost, or the file is truncated or malformed.",
-			}));
-		}
-	}
+	treatfile_fallible(&mut fi, &mut fo, &mut color_cur, &sett)?;
 	fo.commit(path).map_err(Error::Stdio)
+}
+
+fn treatfile_fallible(
+	fi: &mut InputSource, fo: &mut FileOut,
+	color_cur: &mut u32, sett: &Settings,
+) -> Result<(), Error> {
+	const BUFSIZE :usize = 128;
+	let mut fill :usize = 0;
+	let mut buf = [0; BUFSIZE];
+
+	let mut state :Vec<Box<dyn Situation>> = vec!{Box::new(SitNormal{
+		end_trigger: 0x100, end_replace: None,
+	})};
+
+	loop {
+		let bytes = fi.read(&mut buf[fill ..]).map_err(Error::Stdio)?;
+		fill += bytes;
+		let eof = bytes == 0;
+		let consumed = stackmachine(
+			&mut state, fo, color_cur, &buf[0 .. fill], eof, &sett
+		)?;
+		let remain = fill - consumed;
+		if eof {
+			assert!(remain == 0);
+			break;
+		}
+		if fo.change && sett.osel == OutputSelector::CHECK {
+			return Err(Error::Check);
+		}
+		for i in 0 .. remain {
+			buf[i] = buf[consumed + i];
+		}
+		fill = remain;
+	}
+	if *color_cur != COLOR_NORMAL {
+		write_color(fo, COLOR_NORMAL).map_err(Error::Stdio)?;
+	}
+	if state.len() != 1 {
+		return Err(Error::Syntax(UnsupportedSyntax{
+			typ: "Unexpected end of file",
+			ctx: buf[0 .. fill].to_owned(),
+			pos: fill,
+			msg: "The file's end was reached without closing all sytactic scopes.\n\
+			Either, the parser got lost, or the file is truncated or malformed.",
+		}));
+	}
+	Ok(())
 }
 
 fn stackmachine(
