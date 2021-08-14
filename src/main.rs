@@ -129,16 +129,16 @@ fn main() {
 		}
 		if let Err(e) = machine::treatfile(&arg, &sett) {
 			exit_code = 1;
-			match e {
-				machine::Error::Stdio(ref fail) => {
+			match (sett.osel, e) {
+				(_, machine::Error::Stdio(ref fail)) => {
 					errfmt::blame_path_io(&arg, &fail);
 				}
-				machine::Error::Syntax(ref fail) => {
-					errfmt::blame_syntax(&arg, &fail);
-				}
-				machine::Error::Check => {
+				(OutputSelector::CHECK, _) | (_, machine::Error::Check) => {
 					exit_code = 2;
 					break;
+				}
+				(_, machine::Error::Syntax(ref fail)) => {
+					errfmt::blame_syntax(&arg, &fail);
 				}
 			};
 		}
