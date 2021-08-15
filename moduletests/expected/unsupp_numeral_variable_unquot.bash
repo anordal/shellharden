@@ -9,6 +9,6 @@ Try this and be shocked: f() { echo "$9" "$10"; }; f a b c d e f g h i j
 Here is where braces should be used to disambiguate, e.g. "${10}" vs "${1}0".
 
 Syntactic pitfalls are deemed too dangerous to fix automatically
-(the purpose of Shellharden is to fix brittle code – code that mostly does what it looks like, as opposed to code that never does what it looks like):
+(the purpose of Shellharden is to fix vulnerable code – code that mostly does what it looks like, as opposed to code that never does what it looks like):
 * Fixing what it does would be 100% subtle and might slip through code review unnoticed.
 * Fixing its look would make a likely bug look intentional.

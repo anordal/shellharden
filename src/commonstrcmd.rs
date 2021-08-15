@@ -220,7 +220,7 @@ fn bail_doubledigit(context: &[u8], pos: usize) -> CommonStrCmdResult {
 			e.g. \"${10}\" vs \"${1}0\".\n\
 			\n\
 			Syntactic pitfalls are deemed too dangerous to fix automatically\n\
-			(the purpose of Shellharden is to fix brittle code – code that mostly \
+			(the purpose of Shellharden is to fix vulnerable code – code that mostly \
 			does what it looks like, as opposed to code that never does what it looks like):\n\
 			* Fixing what it does would be 100% subtle \
 			and might slip through code review unnoticed.\n\

@@ -10,9 +10,9 @@ Purpose of this guide
 
 This guide accompanies Shellharden, the corrective syntax highlighter.
 
-Shellharden suggests, and can apply, changes to remove brittleness in shellscripts. This is in accordance with [ShellCheck](https://github.com/koalaman/shellcheck/) and [BashPitfalls](http://mywiki.wooledge.org/BashPitfalls) – Shellharden shall not disagree with these.
+Shellharden suggests, and can apply, changes to remove vulnerabilities in shellscripts. This is in accordance with [ShellCheck](https://github.com/koalaman/shellcheck/) and [BashPitfalls](http://mywiki.wooledge.org/BashPitfalls) – Shellharden shall not disagree with these.
 
-The problem is that not all scripts will work with their brittleness simply removed, because *that* was their working principle, and must be rewritten quite differently.
+The problem is that not all scripts will work with their vulnerabilities simply removed, because *that* was their working principle, and must be rewritten quite differently.
 Thus the need for a human in the loop and a holistic methodology.
 
 Why focus on bash?

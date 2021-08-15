@@ -31,8 +31,8 @@ Name
 
 Shellharden can do what Shellcheck can't: Apply the suggested changes.
 
-In other words, harden brittle shellscripts.
-The builtin assumption is that the script does not *depend* on the brittle behavior –
+In other words, harden vulnerable shellscripts.
+The builtin assumption is that the script does not *depend* on the vulnerable behavior –
 the user is responsible for the code review.
 
 Shellharden was previously known as "Naziquote".
@@ -44,7 +44,7 @@ I couldn't call it "bash cleaner" either, as that means "poo smearer" in Norwegi
 Prior art
 ---------
 
-* [Shellcheck][2] is a wonderful tool to *detect*, and give general advice, about brittle bash code. The only thing missing is something to say yes with, and *apply* those advice (assuming proper review of course).
+* [Shellcheck][2] is a wonderful tool to *detect*, and give general advice, about vulnerable bash code. The only thing missing is something to say yes with, and *apply* those advice (assuming proper review of course).
 
 * I asked [this SO question][3], for a tool that could rewrite bash scripts with proper quoting. One answerer beat me to it. But if it was me, I would do a syntax highlighter in the same tool (as a way to see if the parser gets lost, and make the most out of the parser, because bash is like quantum mechanics – nobody really knows how it works).
 
