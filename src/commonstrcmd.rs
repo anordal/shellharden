@@ -10,6 +10,7 @@ use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::if_needed;
+use crate::situation::COLOR_ESC;
 use crate::situation::COLOR_VAR;
 
 use crate::microparsers::predlen;
@@ -54,7 +55,7 @@ pub fn common_str_cmd(
 		});
 	}
 	if horizon[i] == b'\\' {
-		let esc = Box::new(SitExtent{len: 1, color: 0x01_ff0080});
+		let esc = Box::new(SitExtent{len: 1, color: COLOR_ESC});
 		return CommonStrCmdResult::Some(WhatNow{
 			tri: Transition::Push(esc), pre: i, len: 1, alt: None
 		});

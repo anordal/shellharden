@@ -10,8 +10,9 @@ use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::if_needed;
-use crate::situation::COLOR_KWD;
 use crate::situation::COLOR_HERE;
+use crate::situation::COLOR_KWD;
+use crate::situation::COLOR_SQ;
 use crate::situation::COLOR_VAR;
 
 use crate::microparsers::prefixlen;
@@ -253,7 +254,7 @@ fn find_usual_suspects(
 	if a == b'\'' {
 		return Some(WhatNow{
 			tri: Transition::Push(Box::new(SitUntilByte{
-				until: b'\'', color: 0x00_ffff00,
+				until: b'\'', color: COLOR_SQ,
 			})),
 			pre: i, len: 1, alt: None
 		});
