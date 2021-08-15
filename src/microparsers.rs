@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 - 2018 Andreas Nordal
+ * Copyright 2016 - 2021 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,19 +22,12 @@ pub fn predlen(pred: impl Fn(u8) -> bool, horizon: &[u8]) -> usize {
 	i
 }
 
-#[rustfmt::skip]
 pub fn is_identifierhead(c: u8) -> bool {
-	(c >= b'a' && c <= b'z')
-	|| (c >= b'A' && c <= b'Z')
-	|| (c == b'_')
+	matches!(c, b'a' ..= b'z' | b'A' ..= b'Z' | b'_')
 }
 
-#[rustfmt::skip]
 pub fn is_identifiertail(c: u8) -> bool {
-	(c >= b'a' && c <= b'z')
-	|| (c >= b'A' && c <= b'Z')
-	|| (c >= b'0' && c <= b'9')
-	|| (c == b'_')
+	matches!(c, b'a' ..= b'z' | b'A' ..= b'Z' | b'0' ..= b'9' | b'_')
 }
 
 pub fn identifierlen(horizon: &[u8]) -> usize {
@@ -50,16 +43,5 @@ pub fn is_whitespace(c: u8) -> bool {
 }
 
 pub fn is_word(byte: u8) -> bool {
-	match byte {
-		0 ..= b' ' => false,
-		b'&' => false,
-		b'(' => false,
-		b')' => false,
-		b';' => false,
-		b'<' => false,
-		b'>' => false,
-		b'`' => false,
-		b'|' => false,
-		_ => true,
-	}
+	!matches!(byte, 0 ..= b' ' | b'&' | b'(' | b')' | b';' | b'<' | b'>' | b'`' | b'|')
 }

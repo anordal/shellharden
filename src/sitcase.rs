@@ -119,7 +119,7 @@ impl Situation for SitCaseArm {
 					};
 				}
 			}
-			return keyword_or_command(0x100, &horizon, i, is_horizon_lengthenable);
+			return keyword_or_command(0x100, horizon, i, is_horizon_lengthenable);
 		}
 		flush(horizon.len())
 	}

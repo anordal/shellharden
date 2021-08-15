@@ -25,10 +25,10 @@ use crate::sitcmd::SitNormal;
 #[derive(Copy)]
 #[derive(PartialEq)]
 pub enum OutputSelector {
-	ORIGINAL,
-	DIFF,
-	TRANSFORM,
-	CHECK,
+	Original,
+	Diff,
+	Transform,
+	Check,
 }
 
 pub struct Settings {
@@ -52,7 +52,7 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 	};
 
 	let stdout = io::stdout();
-	let mut fo: FileOut = if sett.osel == OutputSelector::CHECK {
+	let mut fo: FileOut = if sett.osel == OutputSelector::Check {
 		FileOut::open_none()
 	} else if sett.replace && !path.is_empty() {
 		FileOut::open_soak(fi.size().map_err(Error::Stdio)? * 9 / 8)
@@ -62,11 +62,11 @@ pub fn treatfile(path: &std::ffi::OsString, sett: &Settings) -> Result<(), Error
 
 	let mut color_cur = COLOR_NORMAL;
 
-	let res = treatfile_fallible(&mut fi, &mut fo, &mut color_cur, &sett);
+	let res = treatfile_fallible(&mut fi, &mut fo, &mut color_cur, sett);
 	if color_cur != COLOR_NORMAL {
 		write_color(&mut fo, COLOR_NORMAL).map_err(Error::Stdio)?;
 	}
-	if let Ok(_) = res {
+	if res.is_ok() {
 		fo.commit(path).map_err(Error::Stdio)
 	} else {
 		if let OutputSink::Stdout(mut stdout) = fo.sink {
@@ -93,14 +93,14 @@ fn treatfile_fallible(
 		fill += bytes;
 		let eof = bytes == 0;
 		let consumed = stackmachine(
-			&mut state, fo, color_cur, &buf[0 .. fill], eof, &sett
+			&mut state, fo, color_cur, &buf[0 .. fill], eof, sett
 		)?;
 		let remain = fill - consumed;
 		if eof {
 			assert!(remain == 0);
 			break;
 		}
-		if fo.change && sett.osel == OutputSelector::CHECK {
+		if fo.change && sett.osel == OutputSelector::Check {
 			return Err(Error::Check);
 		}
 		for i in 0 .. remain {
@@ -136,11 +136,11 @@ fn stackmachine(
 		let statebox: &mut Box<dyn Situation> = state.last_mut().unwrap();
 		let curstate = statebox.as_mut();
 		let color_pre = if sett.syntax { curstate.get_color() } else { COLOR_NORMAL };
-		let whatnow = curstate.whatnow(&horizon, is_horizon_lengthenable);
+		let whatnow = curstate.whatnow(horizon, is_horizon_lengthenable);
 
 		if whatnow.alt.is_some() {
 			out.change = true;
-			if sett.osel == OutputSelector::CHECK {
+			if sett.osel == OutputSelector::Check {
 				break;
 			}
 		}
@@ -194,10 +194,10 @@ fn write_transition(
 	alternative: Option<&[u8]>,
 ) -> Result<(), std::io::Error> {
 	match (alternative, sett.osel) {
-		(Some(replacement), OutputSelector::DIFF) => {
-			write_diff(out, color_cur, color_trans, replaceable, &replacement)
+		(Some(replacement), OutputSelector::Diff) => {
+			write_diff(out, color_cur, color_trans, replaceable, replacement)
 		}
-		(Some(replacement), OutputSelector::TRANSFORM) => {
+		(Some(replacement), OutputSelector::Transform) => {
 			write_colored_slice(out, color_cur, color_trans, replacement)
 		}
 		(_, _) => {
@@ -230,7 +230,7 @@ fn write_diff(
 		}
 		write_colored_slice(out, &mut color_cur, color_next, &remain_a[i ..= i])?;
 	}
-	write_colored_slice(out, &mut color_cur, color_b, &remain_b)
+	write_colored_slice(out, &mut color_cur, color_b, remain_b)
 }
 
 fn write_colored_slice(
@@ -249,7 +249,6 @@ fn write_colored_slice(
 	out.write_all(slice)
 }
 
-#[allow(clippy::verbose_bit_mask)]
 fn write_color(out :&mut FileOut, code :u32) -> Result<(), std::io::Error> {
 	let zero = if (code >> 24) & 3 != 0 { "0" } else { "" };
 	let bold = if (code >> 24) & 1 != 0 { ";1" } else { "" };

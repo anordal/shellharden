@@ -148,7 +148,7 @@ fn common_token(
 	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable, true) {
 		return Some(res);
 	}
-	match common_str_cmd(&horizon, i, is_horizon_lengthenable, true) {
+	match common_str_cmd(horizon, i, is_horizon_lengthenable, true) {
 		CommonStrCmdResult::None => None,
 		CommonStrCmdResult::Some(x) => Some(x),
 		CommonStrCmdResult::OnlyWithQuotes(_) => {
@@ -194,12 +194,13 @@ pub fn common_token_quoting_unneeded(
 	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable, false) {
 		return Some(res);
 	}
-	match common_str_cmd(&horizon, i, is_horizon_lengthenable, false) {
+	match common_str_cmd(horizon, i, is_horizon_lengthenable, false) {
 		CommonStrCmdResult::None => None,
 		CommonStrCmdResult::Some(x) => Some(x),
 		CommonStrCmdResult::OnlyWithQuotes(x) => {
 			if let Some(replacement) = x.alt {
 				if replacement.len() >= x.len {
+					#[allow(clippy::collapsible_if)] // Could be expanded.
 					if horizon[i] == b'`' {
 						return Some(WhatNow{
 							tri: Transition::Push(Box::new(SitNormal{
@@ -320,7 +321,7 @@ pub enum Tri {
 }
 
 pub fn find_lvalue(horizon: &[u8]) -> (Tri, usize) {
-	let mut ate = identifierlen(&horizon);
+	let mut ate = identifierlen(horizon);
 	if ate == 0 {
 		return (Tri::No, ate);
 	}
@@ -356,7 +357,7 @@ pub fn find_lvalue(horizon: &[u8]) -> (Tri, usize) {
 }
 
 fn find_heredoc(horizon: &[u8]) -> (usize, Vec<u8>) {
-	let mut ate = predlen(|x| x == b'<', &horizon);
+	let mut ate = predlen(|x| x == b'<', horizon);
 	let mut found = Vec::<u8>::new();
 	if ate != 2 {
 		return (ate, found);
@@ -371,38 +372,38 @@ fn find_heredoc(horizon: &[u8]) -> (usize, Vec<u8>) {
 	#[derive(Clone)]
 	#[derive(Copy)]
 	enum DelimiterSyntax {
-		WORD,
-		WORDESC,
-		SQ,
-		DQ,
-		DQESC,
+		Word,
+		WordEsc,
+		Sq,
+		Dq,
+		DqEsc,
 	}
-	let mut state = DelimiterSyntax::WORD;
+	let mut state = DelimiterSyntax::Word;
 
 	for byte_ref in herein {
 		let byte: u8 = *byte_ref;
 		state = match (state, byte) {
-			(DelimiterSyntax::WORD, b' ' ) => break,
-			(DelimiterSyntax::WORD, b'\n') => break,
-			(DelimiterSyntax::WORD, b'\t') => break,
-			(DelimiterSyntax::WORD, b'\\') => DelimiterSyntax::WORDESC,
-			(DelimiterSyntax::WORD, b'\'') => DelimiterSyntax::SQ,
-			(DelimiterSyntax::WORD, b'\"') => DelimiterSyntax::DQ,
-			(DelimiterSyntax::SQ, b'\'') => DelimiterSyntax::WORD,
-			(DelimiterSyntax::DQ, b'\"') => DelimiterSyntax::WORD,
-			(DelimiterSyntax::DQ, b'\\') => DelimiterSyntax::DQESC,
-			(DelimiterSyntax::WORDESC, b'\n') => DelimiterSyntax::WORD,
-			(DelimiterSyntax::WORDESC, _) => {
+			(DelimiterSyntax::Word, b' ' ) => break,
+			(DelimiterSyntax::Word, b'\n') => break,
+			(DelimiterSyntax::Word, b'\t') => break,
+			(DelimiterSyntax::Word, b'\\') => DelimiterSyntax::WordEsc,
+			(DelimiterSyntax::Word, b'\'') => DelimiterSyntax::Sq,
+			(DelimiterSyntax::Word, b'\"') => DelimiterSyntax::Dq,
+			(DelimiterSyntax::Sq, b'\'') => DelimiterSyntax::Word,
+			(DelimiterSyntax::Dq, b'\"') => DelimiterSyntax::Word,
+			(DelimiterSyntax::Dq, b'\\') => DelimiterSyntax::DqEsc,
+			(DelimiterSyntax::WordEsc, b'\n') => DelimiterSyntax::Word,
+			(DelimiterSyntax::WordEsc, _) => {
 				found.push(byte);
-				DelimiterSyntax::WORD
+				DelimiterSyntax::Word
 			}
-			(DelimiterSyntax::DQESC, b'\n') => DelimiterSyntax::DQ,
-			(DelimiterSyntax::DQESC, _) => {
+			(DelimiterSyntax::DqEsc, b'\n') => DelimiterSyntax::Dq,
+			(DelimiterSyntax::DqEsc, _) => {
 				if byte != b'\"' && byte != b'\\' {
 					found.push(b'\\');
 				}
 				found.push(byte);
-				DelimiterSyntax::DQ
+				DelimiterSyntax::Dq
 			}
 			(_, _) => {
 				found.push(byte);

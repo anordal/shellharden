@@ -38,9 +38,7 @@ pub fn common_str_cmd(
 	ctx_cmd: bool,
 ) -> CommonStrCmdResult {
 	if horizon[i] == b'`' {
-		let found_pwd = find_pwd(
-			&horizon, i, 1, b'`', is_horizon_lengthenable
-		);
+		let found_pwd = find_pwd(horizon, i, 1, b'`', is_horizon_lengthenable);
 		match found_pwd {
 			CommonStrCmdResult::None => {}
 			CommonStrCmdResult::Some(_) |
@@ -72,9 +70,7 @@ pub fn common_str_cmd(
 	}
 	let c = horizon[i+1];
 	if c == b'(' {
-		let found_pwd = find_pwd(
-			&horizon, i, 2, b')', is_horizon_lengthenable
-		);
+		let found_pwd = find_pwd(horizon, i, 2, b')', is_horizon_lengthenable);
 		match found_pwd {
 			CommonStrCmdResult::None => {}
 			CommonStrCmdResult::Some(_) |
@@ -188,7 +184,7 @@ fn find_pwd(
 }
 
 fn pos_tailhazard(horizon: &[u8], end: u8) -> (usize, usize) {
-	let idlen = identifierlen(&horizon);
+	let idlen = identifierlen(horizon);
 	let mut pos = idlen;
 	if pos < horizon.len() && horizon[pos] == end {
 		pos += 1;
@@ -198,11 +194,11 @@ fn pos_tailhazard(horizon: &[u8], end: u8) -> (usize, usize) {
 }
 
 fn is_decimal(byte: u8) -> bool {
-	byte >= b'0' && byte <= b'9'
+	matches!(byte, b'0' ..= b'9')
 }
 
 fn is_variable_of_numeric_content(c: u8) -> bool {
-	c == b'#' || c == b'?' || c == b'$' || c == b'!'
+	matches!(c, b'#' | b'?' | b'$' | b'!')
 }
 
 fn bail_doubledigit(context: &[u8], pos: usize) -> CommonStrCmdResult {

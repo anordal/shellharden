@@ -25,7 +25,7 @@ pub struct SitStrPhantom {
 
 impl Situation for SitStrPhantom {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		let mouthful = predlen(is_phantomstringfood, &horizon);
+		let mouthful = predlen(is_phantomstringfood, horizon);
 		if mouthful == horizon.len() {
 			if is_horizon_lengthenable {
 				return flush(0);
@@ -36,7 +36,7 @@ impl Situation for SitStrPhantom {
 					return become_real(mouthful);
 				}
 				b'$' | b'`' => {
-					match common_str_cmd(&horizon, mouthful, is_horizon_lengthenable, true) {
+					match common_str_cmd(horizon, mouthful, is_horizon_lengthenable, true) {
 						CommonStrCmdResult::None => {}
 						CommonStrCmdResult::Some(consult) |
 						CommonStrCmdResult::OnlyWithQuotes(consult) => {

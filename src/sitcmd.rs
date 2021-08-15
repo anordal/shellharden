@@ -38,7 +38,7 @@ impl Situation for SitNormal {
 				};
 			}
 			return keyword_or_command(
-				self.end_trigger, &horizon, i, is_horizon_lengthenable
+				self.end_trigger, horizon, i, is_horizon_lengthenable
 			);
 		}
 		flush(horizon.len())

@@ -21,10 +21,10 @@ impl<'a> InputSource<'a> {
 	pub fn open_stdin(stdin: &std::io::Stdin) -> InputSource {
 		InputSource::Stdin(stdin.lock())
 	}
-	pub fn read(&mut self, mut buf: &mut [u8]) -> Result<usize, std::io::Error> {
+	pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error> {
 		match *self {
-			InputSource::Stdin(ref mut fh) => fh.read(&mut buf),
-			InputSource::File (ref mut fh) => fh.read(&mut buf),
+			InputSource::Stdin(ref mut fh) => fh.read(buf),
+			InputSource::File (ref mut fh) => fh.read(buf),
 		}
 	}
 	pub fn size(&mut self) -> Result<u64, std::io::Error> {
@@ -62,7 +62,7 @@ impl<'a> FileOut<'a> {
 	}
 	pub fn write_all(&mut self, buf: &[u8]) -> Result<(), std::io::Error> {
 		match self.sink {
-			OutputSink::Stdout(ref mut fh) => fh.write_all(&buf)?,
+			OutputSink::Stdout(ref mut fh) => fh.write_all(buf)?,
 			OutputSink::Soak(ref mut vec) => vec.extend_from_slice(buf),
 			OutputSink::None => {}
 		}

@@ -1,10 +1,13 @@
 /*
- * Copyright 2016 - 2018 Andreas Nordal
+ * Copyright 2016 - 2021 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+
+// Color codes are split between flag- and color bits on purpose, such as 0x03_789060.
+#![allow(clippy::unusual_byte_groupings)]
 
 use std::env;
 use std::process;
@@ -60,7 +63,7 @@ fn main() {
 	args.next();
 
 	let mut sett = machine::Settings {
-		osel: OutputSelector::DIFF,
+		osel: OutputSelector::Diff,
 		syntax: true,
 		replace: false,
 	};
@@ -72,37 +75,37 @@ fn main() {
 			if comparable.starts_with(opt_trigger) {
 				match comparable {
 					"--suggest" => {
-						sett.osel = OutputSelector::DIFF;
+						sett.osel = OutputSelector::Diff;
 						sett.syntax = false;
 						sett.replace = false;
 						continue;
 					}
 					"--syntax" => {
-						sett.osel = OutputSelector::ORIGINAL;
+						sett.osel = OutputSelector::Original;
 						sett.syntax = true;
 						sett.replace = false;
 						continue;
 					}
 					"--syntax-suggest" => {
-						sett.osel = OutputSelector::DIFF;
+						sett.osel = OutputSelector::Diff;
 						sett.syntax = true;
 						sett.replace = false;
 						continue;
 					}
 					"--transform" => {
-						sett.osel = OutputSelector::TRANSFORM;
+						sett.osel = OutputSelector::Transform;
 						sett.syntax = false;
 						sett.replace = false;
 						continue;
 					}
 					"--check" => {
-						sett.osel = OutputSelector::CHECK;
+						sett.osel = OutputSelector::Check;
 						sett.syntax = false;
 						sett.replace = false;
 						continue;
 					}
 					"--replace" => {
-						sett.osel = OutputSelector::TRANSFORM;
+						sett.osel = OutputSelector::Transform;
 						sett.syntax = false;
 						sett.replace = true;
 						continue;
@@ -131,14 +134,14 @@ fn main() {
 			exit_code = 1;
 			match (sett.osel, e) {
 				(_, machine::Error::Stdio(ref fail)) => {
-					errfmt::blame_path_io(&arg, &fail);
+					errfmt::blame_path_io(&arg, fail);
 				}
-				(OutputSelector::CHECK, _) | (_, machine::Error::Check) => {
+				(OutputSelector::Check, _) | (_, machine::Error::Check) => {
 					exit_code = 2;
 					break;
 				}
 				(_, machine::Error::Syntax(ref fail)) => {
-					errfmt::blame_syntax(&arg, &fail);
+					errfmt::blame_syntax(&arg, fail);
 				}
 			};
 		}

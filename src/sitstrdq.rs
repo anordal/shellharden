@@ -22,7 +22,7 @@ impl Situation for SitStrDq {
 			if a == b'\"' {
 				return WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None};
 			}
-			match common_str_cmd(&horizon, i, is_horizon_lengthenable, false) {
+			match common_str_cmd(horizon, i, is_horizon_lengthenable, false) {
 				CommonStrCmdResult::None => {}
 				CommonStrCmdResult::Some(x) |
 				CommonStrCmdResult::OnlyWithQuotes(x) => { return x; }
