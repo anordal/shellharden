@@ -1,5 +1,35 @@
 # Changelog
 
+## 4.1.3
+
+*A pandemy's worth of maintenance*
+(when "Covid" stopped being a perfect name for a video conferencing company)
+
+* Syntactic fixes
+  * Fix nested case (#37)
+  * Recognise nested variable expansion (#39)
+  * Recognise arithmetic statement (#42)
+  * Recognise export assignments (like local, declare, readonly)
+  * Allow unquoted $* in contexts where quoting is not required, such as s=$*
+  * Recognise negation, or rather that what follows is in command position,
+    as needed to recognise assignments like || ! s=$i in loop conditons.
+  * \`pwd\` rewrites to $PWD, also where quoting is not required
+    (this was an oversight)
+* Feature fixes
+  * --check no longer leaks out syntax errors or other error output.
+* Testing
+  * Make tests run on GitHub
+  * Find & test the right build's executable (debug/release), not just both.
+  * Test that Shellharden is idempotent and exercise --check on current tests
+* Color:
+  * Brighten the comment color 3× for readability on IPS screens where dark
+    colors look black (or KDE Breeze's not so black terminal background).
+  * Change 'single quoted string' from yellow to gold.
+  * Use 3-bit background color for terminals that don't support 24-bit color.
+    This is merely the most important coloring; the syntax is still
+    highlighted in 24-bit color and requires a 24-bit terminal to see.
+  * Change color lazily (less work for the terminal).
+
 ## 4.1.2
 
 *One refactoring, plenty of necessary fixes*
