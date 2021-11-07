@@ -11,6 +11,7 @@
 
 use std::env;
 use std::process;
+use std::ffi::OsStr;
 
 mod machine;
 use crate::machine::OutputSelector;
@@ -71,66 +72,55 @@ fn main() {
 	let mut exit_code: i32 = 0;
 	let mut opt_trigger: &str = "-";
 	for arg in args {
-		if let Some(comparable) = arg.to_str() {
-			if comparable.starts_with(opt_trigger) {
-				match comparable {
-					"--suggest" => {
-						sett.osel = OutputSelector::Diff;
-						sett.syntax = false;
-						sett.replace = false;
-						continue;
-					}
-					"--syntax" => {
-						sett.osel = OutputSelector::Original;
-						sett.syntax = true;
-						sett.replace = false;
-						continue;
-					}
-					"--syntax-suggest" => {
-						sett.osel = OutputSelector::Diff;
-						sett.syntax = true;
-						sett.replace = false;
-						continue;
-					}
-					"--transform" => {
-						sett.osel = OutputSelector::Transform;
-						sett.syntax = false;
-						sett.replace = false;
-						continue;
-					}
-					"--check" => {
-						sett.osel = OutputSelector::Check;
-						sett.syntax = false;
-						sett.replace = false;
-						continue;
-					}
-					"--replace" => {
-						sett.osel = OutputSelector::Transform;
-						sett.syntax = false;
-						sett.replace = true;
-						continue;
-					}
-					"--help" | "-h" => {
-						help();
-						continue;
-					}
-					"--version" => {
-						println!(env!("CARGO_PKG_VERSION"));
-						continue;
-					}
-					"--" => {
-						opt_trigger = "\x00";
-						continue;
-					}
-					_ => {
-						errfmt::blame_path(&arg, "No such option.");
-						exit_code = 3;
-						break;
-					}
+		if let Some(option) = get_if_opt(&arg, opt_trigger) {
+			match option {
+				"--suggest" => {
+					sett.osel = OutputSelector::Diff;
+					sett.syntax = false;
+					sett.replace = false;
+				}
+				"--syntax" => {
+					sett.osel = OutputSelector::Original;
+					sett.syntax = true;
+					sett.replace = false;
+				}
+				"--syntax-suggest" => {
+					sett.osel = OutputSelector::Diff;
+					sett.syntax = true;
+					sett.replace = false;
+				}
+				"--transform" => {
+					sett.osel = OutputSelector::Transform;
+					sett.syntax = false;
+					sett.replace = false;
+				}
+				"--check" => {
+					sett.osel = OutputSelector::Check;
+					sett.syntax = false;
+					sett.replace = false;
+				}
+				"--replace" => {
+					sett.osel = OutputSelector::Transform;
+					sett.syntax = false;
+					sett.replace = true;
+				}
+				"--help" | "-h" => {
+					help();
+				}
+				"--version" => {
+					println!(env!("CARGO_PKG_VERSION"));
+				}
+				"--" => {
+					opt_trigger = "\x00";
+				}
+				_ => {
+					errfmt::blame_path(&arg, "No such option.");
+					exit_code = 3;
+					break;
 				}
 			}
 		}
-		if let Err(e) = machine::treatfile(&arg, &sett) {
+		else if let Err(e) = machine::treatfile(&arg, &sett) {
 			exit_code = 1;
 			match (sett.osel, e) {
 				(_, machine::Error::Stdio(ref fail)) => {
@@ -147,6 +137,15 @@ fn main() {
 		}
 	}
 	process::exit(exit_code);
+}
+
+fn get_if_opt<'a>(arg: &'a OsStr, opt_trigger: &str) -> Option<&'a str> {
+	if let Some(comparable) = arg.to_str() {
+		if comparable.starts_with(opt_trigger) {
+			return Some(comparable);
+		}
+	}
+	None
 }
 
 //------------------------------------------------------------------------------
