@@ -24,7 +24,7 @@ use crate::microparsers::is_word;
 use crate::commonstrcmd::CommonStrCmdResult;
 use crate::commonstrcmd::common_str_cmd;
 
-use crate::sitcase::SitIn;
+use crate::sitcase::SitCase;
 use crate::sitcmd::SitNormal;
 use crate::sitcmd::SitCmd;
 use crate::sitcomment::SitComment;
@@ -72,7 +72,7 @@ pub fn keyword_or_command(
 		b"((" => push_magic(i, 1, b')'),
 		b"[[" => push_magic(i, 1, b']'),
 		b"case" => WhatNow{
-			tri: Transition::Push(Box::new(SitIn{})),
+			tri: Transition::Push(Box::new(SitCase{})),
 			pre: i, len, alt: None
 		},
 		b"!" |

@@ -21,9 +21,9 @@ use crate::microparsers::is_word;
 use crate::commonargcmd::keyword_or_command;
 use crate::commonargcmd::common_expr_quoting_unneeded;
 
-pub struct SitIn {}
+pub struct SitCase {}
 
-impl Situation for SitIn {
+impl Situation for SitCase {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, _) in horizon.iter().enumerate() {
 			if let Some(res) = common_expr_quoting_unneeded(
@@ -41,7 +41,7 @@ impl Situation for SitIn {
 			let word = &horizon[i..i+len];
 			if word == b"in" {
 				return WhatNow{
-					tri: Transition::Replace(Box::new(SitCase{})),
+					tri: Transition::Replace(Box::new(SitCaseIn{})),
 					pre: i + len, len: 0, alt: None
 				};
 			}
@@ -54,9 +54,9 @@ impl Situation for SitIn {
 	}
 }
 
-struct SitCase {}
+struct SitCaseIn {}
 
-impl Situation for SitCase {
+impl Situation for SitCaseIn {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, &a) in horizon.iter().enumerate() {
 			let len = predlen(is_word, &horizon[i..]);
@@ -141,33 +141,33 @@ use crate::testhelpers::*;
 use crate::sitcmd::SitCmd;
 
 #[test]
-fn test_sit_in() {
-	sit_expect!(SitIn{}, b"", &flush(0));
-	sit_expect!(SitIn{}, b" ", &flush(1));
-	sit_expect!(SitIn{}, b"i", &flush(0), &flush(1));
-	let found_the_in_word = WhatNow{
-		tri: Transition::Replace(Box::new(SitCase{})),
-		pre: 2, len: 0, alt: None
-	};
-	sit_expect!(SitIn{}, b"in ", &found_the_in_word);
-	sit_expect!(SitIn{}, b"in", &flush(0), &found_the_in_word);
-	sit_expect!(SitIn{}, b"inn", &flush(0), &flush(3));
-	sit_expect!(SitIn{}, b" in", &flush(1));
-	sit_expect!(SitIn{}, b"fin", &flush(0), &flush(3));
-	sit_expect!(SitIn{}, b"fin ", &flush(3));
-}
-
-#[test]
 fn test_sit_case() {
 	sit_expect!(SitCase{}, b"", &flush(0));
 	sit_expect!(SitCase{}, b" ", &flush(1));
-	sit_expect!(SitCase{}, b"esa", &flush(0), &flush(3));
-	sit_expect!(SitCase{}, b"esac ", &pop_kw(0, 4));
-	sit_expect!(SitCase{}, b"esac", &flush(0), &pop_kw(0, 4));
-	sit_expect!(SitCase{}, b"esacs", &flush(0), &flush(5));
-	sit_expect!(SitCase{}, b" esac", &flush(1));
-	sit_expect!(SitCase{}, b"besac", &flush(0), &flush(5));
-	sit_expect!(SitCase{}, b"besac ", &flush(5));
+	sit_expect!(SitCase{}, b"i", &flush(0), &flush(1));
+	let found_the_in_word = WhatNow{
+		tri: Transition::Replace(Box::new(SitCaseIn{})),
+		pre: 2, len: 0, alt: None
+	};
+	sit_expect!(SitCase{}, b"in ", &found_the_in_word);
+	sit_expect!(SitCase{}, b"in", &flush(0), &found_the_in_word);
+	sit_expect!(SitCase{}, b"inn", &flush(0), &flush(3));
+	sit_expect!(SitCase{}, b" in", &flush(1));
+	sit_expect!(SitCase{}, b"fin", &flush(0), &flush(3));
+	sit_expect!(SitCase{}, b"fin ", &flush(3));
+}
+
+#[test]
+fn test_sit_casein() {
+	sit_expect!(SitCaseIn{}, b"", &flush(0));
+	sit_expect!(SitCaseIn{}, b" ", &flush(1));
+	sit_expect!(SitCaseIn{}, b"esa", &flush(0), &flush(3));
+	sit_expect!(SitCaseIn{}, b"esac ", &pop_kw(0, 4));
+	sit_expect!(SitCaseIn{}, b"esac", &flush(0), &pop_kw(0, 4));
+	sit_expect!(SitCaseIn{}, b"esacs", &flush(0), &flush(5));
+	sit_expect!(SitCaseIn{}, b" esac", &flush(1));
+	sit_expect!(SitCaseIn{}, b"besac", &flush(0), &flush(5));
+	sit_expect!(SitCaseIn{}, b"besac ", &flush(5));
 }
 
 #[test]
