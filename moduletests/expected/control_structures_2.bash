@@ -25,6 +25,21 @@ echo {} [[ "$ivar" ]]
 for i in [[ "$ivar" ]]; do :; done
 select i in [[ "$ivar" ]]; do break; done
 
+for i in
+do echo "$i"; done
+
+for i in "${pseudoarray[@]}"
+do echo "$i"; done
+
+for i in except "$this"
+do echo "$i"; done
+
+for i in "$or" this
+do echo "$i"; done
+
+for i in "$(seq 1 3)"
+do echo "$i"; done
+
 array=(
 	[[ "$ivar" ]]
 )

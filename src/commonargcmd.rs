@@ -25,6 +25,7 @@ use crate::commonstrcmd::CommonStrCmdResult;
 use crate::commonstrcmd::common_str_cmd;
 
 use crate::sitcase::SitCase;
+use crate::sitfor::SitFor;
 use crate::sitcmd::SitNormal;
 use crate::sitcmd::SitCmd;
 use crate::sitcomment::SitComment;
@@ -75,6 +76,11 @@ pub fn keyword_or_command(
 			tri: Transition::Push(Box::new(SitCase{})),
 			pre: i, len, alt: None
 		},
+		b"for" |
+		b"select" => WhatNow{
+			tri: Transition::Push(Box::new(SitFor{})),
+			pre: i, len, alt: None
+		},
 		b"!" |
 		b"declare" |
 		b"do" |
@@ -83,12 +89,10 @@ pub fn keyword_or_command(
 		b"else" |
 		b"export" |
 		b"fi" |
-		b"for" |
 		b"function" |
 		b"if" |
 		b"local" |
 		b"readonly" |
-		b"select" |
 		b"then" |
 		b"until" |
 		b"while" |
