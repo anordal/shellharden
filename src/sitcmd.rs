@@ -77,8 +77,8 @@ impl Situation for SitCmd {
 	}
 }
 
-struct SitArg {
-	end_trigger :u16,
+pub struct SitArg {
+	pub end_trigger :u16,
 }
 
 impl Situation for SitArg {

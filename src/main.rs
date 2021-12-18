@@ -162,6 +162,7 @@ mod sitcmd;
 mod sitcomment;
 mod sitextent;
 mod sitfor;
+mod sithiddentest;
 mod sitmagic;
 mod sitrvalue;
 mod sitstrdq;
