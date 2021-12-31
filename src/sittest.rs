@@ -10,13 +10,59 @@ use crate::situation::COLOR_NORMAL;
 use crate::situation::Situation;
 use crate::situation::Transition;
 use crate::situation::WhatNow;
+use crate::situation::flush;
+use crate::situation::COLOR_CMD;
+
+use crate::commonargcmd::common_token;
+use crate::microparsers::prefixlen;
 
 use crate::sitcmd::SitArg;
 
-pub struct SitHiddenTest {
-	pub push: Option<WhatNow>,
-	pub end_replace: &'static [u8],
-	pub end_trigger: u16,
+pub struct SitTest {
+	pub end_trigger :u16,
+}
+
+impl Situation for SitTest {
+	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
+		if horizon.len() < 5 && is_horizon_lengthenable {
+			return flush(0);
+		}
+		let is_emptystringtest = prefixlen(horizon, b" -z ") == 4;
+		let is_nonemptystringtest = prefixlen(horizon, b" -n ") == 4;
+		if is_emptystringtest || is_nonemptystringtest {
+			if let Some(exciting) = common_token(self.end_trigger, horizon, 4, is_horizon_lengthenable) {
+				return if let Transition::Push(_) = &exciting.tri {
+					let end_replace: &'static [u8] = if is_emptystringtest {
+						b" = \"\""
+					} else {
+						b" != \"\""
+					};
+					WhatNow{
+						tri: Transition::Push(Box::new(SitHiddenTest{
+							push: Some(exciting),
+							end_replace,
+							end_trigger: self.end_trigger,
+						})), pre: 1, len: 4 - 1, alt: Some(b"")
+					}
+				} else {
+					exciting
+				};
+			}
+		}
+		WhatNow{
+			tri: Transition::Replace(Box::new(SitArg{end_trigger: self.end_trigger})),
+			pre: 0, len: 0, alt: None
+		}
+	}
+	fn get_color(&self) -> u32 {
+		COLOR_CMD
+	}
+}
+
+struct SitHiddenTest {
+	push: Option<WhatNow>,
+	end_replace: &'static [u8],
+	end_trigger: u16,
 }
 
 impl Situation for SitHiddenTest {

@@ -30,12 +30,12 @@ use crate::sitcmd::SitNormal;
 use crate::sitcmd::SitCmd;
 use crate::sitcomment::SitComment;
 use crate::sitextent::SitExtent;
-use crate::sittest::SitHiddenTest;
 use crate::sitmagic::push_magic;
 use crate::sitrvalue::SitRvalue;
 use crate::sitstrdq::SitStrDq;
 use crate::sitstrphantom::SitStrPhantom;
 use crate::sitstrsqesc::SitStrSqEsc;
+use crate::sittest::SitTest;
 use crate::situntilbyte::SitUntilByte;
 use crate::sitvec::SitVec;
 
@@ -101,48 +101,15 @@ pub fn keyword_or_command(
 			tri: Transition::Push(Box::new(SitExtent{len: 0, color: COLOR_KWD})),
 			pre: i, len, alt: None,
 		},
-		_ => push_command(end_trigger, horizon, i, is_horizon_lengthenable, word),
-	}
-}
-
-fn push_command(
-	end_trigger :u16,
-	horizon :&[u8],
-	i :usize,
-	is_horizon_lengthenable :bool,
-	cmd: &[u8],
-) -> WhatNow {
-	if cmd == b"[" || cmd == b"test" {
-		let after = &horizon[i+cmd.len() ..];
-		if after.len() < 5 && (i > 0 || is_horizon_lengthenable) {
-			return flush(i);
-		}
-		let is_emptystringtest = prefixlen(after, b" -z ") == 4;
-		let is_nonemptystringtest = prefixlen(after, b" -n ") == 4;
-		if is_emptystringtest || is_nonemptystringtest {
-			if let Some(exciting) = common_token(end_trigger, horizon, i + cmd.len() + 4, is_horizon_lengthenable) {
-				return if let Transition::Push(_) = &exciting.tri {
-					let end_replace: &'static [u8] = if is_emptystringtest {
-						b" = \"\""
-					} else {
-						b" != \"\""
-					};
-					WhatNow{
-						tri: Transition::Push(Box::new(SitHiddenTest{
-							push: Some(exciting),
-							end_replace,
-							end_trigger,
-						})), pre: i + cmd.len() + 1, len: 4 - 1, alt: Some(b"")
-					}
-				} else {
-					exciting
-				};
-			}
-		}
-	}
-	WhatNow{
-		tri: Transition::Push(Box::new(SitCmd{end_trigger})),
-		pre: i, len: 0, alt: None
+		b"[" |
+		b"test" => WhatNow{
+			tri: Transition::Push(Box::new(SitTest{end_trigger})),
+			pre: i, len, alt: None,
+		},
+		_ => WhatNow{
+			tri: Transition::Push(Box::new(SitCmd{end_trigger})),
+			pre: i, len: 0, alt: None
+		},
 	}
 }
 
@@ -182,7 +149,7 @@ pub fn common_expr(
 	common_token(end_trigger, horizon, i, is_horizon_lengthenable)
 }
 
-fn common_token(
+pub fn common_token(
 	end_trigger :u16,
 	horizon :&[u8],
 	i :usize,
