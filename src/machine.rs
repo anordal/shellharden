@@ -130,7 +130,7 @@ fn stackmachine(
 ) -> Result<usize, Error> {
 	let mut pos :usize = 0;
 	loop {
-		let horizon :&[u8] = &buf[pos .. buf.len()];
+		let horizon :&[u8] = &buf[pos ..];
 		let is_horizon_lengthenable = pos > 0 && !eof;
 		let stacksize_pre = state.len();
 		let statebox: &mut Box<dyn Situation> = state.last_mut().unwrap();
