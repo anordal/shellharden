@@ -133,7 +133,11 @@ fn stackmachine(
 		let horizon :&[u8] = &buf[pos ..];
 		let is_horizon_lengthenable = pos > 0 && !eof;
 		let stacksize_pre = state.len();
-		let statebox: &mut Box<dyn Situation> = state.last_mut().unwrap();
+		let statebox: &mut Box<dyn Situation> = if let Some(innerstate) = state.last_mut() {
+			innerstate
+		} else {
+			break;
+		};
 		let curstate = statebox.as_mut();
 		let color_pre = if sett.syntax { curstate.get_color() } else { COLOR_NORMAL };
 		let whatnow = curstate.whatnow(horizon, is_horizon_lengthenable);
