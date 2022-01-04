@@ -30,7 +30,7 @@ use crate::sitcmd::SitNormal;
 use crate::sitcmd::SitCmd;
 use crate::sitcomment::SitComment;
 use crate::sitextent::SitExtent;
-use crate::sithiddentest::SitHiddenTest;
+use crate::sittest::SitHiddenTest;
 use crate::sitmagic::push_magic;
 use crate::sitrvalue::SitRvalue;
 use crate::sitstrdq::SitStrDq;
