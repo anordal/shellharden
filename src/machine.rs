@@ -272,3 +272,24 @@ fn write_color(out :&mut FileOut, code :u32) -> Result<(), std::io::Error> {
 		write!(out, "\x1b[0;4{}m", (r >> 7) | (g >> 6) | (b >> 5))
 	}
 }
+
+pub fn expression_tracker(horizon: &[u8], state: Box<dyn Situation>) -> Result<(bool, usize), ()> {
+	let mut stack = vec!{state};
+	let mut color_cur = COLOR_NORMAL;
+
+	match stackmachine(
+		&mut stack,
+		&mut FileOut::open_none(),
+		&mut color_cur,
+		horizon,
+		false,
+		&Settings{
+			osel: OutputSelector::Original,
+			syntax: false,
+			replace: false,
+		},
+	) {
+		Ok(len) => Ok((stack.is_empty(), len)),
+		Err(_) => Err(()),
+	}
+}

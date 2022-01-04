@@ -352,7 +352,7 @@ pub fn find_lvalue(horizon: &[u8]) -> (Tri, usize) {
 		let byte :u8 = horizon[ate];
 		ate += 1;
 
-		// TODO: Recursion: Expression tracker
+		// Recursion: There is now an expression_tracker() if needed.
 		match (state, byte) {
 			(Lex::Ident, b'=') => return (Tri::Yes, ate),
 			(Lex::Pluss, b'=') => return (Tri::Yes, ate),
