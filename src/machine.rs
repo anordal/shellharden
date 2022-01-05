@@ -214,7 +214,7 @@ fn write_transition(
 // Edit distance without replacement; greedy, but that suffices.
 fn write_diff(
 	out: &mut FileOut,
-	mut color_cur: &mut u32,
+	color_cur: &mut u32,
 	color_neutral: u32,
 	replaceable: &[u8],
 	replacement: &[u8],
@@ -227,14 +227,14 @@ fn write_diff(
 		let color_next;
 		if let Some(pivot_b) = remain_b.iter().position(|&b| b == a) {
 			color_next = color_neutral;
-			write_colored_slice(out, &mut color_cur, color_b, &remain_b[0 .. pivot_b])?;
+			write_colored_slice(out, color_cur, color_b, &remain_b[0 .. pivot_b])?;
 			remain_b = &remain_b[pivot_b+1 ..];
 		} else {
 			color_next = color_a;
 		}
-		write_colored_slice(out, &mut color_cur, color_next, &remain_a[i ..= i])?;
+		write_colored_slice(out, color_cur, color_next, &remain_a[i ..= i])?;
 	}
-	write_colored_slice(out, &mut color_cur, color_b, remain_b)
+	write_colored_slice(out, color_cur, color_b, remain_b)
 }
 
 fn write_colored_slice(
