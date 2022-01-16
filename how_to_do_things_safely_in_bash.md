@@ -25,7 +25,7 @@ all bash scripts are possible to rewrite into wellformedness,
 a representation free of those idiomatic bugs that the language otherwise practically imposes.
 This is because the set of bad language features is finite, and each has a substitute.
 
-Unfortunately, [it is hard to defend the correct way of doing something when it isn't also the seemingly simplest](http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/).
+Unfortunately, [it is hard to defend the correct way of doing something when it isn't also the seemingly simplest][Jussi's two ways].
 With this in mind, the python manifesto (`python3 -c 'import this'`),
 which says that there should only be one obvious way to do things, and that "explicit is better than implicit",
 makes a lot of sense.
@@ -274,9 +274,32 @@ This is all right:
 How to begin a bash script
 --------------------------
 
-Something like this:
+### hashbang
 
     #!/usr/bin/env bash
+
+* Portability consideration: The absolute path to `env` is likely more portable than the absolute path to `bash`. Case in point: [NixOS](https://nixos.wiki/wiki/NixOS). POSIX mandates [the existence of `env`](http://manpag.es/RHEL6/1p+env), but bash is not a posix thing.
+* Safety consideration: No language flavor options like `-euo pipefail` here! It is not actually possible when using the `env` redirection, but even if your hashbang begins with `#!/bin/bash`, it is not the right place for options that influence the meaning of the script, because it can be overridden, which would make it possible to run your script the wrong way. However, options that don't influence the meaning of the script, such as `set -x` would be a bonus to make overridable (if used).
+
+### Safer and better globbing
+
+    shopt -s nullglob globstar
+
+* `nullglob` is what makes `for f in *.txt` work also when zero files happen to match the expression. It removes a special case in the default behavior:
+    * The default behavior (unofficially called [passglob](https://github.com/fish-shell/fish-shell/issues/2394#issuecomment-182047129)) is to pass the pattern as-is in that event.
+    As always, special cases are an enemy of correctness: It creates a two-sided source of bugs that likes to defy test coverage:
+    On one side, it necessitates workarounds when you wanted the general behavior (file existence checks in this case);
+    on the other side, it supports a convenient and wrong use case ([nothing is worse than the intersection between convenient and wrong][Jussi's two ways]).
+    When you mean to pass the pattern literally, the safe thing to do is to just do that instead: Quote it.
+    * `failglob` is also a fine alternative, but not as generally usable:
+    It can be used if zero matches would always be an error (and conveniently makes it so),
+    whereas `nullglob` makes it both non-special and easy to check for
+    (`txt_files=(*.txt); test "${#txt_files[@]}" -eq 0`).
+    Also, `failglob` depends on `errexit` (aka. `set -e`) to actually exit on failure.
+* `globstar` enables recursive globbing. Since globbing is easier to use correctly than `find`, use it.
+
+### Strict Mode – safe and relevant subset edition
+
     if test "$BASH" = "" || "$BASH" -uc "a=();true \"\${a[@]}\"" 2>/dev/null; then
         # Bash 4.4, Zsh
         set -euo pipefail
@@ -284,31 +307,32 @@ Something like this:
         # Bash 4.3 and older chokes on empty arrays with set -u.
         set -eo pipefail
     fi
-    shopt -s nullglob globstar
+
+This is [Bash's unofficial strict mode](http://redsymbol.net/articles/unofficial-bash-strict-mode/) except:
+
+* `nounset` (aka. `set -u`) is behind a feature check.
+* Setting IFS to something safer (but still unsafe): Doesn't hurt, but is irrelevant: Being shellcheck/shellharden compliant means quoting everything – implicit use of IFS is forbidden anyway.
+
+As it turns out, `nounset` **is dangerous** in Bash 4.3 and earlier: In those versions, it [treats empty arrays as unset](http://stackoverflow.com/questions/7577052/bash-empty-array-expansion-with-set-u). What have we just learned about special cases? They are an enemy of correctness. Also, this can't be worked around, and since using arrays is rather basic in this methodology, and they definitely need to be able to hold empty values, this is far from an ignorable problem. If using `nounset` at all, make sure to use Bash 4.4 or another sane shell like Zsh (easier said than done if you are writing a script and someone else is using it). Fortunately, what works with `nounset` will also work without (unlike `errexit`). Thus why putting it behind a feature check is sane at all.
+
+Other alternatives:
+
+* Setting IFS (the *internal field separator*) to the empty string disables word splitting. Sounds like the holy grail, but isn't: Firstly, empty strings still become empty arrays (very uncool in expressions like `test $x = ""`) – you still need to quote everything that *can* be an empty string, and for purposes of static verification, *everything* can (with the exception of a handful of special variables). Secondly, indirect pathname expansion is still a thing (can be turned off, se the next point). Thirdly, it interferes with commands like `read` that also use it, breaking constructs like `cat /etc/fstab | while read -r dev mnt fs opt dump pass; do printf '%s\n' "$fs"; done'`.
+* Disabling pathname expansion (globbing) altogether: If there was an option to only disable indirect pathname expansion, I would. Giving up the unproblematic direct one too, that I'm saying you should want to use, is a tradeoff that I can't imagine being necessary, yet currently is.
+
+### Assert that command dependencies are installed
+
+[Declaring your dependencies](https://12factor.net/dependencies) has many benefits, but until this becomes statically verifiable, concentrate on uncommon commands here.
+This prevents your script from failing for external reasons in hard-to-reach sections of code, such as in error handling or the end of a long-running script.
+It also prevents misbehavior such as `make -j"$(nproc)"` becoming a fork bomb.
 
     require(){ hash "$@" || exit 127; }
     require …
     require …
     require …
 
-This includes:
-
-* The hashbang:
-    * Portability consideration: The absolute path to `env` is likely more portable than the absolute path to `bash`. Case in point: [NixOS](https://nixos.wiki/wiki/NixOS). POSIX mandates [the existence of `env`](http://manpag.es/RHEL6/1p+env), but bash is not a posix thing.
-    * Safety consideration: No language flavor options like `-euo pipefail` here! It is not actually possible when using the `env` redirection, but even if your hashbang begins with `#!/bin/bash`, it is not the right place for options that influence the meaning of the script, because it can be overridden, which would make it possible to run your script the wrong way. However, options that don't influence the meaning of the script, such as `set -x` would be a bonus to make overridable (if used).
-* What we need from [Bash's unofficial strict mode](http://redsymbol.net/articles/unofficial-bash-strict-mode/), with `set -u` behind a feature check. We don't need all of Bash's strict mode because being shellcheck/shellharden compliant means quoting everything, which is a level beyond strict mode. Furthermore, `set -u` **must not be used** in Bash 4.3 and earlier. Because that option, in those versions, [treats empty arrays as unset](http://stackoverflow.com/questions/7577052/bash-empty-array-expansion-with-set-u), which makes arrays unusable for the purposes described herein. With arrays being the second most imporant advice in this guide (after quoting), and the sole reason we're sacrificing POSIX compatibility, that's of course unacceptable: If using `set -u` at all, use Bash 4.4 or another sane shell like Zsh. This is easier said than done if there is a possibility that someone might run your script with an obsolete version of Bash. Fortunately, what works with `set -u` will also work without (unlike `set -e`). Thus why putting it behind a feature check is sane at all. Beware of the presupposition that testing and development happens with a Bash 4.4 compatible shell (so the `set -u` aspect of the script gets tested). If this concerns you, your other options are to give up compatibility (by failing if the feature check fails) or to give up `set -u`.
-* `shopt -s nullglob` is what makes `for f in *.txt` work correctly when `*.txt` matches zero files. The default behavior (aka. *passglob*) – pass the pattern as-is if it happens to match nothing – is dangerous for several reasons. As for *globstar*, that enables recursive globbing. Globbing is easier to use correctly than `find`. So use it.
-* Assert that command dependencies are installed. [Declaring your dependencies](https://12factor.net/dependencies) has many benefits, but until this becomes statically verifiable, concentrate on uncommon commands here. Your motivation should be to prevent long running scripts from failing right at the end, as well as preventing misbehavior such as `make -j"$(nproc)"` becoming a fork bomb. Benefits of using `hash` for this purpose are its low overhead and that it gives you an error message in the failure case. What it doesn't check is indirect dependencies and compatibility level, but at that point, we want package management.
-
-But not:
-
-    IFS=''
-    set -f
-    shopt -s failglob
-
-* Setting the *internal field separator* to the empty string disables word splitting. Sounds like the holy grail. Sadly, this is no complete replacement for quoting variables and command substitutions, and given that you are going to use quotes, this gives you nothing. The reason you must still use quotes is that otherwise, empty strings become empty arrays (as in `test $x = ""`), and indirect pathname expansion is still active. Furthermore, messing with this variable also messes with commands like `read` that use it, breaking constructs like `cat /etc/fstab | while read -r dev mnt fs opt dump pass; do printf '%s\n' "$fs"; done'`.
-* Disabling wildcard expansion: Not just the notorious indirect one, but also the unproblematic direct one, that I'm saying you should want to use. So this is a hard sell. And this too should be completely unnecessary for a script that is shellcheck/shellharden conformant.
-* As an alternative to *nullglob*, *failglob* fails if there are zero matches. While this makes sense for most commands, for example `rm -- *.txt` (because most commands that take file arguments don't expect to be called with zero of them anyway), obviously, *failglob* can only be used when you are able to assume that zero matches won't happen. That just means you mostly won't be putting wildcards in command arguments unless you can assume the same. But what can always be done, is to use *nullglob* and let the pattern expand to zero arguments in a construct that can take zero arguments, such as a `for` loop or array assignment (`txt_files=(*.txt)`).
+Benefits of using `hash` for this purpose are its low overhead and that it gives you an error message in the failure case.
+This doesn't check option compatibility, of course, but it's also not forbidden to add feature checks for that.
 
 How to end a bash script
 ------------------------
@@ -652,3 +676,5 @@ But if you must, so be it:
     echo "This is fish!"
 
     test \'
+
+[Jussi's two ways]: <https://web.archive.org/web/20150905075810/http://voices.canonical.com/jussi.pakkanen/2014/07/22/the-two-ways-of-doing-something/> "If there is an easy way to do something, and another, correct way to do the same, programmers will always choose the easy way. As a corollary for language design, the correct thing to do must also be the easiest."
