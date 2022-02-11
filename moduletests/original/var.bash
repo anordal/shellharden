@@ -44,6 +44,7 @@ echo ${!} # Expands to a number
 echo ${#array[@]} # Expands to a number
 echo ${array[0]}
 echo ${array[@]}
+echo ${array[*]}
 echo ${subst##*/}
 echo ${subst#*/}
 echo ${subst%/*}
@@ -99,6 +100,7 @@ echo "${!}" # Expands to a number
 echo "${#array[@]}" # Expands to a number
 echo "${array[0]}"
 echo "${array[@]}"
+echo "${array[*]}"
 echo "${subst##*/}"
 echo "${subst#*/}"
 echo "${subst%/*}"

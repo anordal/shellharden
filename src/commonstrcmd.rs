@@ -142,7 +142,7 @@ pub fn common_str_cmd(
 			rm_braces = !is_identifiertail(cand[pos_hazard]);
 		}
 		let wn = WhatNow{
-			tri: Transition::Push(Box::new(SitVarBrace::new(rm_braces))),
+			tri: Transition::Push(Box::new(SitVarBrace::new(rm_braces, ctx_cmd))),
 			pre: i, len: 2, alt: if_needed(rm_braces, b"$"),
 		};
 		return if is_number {

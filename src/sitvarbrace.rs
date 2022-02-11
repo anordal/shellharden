@@ -13,25 +13,28 @@ use crate::situation::flush;
 use crate::situation::if_needed;
 use crate::situation::COLOR_VAR;
 
+use crate::sitextent::SitExtent;
+
 #[derive(Clone)]
 #[derive(Copy)]
 enum State{
+	Name,
+	Index,
 	Normal,
 	Escape,
 }
 
 pub struct SitVarBrace {
-	pub end_rm: bool,
-
+	end_rm: bool,
 	state: State,
 	depth: usize,
 }
 
 impl SitVarBrace {
-	pub fn new(end_rm: bool) -> SitVarBrace {
+	pub fn new(end_rm: bool, replace_s11n: bool) -> SitVarBrace {
 		SitVarBrace{
 			end_rm,
-			state: State::Normal,
+			state: if replace_s11n { State::Name } else { State::Normal },
 			depth: 1,
 		}
 	}
@@ -41,8 +44,22 @@ impl Situation for SitVarBrace {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, c) in horizon.iter().enumerate() {
 			match (self.state, c) {
+				(State::Name, b'a' ..= b'z') |
+				(State::Name, b'A' ..= b'Z') |
+				(State::Name, b'0' ..= b'9') |
+				(State::Name, b'_') => {}
+				(State::Name, b'[') => self.state = State::Index,
+				(State::Index, b'*') => {
+					self.state = State::Normal;
+					return WhatNow{
+						tri: Transition::Push(Box::new(SitExtent{
+							len: 0, color: COLOR_VAR
+						})),
+						pre: i, len: 1, alt: Some(b"@"),
+					};
+				}
 				(State::Normal, b'{') => self.depth += 1,
-				(State::Normal, b'}') => {
+				(State::Name | State::Index | State::Normal, b'}') => {
 					self.depth -= 1;
 					if self.depth == 0 {
 						return WhatNow{
@@ -53,6 +70,8 @@ impl Situation for SitVarBrace {
 						};
 					}
 				}
+				(State::Name, _) => self.state = State::Normal,
+				(State::Index, _) => self.state = State::Normal,
 				(State::Normal, b'\\') => self.state = State::Escape,
 				(State::Normal, _) => {}
 				(State::Escape, _) => self.state = State::Normal,
