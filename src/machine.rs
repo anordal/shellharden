@@ -100,9 +100,6 @@ fn treatfile_fallible(
 			assert!(remain == 0);
 			break;
 		}
-		if fo.change && sett.osel == OutputSelector::Check {
-			return Err(Error::Check);
-		}
 		for i in 0 .. remain {
 			buf[i] = buf[consumed + i];
 		}
@@ -145,7 +142,7 @@ fn stackmachine(
 		if whatnow.alt.is_some() {
 			out.change = true;
 			if sett.osel == OutputSelector::Check {
-				break;
+				return Err(Error::Check);
 			}
 		}
 
