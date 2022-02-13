@@ -102,9 +102,9 @@ pub fn keyword_or_command(
 			pre: i, len, alt: None,
 		},
 		b"[" |
-		b"test" => WhatNow{
+		b"test" if predlen(|x| x == b' ', &horizon[i + len ..]) == 1 => WhatNow{
 			tri: Transition::Push(Box::new(SitTest{end_trigger})),
-			pre: i, len, alt: None,
+			pre: i, len: len + 1, alt: None,
 		},
 		_ => WhatNow{
 			tri: Transition::Push(Box::new(SitCmd{end_trigger})),

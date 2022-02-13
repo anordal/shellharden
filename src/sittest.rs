@@ -28,61 +28,71 @@ pub struct SitTest {
 
 impl Situation for SitTest {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		if horizon.len() < 5 && is_horizon_lengthenable {
-			return flush(0);
-		}
-		let is_emptystringtest = prefixlen(horizon, b" -z ") == 4;
-		let is_nonemptystringtest = prefixlen(horizon, b" -n ") == 4;
-		if is_emptystringtest || is_nonemptystringtest {
-			if let Some(exciting) = common_token(self.end_trigger, horizon, 4, is_horizon_lengthenable) {
-				return if let Transition::Push(_) = &exciting.tri {
-					let end_replace: &'static [u8] = if is_emptystringtest {
-						b" = \"\""
-					} else {
-						b" != \"\""
-					};
-					WhatNow{
-						tri: Transition::Push(Box::new(SitHiddenTest{
-							push: Some(exciting),
-							end_replace,
-							end_trigger: self.end_trigger,
-						})), pre: 1, len: 4 - 1, alt: Some(b"")
+		if horizon.len() >= 4 {
+			let is_emptystringtest = prefixlen(horizon, b"-z ") == 3;
+			let is_nonemptystringtest = prefixlen(horizon, b"-n ") == 3;
+			if is_emptystringtest || is_nonemptystringtest {
+				let suggest = common_token(self.end_trigger, horizon, 3, is_horizon_lengthenable);
+				if let Some(ref exciting) = suggest {
+					if let Transition::Push(_) = &exciting.tri {
+						let end_replace: &'static [u8] = if is_emptystringtest {
+							b" = \"\""
+						} else {
+							b" != \"\""
+						};
+						return push_hiddentest(suggest, end_replace, self.end_trigger);
+					} else if is_horizon_lengthenable {
+						return flush(0);
 					}
-				} else {
-					exciting
-				};
-			}
-		} else if prefixlen(horizon, b" x") == 2 {
-			if let Some(mut suggest) = common_token(self.end_trigger, horizon, 2, is_horizon_lengthenable) {
-				if let Transition::Push(_) = &suggest.tri {
-					let transition = std::mem::replace(&mut suggest.tri, Transition::Flush);
-					if let Transition::Push(state) = transition {
-						let progress = suggest.pre + suggest.len;
-						if let Ok(found) = find_xyes_comparison(&horizon[progress ..], state) {
-							if found {
-								return WhatNow{
-									tri: Transition::Push(Box::new(SitXyes{
-										end_trigger: self.end_trigger,
-									})), pre: 1, len: 1, alt: Some(b"")
-								};
-							}
-							if is_horizon_lengthenable {
-								return flush(0);
+				}
+			} else if prefixlen(horizon, b"x") == 1 {
+				if let Some(mut suggest) = common_token(self.end_trigger, horizon, 1, is_horizon_lengthenable) {
+					if let Transition::Push(_) = &suggest.tri {
+						let transition = std::mem::replace(&mut suggest.tri, Transition::Flush);
+						if let Transition::Push(state) = transition {
+							let progress = suggest.pre + suggest.len;
+							if let Ok(found) = find_xyes_comparison(&horizon[progress ..], state) {
+								if found {
+									return push_xyes(self.end_trigger);
+								}
+								if is_horizon_lengthenable {
+									return flush(0);
+								}
 							}
 						}
+					} else {
+						return suggest;
 					}
-				} else {
-					return suggest;
 				}
 			}
+		} else if is_horizon_lengthenable {
+			return flush(0);
 		}
-		WhatNow{
-			tri: Transition::Replace(Box::new(SitArg{end_trigger: self.end_trigger})),
-			pre: 0, len: 0, alt: None
-		}
+		become_regular_args(self.end_trigger)
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_CMD
+	}
+}
+
+fn become_regular_args(end_trigger :u16) -> WhatNow {
+	WhatNow{
+		tri: Transition::Replace(Box::new(SitArg{end_trigger})),
+		pre: 0, len: 0, alt: None
+	}
+}
+
+fn push_hiddentest(push: Option<WhatNow>, end_replace: &'static [u8], end_trigger: u16) -> WhatNow {
+	WhatNow {
+		tri: Transition::Push(Box::new(SitHiddenTest{push, end_replace, end_trigger})),
+		pre: 0, len: 3, alt: Some(b""),
+	}
+}
+
+fn push_xyes(end_trigger: u16) -> WhatNow {
+	WhatNow{
+		tri: Transition::Push(Box::new(SitXyes{end_trigger})),
+		pre: 0, len: 1, alt: Some(b"")
 	}
 }
 
@@ -177,4 +187,34 @@ fn has_rhs_xyes(horizon: &[u8]) -> bool {
 		}
 	}
 	false
+}
+
+#[cfg(test)]
+use crate::testhelpers::*;
+
+#[test]
+fn test_sit_test() {
+	sit_expect!(SitTest{end_trigger: 0u16}, b"", &flush(0), &become_regular_args(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b" ", &flush(0), &become_regular_args(0u16));
+
+	sit_expect!(SitTest{end_trigger: 0u16}, b"-", &flush(0), &become_regular_args(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"-z ", &flush(0), &become_regular_args(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"-n ", &flush(0), &become_regular_args(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"-z $", &flush(0), &become_regular_args(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"-n $", &flush(0), &become_regular_args(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"-z justkidding", &become_regular_args(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"-n justkidding", &become_regular_args(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"-z \"", &push_hiddentest(None, b"", 0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"-n \"", &push_hiddentest(None, b"", 0u16));
+
+	sit_expect!(SitTest{end_trigger: 0u16}, b"x", &flush(0), &become_regular_args(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"x$", &flush(0), &become_regular_args(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"x`", &flush(0), &become_regular_args(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"x\"$(echo)\" = ", &flush(0), &become_regular_args(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"x\"$(echo)\" = x", &push_xyes(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"x$(echo) = x", &push_xyes(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"x`echo` == x", &push_xyes(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"x\"$yes\" != x", &push_xyes(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"x$yes = y", &flush(0), &become_regular_args(0u16));
+	sit_expect!(SitTest{end_trigger: 0u16}, b"$yes = x", &become_regular_args(0u16));
 }
