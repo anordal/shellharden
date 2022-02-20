@@ -218,3 +218,16 @@ fn test_sit_test() {
 	sit_expect!(SitTest{end_trigger: 0u16}, b"x$yes = y", &flush(0), &become_regular_args(0u16));
 	sit_expect!(SitTest{end_trigger: 0u16}, b"$yes = x", &become_regular_args(0u16));
 }
+
+#[test]
+fn test_has_rhs_xyes() {
+	assert!(has_rhs_xyes(b" = x"));
+	assert!(has_rhs_xyes(b" != x"));
+	assert!(has_rhs_xyes(b" == x"));
+	assert!(!has_rhs_xyes(b" = "));
+	assert!(!has_rhs_xyes(b" = y"));
+	assert!(!has_rhs_xyes(b"= x"));
+	assert!(!has_rhs_xyes(b" =x"));
+	assert!(!has_rhs_xyes(b"  x"));
+	assert!(!has_rhs_xyes(b" ! x"));
+}
