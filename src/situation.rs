@@ -29,12 +29,12 @@ pub struct WhatNow {
 	pub alt :Option<&'static [u8]>,
 }
 
-pub fn flush(i: usize) -> WhatNow {
-	WhatNow{tri: Transition::Flush, pre: i, len: 0, alt: None}
+pub fn flush(pre: usize) -> WhatNow {
+	WhatNow{tri: Transition::Flush, pre, len: 0, alt: None}
 }
 
-pub fn flush_or_pop(i: usize) -> WhatNow {
-	WhatNow{tri: Transition::FlushPopOnEof, pre: i, len: 0, alt: None}
+pub fn flush_or_pop(pre: usize) -> WhatNow {
+	WhatNow{tri: Transition::FlushPopOnEof, pre, len: 0, alt: None}
 }
 
 pub fn if_needed<T>(needed: bool, val: T) -> Option<T> {
