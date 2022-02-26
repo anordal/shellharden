@@ -46,7 +46,7 @@ impl Situation for SitFor {
 					pre: i, len: 1, alt: None
 				};
 			}
-			if !is_whitespace(a) {
+			if !is_whitespace(a) || a == b'\n' {
 				return WhatNow{
 					tri: Transition::Pop,
 					pre: i, len: 0, alt: None,
@@ -78,7 +78,7 @@ impl Situation for SitForIn {
 					};
 				}
 			}
-			if !is_whitespace(a) {
+			if !is_whitespace(a) || a == b'\n' {
 				return WhatNow{
 					tri: Transition::Replace(Box::new(SitForInAnythingElse{})),
 					pre: i, len: 0, alt: None,
