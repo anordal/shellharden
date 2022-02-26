@@ -11,6 +11,7 @@ use crate::situation::Transition;
 use crate::sitextent::SitExtent;
 use crate::situation::WhatNow;
 use crate::situation::flush;
+use crate::situation::pop;
 use crate::situation::COLOR_NORMAL;
 use crate::situation::COLOR_KWD;
 
@@ -98,9 +99,7 @@ impl Situation for SitCaseArm {
 			if a == b';' {
 				if i + 1 < horizon.len() {
 					if horizon[i + 1] == b';' {
-						return WhatNow{
-							tri: Transition::Pop, pre: i, len: 0, alt: None
-						};
+						return pop(i, 0, None);
 					}
 				} else if i > 0 || is_horizon_lengthenable {
 					return flush(i);
@@ -114,9 +113,7 @@ impl Situation for SitCaseArm {
 			if i + len != horizon.len() || (i == 0 && !is_horizon_lengthenable) {
 				let word = &horizon[i..i+len];
 				if word == b"esac" {
-					return WhatNow{
-						tri: Transition::Pop, pre: i, len: 0, alt: Some(b";; ")
-					};
+					return pop(i, 0, Some(b";; "));
 				}
 			}
 			return keyword_or_command(0x100, horizon, i, is_horizon_lengthenable);
@@ -179,10 +176,7 @@ fn test_sit_casearm() {
 		pre: 0, len: 0, alt: None
 	};
 	sit_expect!(SitCaseArm{}, b"esa", &flush(0), &found_command);
-	let found_the_esac_word = WhatNow{
-		tri: Transition::Pop,
-		pre: 0, len: 0, alt: Some(b";; ")
-	};
+	let found_the_esac_word = pop(0, 0, Some(b";; "));
 	sit_expect!(SitCaseArm{}, b"esac ", &found_the_esac_word);
 	sit_expect!(SitCaseArm{}, b"esac", &flush(0), &found_the_esac_word);
 	sit_expect!(SitCaseArm{}, b"esacs", &flush(0), &found_command);

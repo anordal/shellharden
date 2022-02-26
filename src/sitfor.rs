@@ -10,6 +10,7 @@ use crate::situation::Situation;
 use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
+use crate::situation::pop;
 use crate::situation::COLOR_KWD;
 use crate::situation::COLOR_VAR;
 use crate::situation::COLOR_NORMAL;
@@ -47,10 +48,7 @@ impl Situation for SitFor {
 				};
 			}
 			if !is_whitespace(a) || a == b'\n' {
-				return WhatNow{
-					tri: Transition::Pop,
-					pre: i, len: 0, alt: None,
-				};
+				return pop(i, 0, None);
 			}
 		}
 		flush(horizon.len())
@@ -99,10 +97,7 @@ impl Situation for SitVarIdentNecessarilyArray {
 		for (i, &a) in horizon.iter().enumerate() {
 			// An identifierhead is also an identifiertail.
 			if !is_identifiertail(a) {
-				return WhatNow{
-					tri: Transition::Pop,
-					pre: i, len: 0, alt: Some(b"[@]}\""),
-				};
+				return pop(i, 0, Some(b"[@]}\""));
 			}
 		}
 		flush(horizon.len())
@@ -121,10 +116,7 @@ impl Situation for SitForInAnythingElse {
 				return res;
 			}
 			if a == b'\n' {
-				return WhatNow{
-					tri: Transition::Pop,
-					pre: i, len: 1, alt: None,
-				};
+				return pop(i, 1, None);
 			}
 		}
 		flush(horizon.len())

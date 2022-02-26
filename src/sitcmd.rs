@@ -11,6 +11,7 @@ use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::flush_or_pop;
+use crate::situation::pop;
 use crate::situation::COLOR_NORMAL;
 use crate::situation::COLOR_CMD;
 
@@ -32,10 +33,7 @@ impl Situation for SitNormal {
 				continue;
 			}
 			if u16::from(a) == self.end_trigger {
-				return WhatNow{
-					tri: Transition::Pop, pre: i, len: 1,
-					alt: self.end_replace
-				};
+				return pop(i, 1, self.end_replace);
 			}
 			return keyword_or_command(
 				self.end_trigger, horizon, i, is_horizon_lengthenable
@@ -65,9 +63,7 @@ impl Situation for SitCmd {
 				};
 			}
 			if a == b'(' {
-				return WhatNow{
-					tri: Transition::Pop, pre: i, len: 0, alt: None
-				};
+				return pop(i, 0, None);
 			}
 		}
 		flush_or_pop(horizon.len())

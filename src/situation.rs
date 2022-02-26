@@ -37,6 +37,10 @@ pub fn flush_or_pop(pre: usize) -> WhatNow {
 	WhatNow{tri: Transition::FlushPopOnEof, pre, len: 0, alt: None}
 }
 
+pub fn pop(pre: usize, len: usize, alt: Option<&'static [u8]>) -> WhatNow {
+	WhatNow{tri: Transition::Pop, pre, len, alt}
+}
+
 pub fn if_needed<T>(needed: bool, val: T) -> Option<T> {
 	if needed { Some(val) } else { None }
 }

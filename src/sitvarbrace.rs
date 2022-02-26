@@ -11,6 +11,7 @@ use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::if_needed;
+use crate::situation::pop;
 use crate::situation::COLOR_VAR;
 
 use crate::sitextent::SitExtent;
@@ -62,12 +63,7 @@ impl Situation for SitVarBrace {
 				(State::Name | State::Index | State::Normal, b'}') => {
 					self.depth -= 1;
 					if self.depth == 0 {
-						return WhatNow{
-							tri: Transition::Pop,
-							pre: i,
-							len: 1,
-							alt: if_needed(self.end_rm, b""),
-						};
+						return pop(i, 1, if_needed(self.end_rm, b""));
 					}
 				}
 				(State::Name, _) => self.state = State::Normal,

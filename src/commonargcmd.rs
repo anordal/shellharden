@@ -10,6 +10,7 @@ use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::if_needed;
+use crate::situation::pop;
 use crate::situation::COLOR_HERE;
 use crate::situation::COLOR_KWD;
 use crate::situation::COLOR_SQ;
@@ -240,9 +241,7 @@ fn find_command_enders(
 	}
 	let a = horizon[i];
 	if a == b'\n' || a == b';' || a == b'|' || a == b'&' {
-		return Some(WhatNow{
-			tri: Transition::Pop, pre: i, len: 0, alt: None
-		});
+		return Some(pop(i, 0, None));
 	}
 	None
 }
@@ -256,9 +255,7 @@ fn find_usual_suspects(
 ) -> Option<WhatNow> {
 	let a = horizon[i];
 	if u16::from(a) == end_trigger {
-		return Some(WhatNow{
-			tri: Transition::Pop, pre: i, len: 0, alt: None
-		});
+		return Some(pop(i, 0, None));
 	}
 	if a == b'\'' {
 		return Some(WhatNow{
