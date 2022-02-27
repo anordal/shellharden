@@ -36,16 +36,10 @@ impl Situation for SitFor {
 			}
 			let word = &horizon[i..i+len];
 			if word == b"in" {
-				return WhatNow{
-					tri: Transition::Push(Box::new(SitForIn{})),
-					pre: i, len, alt: None
-				};
+				return push_forin(i, len);
 			}
 			if is_identifierhead(a) {
-				return WhatNow{
-					tri: Transition::Push(Box::new(SitVarIdent{end_insert: None})),
-					pre: i, len: 1, alt: None
-				};
+				return push_varident(i, 1);
 			}
 			if !is_whitespace(a) || a == b'\n' {
 				return pop(i, 0, None);
@@ -124,4 +118,37 @@ impl Situation for SitForInAnythingElse {
 	fn get_color(&self) -> u32 {
 		COLOR_NORMAL
 	}
+}
+
+fn push_forin(pre: usize, len: usize) -> WhatNow {
+	WhatNow{
+		tri: Transition::Push(Box::new(SitForIn{})),
+		pre, len, alt: None
+	}
+}
+
+fn push_varident(pre: usize, len: usize) -> WhatNow {
+	WhatNow{
+		tri: Transition::Push(Box::new(SitVarIdent{end_insert: None})),
+		pre, len, alt: None
+	}
+}
+
+#[cfg(test)]
+use crate::testhelpers::*;
+
+#[test]
+fn test_sit_for() {
+	sit_expect!(SitFor{}, b"", &flush(0));
+	sit_expect!(SitFor{}, b" ", &flush(1));
+	sit_expect!(SitFor{}, b"\n", &pop(0, 0, None));
+	sit_expect!(SitFor{}, b";", &pop(0, 0, None));
+	sit_expect!(SitFor{}, b"_azAZ09\n", &push_varident(0, 1));
+	sit_expect!(SitFor{}, b"_azAZ09;", &push_varident(0, 1));
+	sit_expect!(SitFor{}, b"inn\n", &push_varident(0, 1));
+	sit_expect!(SitFor{}, b"inn;", &push_varident(0, 1));
+	sit_expect!(SitFor{}, b"in\n", &push_forin(0, 2));
+	sit_expect!(SitFor{}, b"in;", &push_forin(0, 2));
+	sit_expect!(SitFor{}, b"in ", &push_forin(0, 2));
+	sit_expect!(SitFor{}, b"in", &flush(0), &push_forin(0, 2));
 }
