@@ -103,12 +103,9 @@ pub struct SitForInAnythingElse {}
 
 impl Situation for SitForInAnythingElse {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, &a) in horizon.iter().enumerate() {
+		for (i, _) in horizon.iter().enumerate() {
 			if let Some(res) = common_arg(u16::from(b';'), horizon, i, is_horizon_lengthenable) {
 				return res;
-			}
-			if a == b'\n' {
-				return pop(i, 1, None);
 			}
 		}
 		flush(horizon.len())
@@ -178,4 +175,11 @@ fn test_sit_forin() {
 	sit_expect!(SitForIn{}, b" $a\n", &become_for_in_necessarily_array(1));
 	sit_expect!(SitForIn{}, b" $a;", &become_for_in_necessarily_array(1));
 	sit_expect!(SitForIn{}, b" $a $a;", &become_for_in_anything_else(1));
+}
+
+#[test]
+fn test_sit_forinanythingelse() {
+	sit_expect!(SitForInAnythingElse{}, b"", &flush(0));
+	sit_expect!(SitForInAnythingElse{}, b";", &pop(0, 0, None));
+	sit_expect!(SitForInAnythingElse{}, b"\n", &pop(0, 0, None));
 }
