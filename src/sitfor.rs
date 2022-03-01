@@ -58,23 +58,21 @@ impl Situation for SitForIn {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, &a) in horizon.iter().enumerate() {
 			if a == b'$' {
-				let idlen = identifierlen(&horizon[i+1 ..]);
-				let len = idlen + predlen(|x| x == b' ', &horizon[i+1+idlen ..]);
-				if i+1+len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
+				let candidate = &horizon[i+1 ..];
+				let idlen = identifierlen(candidate);
+				let candidate = &candidate[idlen ..];
+				let spacelen = predlen(|x| x == b' ', candidate);
+				let candidate = &candidate[spacelen ..];
+				if let Some(end) = candidate.iter().next() {
+					if idlen >= 1 && matches!(end, b';' | b'\n') {
+						return become_for_in_necessarily_array(i);
+					}
+				} else if i > 0 || is_horizon_lengthenable {
 					return flush(i);
-				}
-				if idlen >= 1 && matches!(horizon[i+1+len], b';' | b'\n') {
-					return WhatNow{
-						tri: Transition::Replace(Box::new(SitVarIdentNecessarilyArray{})),
-						pre: i, len: 1, alt: Some(b"\"${"),
-					};
 				}
 			}
 			if !is_whitespace(a) || a == b'\n' {
-				return WhatNow{
-					tri: Transition::Replace(Box::new(SitForInAnythingElse{})),
-					pre: i, len: 0, alt: None,
-				};
+				return become_for_in_anything_else(i);
 			}
 		}
 		flush(horizon.len())
@@ -134,6 +132,20 @@ fn push_varident(pre: usize, len: usize) -> WhatNow {
 	}
 }
 
+fn become_for_in_necessarily_array(pre: usize) -> WhatNow {
+	WhatNow{
+		tri: Transition::Replace(Box::new(SitVarIdentNecessarilyArray{})),
+		pre, len: 1, alt: Some(b"\"${"),
+	}
+}
+
+fn become_for_in_anything_else(pre: usize) -> WhatNow {
+	WhatNow{
+		tri: Transition::Replace(Box::new(SitForInAnythingElse{})),
+		pre, len: 0, alt: None,
+	}
+}
+
 #[cfg(test)]
 use crate::testhelpers::*;
 
@@ -151,4 +163,19 @@ fn test_sit_for() {
 	sit_expect!(SitFor{}, b"in;", &push_forin(0, 2));
 	sit_expect!(SitFor{}, b"in ", &push_forin(0, 2));
 	sit_expect!(SitFor{}, b"in", &flush(0), &push_forin(0, 2));
+}
+
+#[test]
+fn test_sit_forin() {
+	sit_expect!(SitForIn{}, b"", &flush(0));
+	sit_expect!(SitForIn{}, b" ", &flush(1));
+	sit_expect!(SitForIn{}, b"a", &become_for_in_anything_else(0));
+	sit_expect!(SitForIn{}, b" a", &become_for_in_anything_else(1));
+	sit_expect!(SitForIn{}, b" \n", &become_for_in_anything_else(1));
+	sit_expect!(SitForIn{}, b" ;", &become_for_in_anything_else(1));
+	sit_expect!(SitForIn{}, b" $a", &flush(1));
+	sit_expect!(SitForIn{}, b"$a", &flush(0), &become_for_in_anything_else(0));
+	sit_expect!(SitForIn{}, b" $a\n", &become_for_in_necessarily_array(1));
+	sit_expect!(SitForIn{}, b" $a;", &become_for_in_necessarily_array(1));
+	sit_expect!(SitForIn{}, b" $a $a;", &become_for_in_anything_else(1));
 }
