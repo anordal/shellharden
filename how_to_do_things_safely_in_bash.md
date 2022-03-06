@@ -547,6 +547,72 @@ Lastly, don't ever use constructs like `[ -n $var ]` or `[ -z $var ]`. They are 
 * A string comparison can't distinguish an unset variable from an empty one. Let alone distinguish the ways it can be empty: Environment variables are just strings, so they may be empty strings, but normal shell variables are really arrays – they can be empty arrays or arrays of empty strings (what you think of as the empty string is indistinguishable from a one-element array).
 * Expanding a potentially unset variable obviously precludes the use of `set -u`.
 
+### Are empty string comparisons any special?
+
+Of course not:
+Quoting also works when strings are empty on purpose!
+For readability, prefer normal string comparisons.
+
+Good:
+
+    test "$s" != ""
+    test "$s" = ""
+    [ "$s" != "" ]
+    [ "$s" = "" ]
+
+(Many shells also support `==`, but a single equal-sign is posixly correct.)
+
+Bad (readability):
+
+    test -n "$s"
+    test -z "$s"
+    [ -n "$s" ]
+    [ -z "$s" ]
+
+Plain wrong (always true):
+
+    test -n $s
+    [ -n $s ]
+
+### Conditions with AND, OR, NOT and parentheses
+
+The shell syntax for conjunction `&&`, disjunction `||`, negation `!` and grouping `{}` is unproblematic and works with any command.
+Use it.
+Also for conditions.
+
+The confusing part is that the `test` or `[` command has operators for the same:
+POSIX (man 1p test) defines these as `-a`, `-o`, `!`, and parentheses.
+But is everything that POSIX standardizes safe? Hint: POSIX is more about portability.
+
+These operators are ill-conceived because strings can evaluate to operators,
+and different operators take different numbers of operands,
+which together can lead to desynchronization.
+To prevent string content from changing the meaning of the test,
+the same standard prescribes that the number of arguments has the highest precedence:
+POSIX defines the unambiguous meaning of a test, from 0 to 4 arguments, but not more.
+These definitions do not include any conjunctions or disjunctions
+(likely because the unambiguity breaks down in the combinatorial explosion).
+
+Bad (unless your shell can unambiguously interpret a 13-argument test):
+
+    test ! -e "$f" -a \( "$s" = yes -o "$s" = y \)
+    [ ! -e "$f" -a \( "$s" = yes -o "$s" = y \) ]
+
+Good:
+
+    ! test -e "$f" && { test "$s" = yes || test "$s" = y; }
+    ! [ -e "$f" ] && { [ "$s" = yes ] || [ "$s" = y ]; }
+
+### xyes deemed unnecessary
+
+Is this idiom of any use?
+
+    test x"$s" = xyes
+
+1. Not to preserve empty strings: Use quoting.
+2. Not to prevent ambiguity in case the variable contains a valid operator: The number of arguments has highter precedence.
+3. When used with the AND/OR operators (`-a/-o`), it can prevent ambiguity. However, this use is unnecessary (see above).
+
 Commands with better alternatives
 ---------------------------------
 

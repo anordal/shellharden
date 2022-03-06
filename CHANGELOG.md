@@ -1,5 +1,25 @@
 # Changelog
 
+## 4.2.0
+
+*More helpful with `for` and `test`*
+
+* Variables that must necessarily be arrays in order to be quoted now become
+  array expansions instead of simply being quoted
+  (they must still manually be changed to arrays):
+  * `for i in $a` → `for i in "${a[@]}"`
+* Rewriting array serialization to array expansion in contexts where quoting
+  is needed, now also for named arrays
+  (analogous to `$*` → `"$@"`):
+  * `${a[*]}` → `"${a[@]}"`
+* `test` command normalization (see the howto for justification):
+  * Empty string tests:
+    * `test -n "$s"` → `test "$s" != ""`
+    * `test -z "$s"` → `test "$s" = ""`
+  * xyes deemed unnecessary:
+    * `test x"$s" = xyes` → `test "$s" = yes`
+* Bugfix: Fix lookahead on short read. See commit 21904cce1.
+
 ## 4.1.3
 
 *A pandemy's worth of maintenance*
