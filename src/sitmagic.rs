@@ -10,6 +10,7 @@ use crate::situation::Situation;
 use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
+use crate::situation::pop;
 use crate::situation::COLOR_MAGIC;
 
 use crate::commonargcmd::common_token_quoting_unneeded;
@@ -29,7 +30,7 @@ impl Situation for SitMagic {
 				return push_magic(i, 1, b']');
 			}
 			if a == self.end_trigger {
-				return WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None};
+				return pop(i, 1, None);
 			}
 			if let Some(res) = common_token_quoting_unneeded(0x100, horizon, i, is_horizon_lengthenable) {
 				return res;

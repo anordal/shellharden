@@ -7,9 +7,9 @@
  */
 
 use crate::situation::Situation;
-use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
+use crate::situation::pop;
 
 use crate::commonstrcmd::QuotingCtx;
 use crate::commonstrcmd::CommonStrCmdResult;
@@ -29,7 +29,7 @@ impl Situation for SitStrDq {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, &a) in horizon.iter().enumerate() {
 			if a == b'\"' {
-				return WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None};
+				return pop(i, 1, None);
 			}
 			match common_str_cmd(horizon, i, is_horizon_lengthenable, self.interpolation_detection) {
 				CommonStrCmdResult::None => {
@@ -58,6 +58,8 @@ use crate::testhelpers::*;
 use crate::sitcmd::SitNormal;
 #[cfg(test)]
 use crate::sitmagic::push_magic;
+#[cfg(test)]
+use crate::situation::Transition;
 
 #[test]
 fn test_sit_strdq() {

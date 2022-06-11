@@ -7,10 +7,10 @@
  */
 
 use crate::situation::Situation;
-use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush_or_pop;
 use crate::situation::COLOR_CMT;
+use crate::situation::pop;
 
 pub struct SitComment {}
 
@@ -18,9 +18,7 @@ impl Situation for SitComment {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, &a) in horizon.iter().enumerate() {
 			if a == b'\n' {
-				return WhatNow{
-					tri: Transition::Pop, pre: i, len: 0, alt: None
-				};
+				return pop(i, 0, None);
 			}
 		}
 		flush_or_pop(horizon.len())

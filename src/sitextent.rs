@@ -7,9 +7,9 @@
  */
 
 use crate::situation::Situation;
-use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
+use crate::situation::pop;
 
 pub struct SitExtent{
 	pub len : usize,
@@ -19,7 +19,7 @@ pub struct SitExtent{
 impl Situation for SitExtent {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
 		if horizon.len() >= self.len {
-			return WhatNow{tri: Transition::Pop, pre: self.len, len: 0, alt: None};
+			return pop(self.len, 0, None);
 		}
 		self.len -= horizon.len();
 		flush(horizon.len())

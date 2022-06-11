@@ -10,6 +10,7 @@ use crate::situation::Situation;
 use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
+use crate::situation::pop;
 use crate::situation::COLOR_SQESC;
 use crate::situation::COLOR_ESC;
 
@@ -25,7 +26,7 @@ impl Situation for SitStrSqEsc {
 				return WhatNow{tri: Transition::Push(esc), pre: i, len: 1, alt: None};
 			}
 			if a == b'\'' {
-				return WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None};
+				return pop(i, 1, None);
 			}
 		}
 		flush(horizon.len())

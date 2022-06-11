@@ -7,9 +7,9 @@
  */
 
 use crate::situation::Situation;
-use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
+use crate::situation::pop;
 
 use crate::microparsers::predlen;
 
@@ -22,7 +22,7 @@ impl Situation for SitUntilByte {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
 		let len = predlen(|x| x != self.until, horizon);
 		if len < horizon.len() {
-			WhatNow{tri: Transition::Pop, pre: len, len: 1, alt: None}
+			pop(len, 1, None)
 		} else {
 			flush(len)
 		}
