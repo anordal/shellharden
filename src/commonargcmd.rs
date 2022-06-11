@@ -22,6 +22,7 @@ use crate::microparsers::identifierlen;
 use crate::microparsers::is_whitespace;
 use crate::microparsers::is_word;
 
+use crate::commonstrcmd::QuotingCtx;
 use crate::commonstrcmd::CommonStrCmdResult;
 use crate::commonstrcmd::common_str_cmd;
 
@@ -159,7 +160,7 @@ pub fn common_token(
 	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable, true) {
 		return Some(res);
 	}
-	match common_str_cmd(horizon, i, is_horizon_lengthenable, true) {
+	match common_str_cmd(horizon, i, is_horizon_lengthenable, QuotingCtx::Need) {
 		CommonStrCmdResult::None => None,
 		CommonStrCmdResult::Some(x) => Some(x),
 		CommonStrCmdResult::OnlyWithQuotes(_) => {
@@ -205,7 +206,7 @@ pub fn common_token_quoting_unneeded(
 	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable, false) {
 		return Some(res);
 	}
-	match common_str_cmd(horizon, i, is_horizon_lengthenable, false) {
+	match common_str_cmd(horizon, i, is_horizon_lengthenable, QuotingCtx::Dontneed) {
 		CommonStrCmdResult::None => None,
 		CommonStrCmdResult::Some(x) => Some(x),
 		CommonStrCmdResult::OnlyWithQuotes(x) => {
@@ -267,7 +268,7 @@ fn find_usual_suspects(
 	}
 	if a == b'\"' {
 		return Some(WhatNow{
-			tri: Transition::Push(Box::new(SitStrDq{})),
+			tri: Transition::Push(Box::new(SitStrDq::new())),
 			pre: i, len: 1, alt: None
 		});
 	}

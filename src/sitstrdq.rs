@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 - 2019 Andreas Nordal
+ * Copyright 2016 - 2022 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,10 +11,19 @@ use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 
+use crate::commonstrcmd::QuotingCtx;
 use crate::commonstrcmd::CommonStrCmdResult;
 use crate::commonstrcmd::common_str_cmd;
 
-pub struct SitStrDq {}
+pub struct SitStrDq {
+	interpolation_detection: QuotingCtx,
+}
+
+impl SitStrDq {
+	pub fn new() -> SitStrDq {
+		SitStrDq{ interpolation_detection: QuotingCtx::Dontneed }
+	}
+}
 
 impl Situation for SitStrDq {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
@@ -22,10 +31,18 @@ impl Situation for SitStrDq {
 			if a == b'\"' {
 				return WhatNow{tri: Transition::Pop, pre: i, len: 1, alt: None};
 			}
-			match common_str_cmd(horizon, i, is_horizon_lengthenable, false) {
-				CommonStrCmdResult::None => {}
+			match common_str_cmd(horizon, i, is_horizon_lengthenable, self.interpolation_detection) {
+				CommonStrCmdResult::None => {
+					self.interpolation_detection = QuotingCtx::Interpolation;
+				}
 				CommonStrCmdResult::Some(x) |
-				CommonStrCmdResult::OnlyWithQuotes(x) => { return x; }
+				CommonStrCmdResult::OnlyWithQuotes(x) => {
+					let progress = x.pre + x.len;
+					if progress != 0 {
+						self.interpolation_detection = QuotingCtx::Interpolation;
+					}
+					return x;
+				}
 			}
 		}
 		flush(horizon.len())
@@ -49,9 +66,9 @@ fn test_sit_strdq() {
 			end_trigger: u16::from(b')'), end_replace: None,
 		})), pre: 0, len: 2, alt: None
 	};
-	sit_expect!(SitStrDq{}, b"", &flush(0));
-	sit_expect!(SitStrDq{}, b"$", &flush(0), &flush(1));
-	sit_expect!(SitStrDq{}, b"$(", &flush(0), &found_cmdsub);
-	sit_expect!(SitStrDq{}, b"$( ", &found_cmdsub);
-	sit_expect!(SitStrDq{}, b"$((", &push_magic(0, 2, b')'));
+	sit_expect!(SitStrDq::new(), b"", &flush(0));
+	sit_expect!(SitStrDq::new(), b"$", &flush(0), &flush(1));
+	sit_expect!(SitStrDq::new(), b"$(", &flush(0), &found_cmdsub);
+	sit_expect!(SitStrDq::new(), b"$( ", &found_cmdsub);
+	sit_expect!(SitStrDq::new(), b"$((", &push_magic(0, 2, b')'));
 }

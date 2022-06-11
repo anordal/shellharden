@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 - 2021 Andreas Nordal
+ * Copyright 2016 - 2022 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,6 +26,15 @@ use crate::sitmagic::push_magic;
 use crate::sitvarbrace::SitVarBrace;
 use crate::sitvarident::SitVarIdent;
 
+#[derive(Copy)]
+#[derive(Clone)]
+#[derive(PartialEq)]
+pub enum QuotingCtx {
+	Need,
+	Dontneed,
+	Interpolation,
+}
+
 pub enum CommonStrCmdResult {
 	None,
 	Some(WhatNow),
@@ -36,8 +45,11 @@ pub fn common_str_cmd(
 	horizon: &[u8],
 	i: usize,
 	is_horizon_lengthenable: bool,
-	ctx_cmd: bool,
+	ctx: QuotingCtx,
 ) -> CommonStrCmdResult {
+	let need_quotes = ctx == QuotingCtx::Need;
+	let is_interpolation = ctx == QuotingCtx::Interpolation;
+
 	if horizon[i] == b'`' {
 		let found_pwd = find_pwd(horizon, i, 1, b'`', is_horizon_lengthenable);
 		match found_pwd {
@@ -108,7 +120,7 @@ pub fn common_str_cmd(
 		});
 	} else if is_identifierhead(c) {
 		let tailhazard;
-		if ctx_cmd {
+		if need_quotes {
 			let cand: &[u8] = &horizon[i+1 ..];
 			let (_, pos_hazard) = pos_tailhazard(cand, b'\"');
 			if pos_hazard == cand.len() {
@@ -138,11 +150,12 @@ pub fn common_str_cmd(
 			}
 		} else if idlen == 0 {
 			is_number = is_variable_of_numeric_content(cand[0]);
-		} else if idlen < pos_hazard {
-			rm_braces = !is_identifiertail(cand[pos_hazard]);
+		} else if idlen < pos_hazard && !is_identifiertail(cand[pos_hazard]) {
+			let is_interpolation = is_interpolation || pos_hazard - idlen == 1;
+			rm_braces = need_quotes || !is_interpolation;
 		}
 		let wn = WhatNow{
-			tri: Transition::Push(Box::new(SitVarBrace::new(rm_braces, ctx_cmd))),
+			tri: Transition::Push(Box::new(SitVarBrace::new(rm_braces, need_quotes))),
 			pre: i, len: 2, alt: if_needed(rm_braces, b"$"),
 		};
 		return if is_number {

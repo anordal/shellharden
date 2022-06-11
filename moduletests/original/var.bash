@@ -22,6 +22,18 @@ echo $! # Expands to a number
 echo ${identifier_azAZ09}
 echo ${Identifier_azAZ09}
 echo ${_identifier_azAZ09}
+echo ${identifier_azAZ09}a
+echo ${Identifier_azAZ09}a
+echo ${_identifier_azAZ09}a
+echo ${identifier_azAZ09}"a"
+echo ${Identifier_azAZ09}"a"
+echo ${_identifier_azAZ09}"a"
+echo ${identifier_azAZ09}"/a"
+echo ${Identifier_azAZ09}"/a"
+echo ${_identifier_azAZ09}"/a"
+echo ${identifier_azAZ09}${identifier_azAZ09}
+echo ${Identifier_azAZ09}${Identifier_azAZ09}
+echo ${_identifier_azAZ09}${_identifier_azAZ09}
 echo ${0}
 echo ${1}
 echo ${2}
@@ -71,12 +83,18 @@ echo "$?" # Expands to a number
 echo "$$" # Expands to a number
 echo "$!" # Expands to a number
 
-echo "${identifier_azAZ09}a"
-echo "${Identifier_azAZ09}a"
-echo "${_identifier_azAZ09}a"
-echo "${identifier_azAZ09}:a"
-echo "${Identifier_azAZ09}:a"
-echo "${_identifier_azAZ09}:a"
+echo "${identifier_azAZ09}"
+echo "${Identifier_azAZ09}"
+echo "${_identifier_azAZ09}"
+echo " ${identifier_azAZ09}"
+echo " ${Identifier_azAZ09}"
+echo " ${_identifier_azAZ09}"
+echo "${identifier_azAZ09} "
+echo "${Identifier_azAZ09} "
+echo "${_identifier_azAZ09} "
+echo "${identifier_azAZ09}${identifier_azAZ09}"
+echo "${Identifier_azAZ09}${Identifier_azAZ09}"
+echo "${_identifier_azAZ09}${_identifier_azAZ09}"
 echo "${0}"
 echo "${1}"
 echo "${2}"

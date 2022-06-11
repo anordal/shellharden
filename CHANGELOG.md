@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.3.0
+
+*One long awaited rule change*
+
+* Unnecessary braces on variable expansions in string interpolations are now
+  allowed.
+
 ## 4.2.0
 
 *More helpful with `for` and `test`*

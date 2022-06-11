@@ -94,34 +94,65 @@ Shellharden rewrites these into the dollar-parenthesis form.
 
 ### Should I use curly braces?
 
-Braces are for string interpolation, i.e. usually unnecessary:
+Variable substitution: This is not the controversy, but just to get it out of the way: These braces are of course needed:
+
+    "${image%.png}.jpg"
+
+String interpolation: Braces also have this role:
+
+    "${var}string literal"
+
+When expanding a variable inside a string, a closing brace can be used to delimit the end of the variable name from subsequent characters of the string literal.
+This makes a difference if and only if the next character can take part in a variable name, in other words, if it is an identifier tail character, in regex `[_0-9a-zA-Z]`.
+
+Strictly speaking, it never hurts to always use braces. Does that make it a good idea?
+
+Note that this is not a question of correctness, but of brittleness
+(the script would have to be edited, and a mistake be made, before it becomes incorrect).
+Strictly speaking not that either, because the problem itself is unnecessary:
+Quotes are obligatory anyway; just quote variables individually to avoid the problem
+(quotes can always replace braces, but not the opposite, and you never need both).
+The result is a concatenation instead of interpolation:
+
+    "$var"'string literal'
+
+Now that the question is clear, your author would say: Mostly not.
+In terms of which way to go for consistency's sake, considert that
+most variable expansions aren't interpolations. And they shouldn't:
+The noble thing to do for a shellscript (or any glue code) is to pass arguments cleanly.
+Let's focus on passing arguments cleanly:
 
 * Bad: `some_command $arg1 $arg2 $arg3`
 * Bad and verbose: `some_command ${arg1} ${arg2} ${arg3}`
 * Good but verbose: `some_command "${arg1}" "${arg2}" "${arg3}"`
 * Good: `some_command "$arg1" "$arg2" "$arg3"`
 
-It does not hurt to always use braces, in theory, but in your author's experience, there is a strong negative correlation between unnecessary use of braces and proper use of quotes – nearly everyone chooses the "bad and verbose" instead of "good but verbose" form!
+The braces don't do anything objectively good here.
 
-Your author's theories:
+In your author's experience, there is rather a negative correlation between unnecessary use of braces and proper use of quotes – nearly everyone chooses the "bad and verbose" instead of "good but verbose" form! My speculations:
 
 * Fear of the wrong thing: Instead of worrying about the real danger (missing quotes), a beginner might worry that a variable named `$prefix` would influence the expansion of `"$prefix_postfix"` – this is simply not how it works.
 * Cargo cult – writing code in testament to the wrong fear perpetuates it.
 * Braces compete with quotes under the limits of tolerable verbosity.
 
-The decision was made to ban unnecessary use of braces: Shellharden will rewrite all these variants into the simplest good form.
+Shellharden will add and remove braces on an as-needed basis when it needs to add quotes:
 
-Now onto string interpolation, where braces are actually useful:
+`${arg} $arg"ument"` → `"$arg" "${arg}ument"`
 
-* Bad (concatenation): `$var1"more string content"$var2`
-* Good (concatentation): `"$var1""more string content""$var2"`
-* Good (interpolation): `"${var1}more string content${var2}"`
+It will also remove braces on individually quoted variables:
 
-Concatenation and interpolation are equivalent in bash (even for arrays, which is ridiculous).
+`"${arg}"` → `"$arg"`
 
-Because Shellharden is not a style formatter, it is not supposed to change correct code. This is true of the "good (concatenation)" example: As far as shellharden is concerned, this is the holy (canonically correct) form.
+As of Shellharden 4.3.0, braces are allowed in string interpolations (not that it adds them):
 
-Shellharden currently adds and removes braces on an as-needed basis: In the bad example, var1 becomes interpolated with braces, but braces are not accepted on var2 even in the good (interpolation) case, since they are never needed at the end of a string. The latter requirement may well be lifted.
+    "${var} "
+    " ${var}"
+    "${var}${var}"
+
+Thus, a neutral stance in interpolations
+(being not a style formatter, Shellharden is not supposed to make subjective changes).
+Previously, it rewrote interpolations too on an as-needed basis,
+but as noted here, this could indeed be relaxed.
 
 #### Gotcha: Numbered arguments
 

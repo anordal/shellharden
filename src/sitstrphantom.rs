@@ -11,6 +11,7 @@ use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 
+use crate::commonstrcmd::QuotingCtx;
 use crate::commonstrcmd::CommonStrCmdResult;
 use crate::commonstrcmd::common_str_cmd;
 
@@ -36,7 +37,7 @@ impl Situation for SitStrPhantom {
 					return become_real(mouthful);
 				}
 				b'$' | b'`' => {
-					match common_str_cmd(horizon, mouthful, is_horizon_lengthenable, true) {
+					match common_str_cmd(horizon, mouthful, is_horizon_lengthenable, QuotingCtx::Need) {
 						CommonStrCmdResult::None => {}
 						CommonStrCmdResult::Some(consult) |
 						CommonStrCmdResult::OnlyWithQuotes(consult) => {
@@ -71,7 +72,7 @@ fn is_phantomstringfood(c: u8) -> bool {
 
 fn become_real(pre: usize) -> WhatNow {
 	WhatNow{
-		tri: Transition::Replace(Box::new(SitStrDq{})),
+		tri: Transition::Replace(Box::new(SitStrDq::new())),
 		pre, len: 1, alt: Some(b"")
 	}
 }
