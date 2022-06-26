@@ -59,8 +59,6 @@ Distro packages:
 
     cargo install shellharden
 
-For convenience, a few precompiled binaries are also available in the [releases](https://github.com/anordal/shellharden/releases).
-
 Build from source
 -----------------
 
