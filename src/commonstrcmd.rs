@@ -21,7 +21,7 @@ use crate::microparsers::identifierlen;
 use crate::syntaxerror::UnsupportedSyntax;
 
 use crate::sitcmd::SitNormal;
-use crate::sitextent::SitExtent;
+use crate::sitextent::push_extent;
 use crate::sitmagic::push_magic;
 use crate::sitvarbrace::SitVarBrace;
 use crate::sitvarident::SitVarIdent;
@@ -67,10 +67,7 @@ pub fn common_str_cmd(
 		});
 	}
 	if horizon[i] == b'\\' {
-		let esc = Box::new(SitExtent{len: 1, color: COLOR_ESC});
-		return CommonStrCmdResult::Some(WhatNow{
-			tri: Transition::Push(esc), pre: i, len: 1, alt: None
-		});
+		return CommonStrCmdResult::Some(push_extent(COLOR_ESC, i, 2, None));
 	}
 	if horizon[i] != b'$' {
 		return CommonStrCmdResult::None;
@@ -104,20 +101,12 @@ pub fn common_str_cmd(
 			pre: i, len: 2, alt: None
 		});
 	} else if is_variable_of_numeric_content(c) {
-		let ext = Box::new(SitExtent{len: 2, color: COLOR_VAR});
-		return CommonStrCmdResult::Some(WhatNow{
-			tri: Transition::Push(ext),
-			pre: i, len: 0, alt: None
-		});
+		return CommonStrCmdResult::Some(push_extent(COLOR_VAR, i, 2, None));
 	} else if c == b'@' || c == b'*' || c == b'-' || is_decimal(c) {
 		if predlen(is_decimal, &horizon[i+1 ..]) > 1 {
 			return bail_doubledigit(horizon, i+2);
 		}
-		let ext = Box::new(SitExtent{len: 2, color: COLOR_VAR});
-		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
-			tri: Transition::Push(ext),
-			pre: i, len: 0, alt: None
-		});
+		return CommonStrCmdResult::OnlyWithQuotes(push_extent(COLOR_VAR, i, 2, None));
 	} else if is_identifierhead(c) {
 		let tailhazard;
 		if need_quotes {
@@ -187,12 +176,8 @@ fn find_pwd(
 		} else {
 			b"$PWD"
 		};
-		let sit = Box::new(SitExtent{len: 0, color: COLOR_VAR});
-		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
-			tri: Transition::Push(sit),
-			pre: i, len: candidate_offset + idlen + 1,
-			alt: Some(replacement)
-		});
+		let what = push_extent(COLOR_VAR, i, candidate_offset + idlen + 1, Some(replacement));
+		return CommonStrCmdResult::OnlyWithQuotes(what);
 	}
 	CommonStrCmdResult::None
 }

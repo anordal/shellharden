@@ -127,7 +127,7 @@ impl Situation for SitCaseArm {
 
 fn pop_kw(pre: usize, len: usize) -> WhatNow {
 	WhatNow{
-		tri: Transition::Replace(Box::new(SitExtent{len: 0, color: COLOR_KWD})),
+		tri: Transition::Replace(Box::new(SitExtent{color: COLOR_KWD})),
 		pre, len, alt: None,
 	}
 }

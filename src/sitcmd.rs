@@ -94,7 +94,7 @@ impl Situation for SitArg {
 #[cfg(test)]
 use crate::testhelpers::*;
 #[cfg(test)]
-use crate::sitextent::SitExtent;
+use crate::sitextent::push_extent;
 #[cfg(test)]
 use crate::sitmagic::push_magic;
 #[cfg(test)]
@@ -122,14 +122,6 @@ fn mk_cmd(pre: usize) -> WhatNow {
 	}
 }
 
-#[cfg(test)]
-fn mk_kwd(len: usize) -> WhatNow {
-	WhatNow{
-		tri: Transition::Push(Box::new(SitExtent{len: 0, color: COLOR_KWD})),
-		pre: 0, len, alt: None,
-	}
-}
-
 #[test]
 fn test_sit_normal() {
 	let subj = || {
@@ -138,7 +130,7 @@ fn test_sit_normal() {
 
 	sit_expect!(subj(), b"fo", &flush(0), &mk_cmd(0));
 	sit_expect!(subj(), b"fo=", &mk_assignment(3));
-	sit_expect!(subj(), b"for", &flush(0), &mk_kwd(3));
+	sit_expect!(subj(), b"for", &flush(0), &push_extent(COLOR_KWD, 0, 3, None));
 	sit_expect!(subj(), b"for=", &mk_assignment(4));
 	sit_expect!(subj(), b"fork", &flush(0), &mk_cmd(0));
 	sit_expect!(subj(), b"fork=", &mk_assignment(5));

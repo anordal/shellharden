@@ -8,23 +8,23 @@
 
 use crate::situation::Situation;
 use crate::situation::WhatNow;
-use crate::situation::flush;
+use crate::situation::Transition;
 use crate::situation::pop;
 
 pub struct SitExtent{
-	pub len : usize,
 	pub color: u32,
 }
 
 impl Situation for SitExtent {
-	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
-		if horizon.len() >= self.len {
-			return pop(self.len, 0, None);
-		}
-		self.len -= horizon.len();
-		flush(horizon.len())
+	fn whatnow(&mut self, _horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
+		pop(0, 0, None)
 	}
 	fn get_color(&self) -> u32 {
 		self.color
 	}
+}
+
+pub fn push_extent(color: u32, pre: usize, len: usize, alt: Option<&'static [u8]>) -> WhatNow {
+	let ext = Box::new(SitExtent{color});
+	WhatNow{tri: Transition::Push(ext), pre, len, alt}
 }

@@ -88,7 +88,7 @@ use crate::testhelpers::*;
 #[cfg(test)]
 use crate::sitcmd::SitNormal;
 #[cfg(test)]
-use crate::sitextent::SitExtent;
+use crate::sitextent::push_extent;
 #[cfg(test)]
 use crate::situation::COLOR_VAR;
 
@@ -105,10 +105,6 @@ fn test_sit_strphantom() {
 			end_trigger: u16::from(b')'), end_replace: None,
 		})), pre: 0, len: 2, alt: None
 	};
-	let found_specialvar = WhatNow{
-		tri: Transition::Push(Box::new(SitExtent{len: 2, color: COLOR_VAR})),
-		pre: 0, len: 0, alt: None,
-	};
 	sit_expect!(subject(), b"", &flush(0), &cod);
 	sit_expect!(subject(), b"a", &flush(0), &cod);
 	sit_expect!(subject(), b" ", &cod);
@@ -120,11 +116,11 @@ fn test_sit_strphantom() {
 	sit_expect!(subject(), b"a$(", &flush(0), &cod);
 	sit_expect!(subject(), b"$\'", &cod);
 	sit_expect!(subject(), b"$\"", &cod);
-	sit_expect!(subject(), b"$@", &found_specialvar);
-	sit_expect!(subject(), b"$*", &found_specialvar);
-	sit_expect!(subject(), b"$#", &found_specialvar);
-	sit_expect!(subject(), b"$?", &found_specialvar);
-	sit_expect!(subject(), b"$-", &found_specialvar);
-	sit_expect!(subject(), b"$$", &found_specialvar);
-	sit_expect!(subject(), b"$!", &found_specialvar);
+	sit_expect!(subject(), b"$@", &push_extent(COLOR_VAR, 0, 2, None));
+	sit_expect!(subject(), b"$*", &push_extent(COLOR_VAR, 0, 2, None));
+	sit_expect!(subject(), b"$#", &push_extent(COLOR_VAR, 0, 2, None));
+	sit_expect!(subject(), b"$?", &push_extent(COLOR_VAR, 0, 2, None));
+	sit_expect!(subject(), b"$-", &push_extent(COLOR_VAR, 0, 2, None));
+	sit_expect!(subject(), b"$$", &push_extent(COLOR_VAR, 0, 2, None));
+	sit_expect!(subject(), b"$!", &push_extent(COLOR_VAR, 0, 2, None));
 }

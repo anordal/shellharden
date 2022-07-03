@@ -7,14 +7,13 @@
  */
 
 use crate::situation::Situation;
-use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::if_needed;
 use crate::situation::pop;
 use crate::situation::COLOR_VAR;
 
-use crate::sitextent::SitExtent;
+use crate::sitextent::push_extent;
 
 #[derive(Clone)]
 #[derive(Copy)]
@@ -52,12 +51,7 @@ impl Situation for SitVarBrace {
 				(State::Name, b'[') => self.state = State::Index,
 				(State::Index, b'*') => {
 					self.state = State::Normal;
-					return WhatNow{
-						tri: Transition::Push(Box::new(SitExtent{
-							len: 0, color: COLOR_VAR
-						})),
-						pre: i, len: 1, alt: Some(b"@"),
-					};
+					return push_extent(COLOR_VAR, i, 1, Some(b"@"));
 				}
 				(State::Normal, b'{') => self.depth += 1,
 				(State::Name | State::Index | State::Normal, b'}') => {

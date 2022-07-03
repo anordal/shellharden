@@ -31,7 +31,7 @@ use crate::sitfor::SitFor;
 use crate::sitcmd::SitNormal;
 use crate::sitcmd::SitCmd;
 use crate::sitcomment::SitComment;
-use crate::sitextent::SitExtent;
+use crate::sitextent::push_extent;
 use crate::sitmagic::push_magic;
 use crate::sitrvalue::SitRvalue;
 use crate::sitstrdq::SitStrDq;
@@ -99,10 +99,7 @@ pub fn keyword_or_command(
 		b"until" |
 		b"while" |
 		b"{" |
-		b"}" => WhatNow{
-			tri: Transition::Push(Box::new(SitExtent{len: 0, color: COLOR_KWD})),
-			pre: i, len, alt: None,
-		},
+		b"}" => push_extent(COLOR_KWD, i, len, None),
 		b"[" |
 		b"test" if predlen(|x| x == b' ', &horizon[i + len ..]) == 1 => WhatNow{
 			tri: Transition::Push(Box::new(SitTest{end_trigger})),
@@ -287,11 +284,7 @@ fn find_usual_suspects(
 			});
 		} else if b == b'*' {
 			// $* → "$@" but not "$*" → "$@"
-			let ext = Box::new(SitExtent{len: 0, color: COLOR_VAR});
-			return Some(WhatNow{
-				tri: Transition::Push(ext),
-				pre: i, len: 2, alt: if_needed(quoting_needed, b"\"$@\"")
-			});
+			return Some(push_extent(COLOR_VAR, i, 2, if_needed(quoting_needed, b"\"$@\"")));
 		}
 	}
 	let (ate, delimiter) = find_heredoc(&horizon[i ..]);
