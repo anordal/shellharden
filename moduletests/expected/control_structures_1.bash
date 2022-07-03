@@ -34,6 +34,9 @@ do
 	[[ $i ]]
 done
 
+\
+[[ $ivar ]]
+
 true \
 # Comments don't have line continuations. \
 [[ $ivar ]]

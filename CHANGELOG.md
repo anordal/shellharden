@@ -1,5 +1,9 @@
 # Changelog
 
+## Next
+
+* Fix misdetection of line continuation as a command
+
 ## 4.3.0
 
 *One long awaited rule change*

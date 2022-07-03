@@ -14,12 +14,15 @@ use crate::situation::flush_or_pop;
 use crate::situation::pop;
 use crate::situation::COLOR_NORMAL;
 use crate::situation::COLOR_CMD;
+use crate::situation::COLOR_ESC;
 
 use crate::microparsers::is_whitespace;
 
 use crate::commonargcmd::keyword_or_command;
 use crate::commonargcmd::common_arg;
 use crate::commonargcmd::common_cmd;
+
+use crate::sitextent::push_extent;
 
 pub struct SitNormal {
 	pub end_trigger :u16,
@@ -31,6 +34,9 @@ impl Situation for SitNormal {
 		for (i, &a) in horizon.iter().enumerate() {
 			if is_whitespace(a) || a == b';' || a == b'|' || a == b'&' || a == b'<' || a == b'>' {
 				continue;
+			}
+			if a == b'\\' {
+				return push_extent(COLOR_ESC, i, 2, None);
 			}
 			if u16::from(a) == self.end_trigger {
 				return pop(i, 1, self.end_replace);
@@ -93,8 +99,6 @@ impl Situation for SitArg {
 
 #[cfg(test)]
 use crate::testhelpers::*;
-#[cfg(test)]
-use crate::sitextent::push_extent;
 #[cfg(test)]
 use crate::sitmagic::push_magic;
 #[cfg(test)]
