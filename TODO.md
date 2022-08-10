@@ -2,7 +2,19 @@
 
 ## Nice haves:
 * -c 'check this'
-* Rewrite alias to function
+* Things that never work: $10 and [ -n $var ]:
+  Fail by default, add --unbreak/--fix-neverworking
+
+# Language features
+* alias → function
+* eval is evil: Color blinking red?
+* for i in seq → for ((i…))
+* for i in … → while read < <(…)
+
+## Code organisation
+* reduce perilous boilerplate
+  * make flush an error for easier propagation
+* approach agreement with rust-fmt (struct grouping)
 
 ## Write about:
 * errexit → errtrace ?
