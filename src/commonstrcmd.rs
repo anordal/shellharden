@@ -9,6 +9,7 @@
 use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
+use crate::situation::push;
 use crate::situation::if_needed;
 use crate::situation::COLOR_ESC;
 use crate::situation::COLOR_VAR;
@@ -59,12 +60,13 @@ pub fn common_str_cmd(
 				return found_pwd;
 			}
 		}
-		let cmd = Box::new(SitNormal{
-			end_trigger: u16::from(b'`'), end_replace: Some(b")"),
-		});
-		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
-			tri: Transition::Push(cmd), pre: i, len: 1, alt: Some(b"$(")
-		});
+		return CommonStrCmdResult::OnlyWithQuotes(push(
+			(i, 1, Some(b"$(")),
+			Box::new(SitNormal {
+				end_trigger: u16::from(b'`'),
+				end_replace: Some(b")"),
+			}),
+		));
 	}
 	if horizon[i] == b'\\' {
 		return CommonStrCmdResult::Some(push_extent(COLOR_ESC, i, 2, None));
@@ -93,13 +95,13 @@ pub fn common_str_cmd(
 		} else if horizon[i+2] == b'(' {
 			return CommonStrCmdResult::Some(push_magic(i, 2, b')'));
 		}
-		let sit = Box::new(SitNormal{
-			end_trigger: u16::from(b')'), end_replace: None,
-		});
-		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
-			tri: Transition::Push(sit),
-			pre: i, len: 2, alt: None
-		});
+		return CommonStrCmdResult::OnlyWithQuotes(push(
+			(i, 2, None),
+			Box::new(SitNormal {
+				end_trigger: u16::from(b')'),
+				end_replace: None,
+			}),
+		));
 	} else if is_variable_of_numeric_content(c) {
 		return CommonStrCmdResult::Some(push_extent(COLOR_VAR, i, 2, None));
 	} else if c == b'@' || c == b'*' || c == b'-' || is_decimal(c) {
@@ -123,11 +125,12 @@ pub fn common_str_cmd(
 		} else {
 			tailhazard = false;
 		}
-		return CommonStrCmdResult::OnlyWithQuotes(WhatNow{
-			tri: Transition::Push(Box::new(SitVarIdent{
-				end_insert: if_needed(tailhazard, b"}")
-			})), pre: i, len: 1, alt: if_needed(tailhazard, b"${")
-		});
+		return CommonStrCmdResult::OnlyWithQuotes(push(
+			(i, 1, if_needed(tailhazard, b"${")),
+			Box::new(SitVarIdent {
+				end_insert: if_needed(tailhazard, b"}"),
+			}),
+		));
 	} else if c == b'{' {
 		let cand: &[u8] = &horizon[i+2 ..];
 		let (idlen, pos_hazard) = pos_tailhazard(cand, b'}');
@@ -143,10 +146,10 @@ pub fn common_str_cmd(
 			let is_interpolation = is_interpolation || pos_hazard - idlen == 1;
 			rm_braces = need_quotes || !is_interpolation;
 		}
-		let wn = WhatNow{
-			tri: Transition::Push(Box::new(SitVarBrace::new(rm_braces, need_quotes))),
-			pre: i, len: 2, alt: if_needed(rm_braces, b"$"),
-		};
+		let wn = push(
+			(i, 2, if_needed(rm_braces, b"$")),
+			Box::new(SitVarBrace::new(rm_braces, need_quotes)),
+		);
 		return if is_number {
 			CommonStrCmdResult::Some(wn)
 		} else {

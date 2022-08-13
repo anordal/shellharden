@@ -10,6 +10,7 @@ use crate::situation::Situation;
 use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
+use crate::situation::pop;
 
 use crate::commonstrcmd::QuotingCtx;
 use crate::commonstrcmd::CommonStrCmdResult;
@@ -78,9 +79,7 @@ fn become_real(pre: usize) -> WhatNow {
 }
 
 fn dutifully_end_the_string() -> WhatNow {
-	WhatNow{
-		tri: Transition::Pop, pre: 0, len: 0, alt: Some(b"\"")
-	}
+	pop(0, 0, Some(b"\""))
 }
 
 #[cfg(test)]
@@ -91,6 +90,8 @@ use crate::sitcmd::SitNormal;
 use crate::sitextent::push_extent;
 #[cfg(test)]
 use crate::situation::COLOR_VAR;
+#[cfg(test)]
+use crate::situation::push;
 
 #[cfg(test)]
 fn subject() -> SitStrPhantom {
@@ -100,11 +101,13 @@ fn subject() -> SitStrPhantom {
 #[test]
 fn test_sit_strphantom() {
 	let cod = dutifully_end_the_string();
-	let found_cmdsub = WhatNow{
-		tri: Transition::Push(Box::new(SitNormal{
-			end_trigger: u16::from(b')'), end_replace: None,
-		})), pre: 0, len: 2, alt: None
-	};
+	let found_cmdsub = push(
+		(0, 2, None),
+		Box::new(SitNormal {
+			end_trigger: u16::from(b')'),
+			end_replace: None,
+		}),
+	);
 	sit_expect!(subject(), b"", &flush(0), &cod);
 	sit_expect!(subject(), b"a", &flush(0), &cod);
 	sit_expect!(subject(), b" ", &cod);

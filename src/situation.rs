@@ -41,6 +41,16 @@ pub fn pop(pre: usize, len: usize, alt: Option<&'static [u8]>) -> WhatNow {
 	WhatNow{tri: Transition::Pop, pre, len, alt}
 }
 
+pub fn push(transform: (usize, usize, Option<&'static [u8]>), sit: Box<dyn Situation>) -> WhatNow {
+	let (pre, len, alt) = transform;
+	WhatNow{
+		tri: Transition::Push(sit),
+		pre,
+		len,
+		alt,
+	}
+}
+
 pub fn if_needed<T>(needed: bool, val: T) -> Option<T> {
 	if needed { Some(val) } else { None }
 }

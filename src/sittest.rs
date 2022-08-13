@@ -12,6 +12,7 @@ use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::flush_or_pop;
+use crate::situation::push;
 use crate::situation::COLOR_CMD;
 
 use crate::commonargcmd::common_arg;
@@ -82,29 +83,34 @@ fn become_regular_args(end_trigger :u16) -> WhatNow {
 	}
 }
 
-fn push_hiddentest(push: Option<WhatNow>, end_replace: &'static [u8], end_trigger: u16) -> WhatNow {
-	WhatNow {
-		tri: Transition::Push(Box::new(SitHiddenTest{push, end_replace, end_trigger})),
-		pre: 0, len: 3, alt: Some(b""),
-	}
+fn push_hiddentest(
+	inner: Option<WhatNow>,
+	end_replace: &'static [u8],
+	end_trigger: u16,
+) -> WhatNow {
+	push(
+		(0, 3, Some(b"")),
+		Box::new(SitHiddenTest {
+			inner,
+			end_replace,
+			end_trigger,
+		}),
+	)
 }
 
 fn push_xyes(end_trigger: u16) -> WhatNow {
-	WhatNow{
-		tri: Transition::Push(Box::new(SitXyes{end_trigger})),
-		pre: 0, len: 1, alt: Some(b"")
-	}
+	push((0, 1, Some(b"")), Box::new(SitXyes { end_trigger }))
 }
 
 struct SitHiddenTest {
-	push: Option<WhatNow>,
+	inner: Option<WhatNow>,
 	end_replace: &'static [u8],
 	end_trigger: u16,
 }
 
 impl Situation for SitHiddenTest {
 	fn whatnow(&mut self, _horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
-		let initial_adventure = std::mem::replace(&mut self.push, None);
+		let initial_adventure = std::mem::replace(&mut self.inner, None);
 		if let Some(mut exciting) = initial_adventure {
 			exciting.pre = 0;
 			exciting

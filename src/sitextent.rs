@@ -8,8 +8,8 @@
 
 use crate::situation::Situation;
 use crate::situation::WhatNow;
-use crate::situation::Transition;
 use crate::situation::pop;
+use crate::situation::push;
 
 pub struct SitExtent{
 	pub color: u32,
@@ -25,6 +25,5 @@ impl Situation for SitExtent {
 }
 
 pub fn push_extent(color: u32, pre: usize, len: usize, alt: Option<&'static [u8]>) -> WhatNow {
-	let ext = Box::new(SitExtent{color});
-	WhatNow{tri: Transition::Push(ext), pre, len, alt}
+	push((pre, len, alt), Box::new(SitExtent { color }))
 }

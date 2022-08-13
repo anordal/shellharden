@@ -7,8 +7,9 @@
  */
 
 use crate::situation::Situation;
-use crate::situation::Transition;
 use crate::situation::WhatNow;
+use crate::situation::pop;
+use crate::situation::push;
 use crate::situation::flush;
 use crate::situation::flush_or_pop;
 use crate::situation::COLOR_NORMAL;
@@ -26,18 +27,13 @@ impl Situation for SitRvalue {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, &a) in horizon.iter().enumerate() {
 			if a == b'(' {
-				return WhatNow{
-					tri: Transition::Push(Box::new(SitArray{})),
-					pre: i, len: 1, alt: None
-				};
+				return push((i, 1, None), Box::new(SitArray {}));
 			}
 			if let Some(res) = common_cmd_quoting_unneeded(self.end_trigger, horizon, i, is_horizon_lengthenable) {
 				return res;
 			}
 			if is_whitespace(a) {
-				return WhatNow{
-					tri: Transition::Pop, pre: i, len: 1, alt: None
-				};
+				return pop(i, 1, None);
 			}
 		}
 		flush_or_pop(horizon.len())

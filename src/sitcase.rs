@@ -12,6 +12,7 @@ use crate::sitextent::SitExtent;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::pop;
+use crate::situation::push;
 use crate::situation::COLOR_NORMAL;
 use crate::situation::COLOR_KWD;
 
@@ -63,10 +64,7 @@ impl Situation for SitCaseIn {
 			let len = predlen(is_word, &horizon[i..]);
 			if len == 0 {
 				if a == b')' {
-					return WhatNow{
-						tri: Transition::Push(Box::new(SitCaseArm{})),
-						pre: i, len: 1, alt: None
-					};
+					return push((i, 1, None), Box::new(SitCaseArm {}));
 				}
 				continue;
 			}
@@ -169,14 +167,12 @@ fn test_sit_casein() {
 
 #[test]
 fn test_sit_casearm() {
+	let found_command = push((0, 0, None), Box::new(SitCmd{end_trigger: 0x100}));
+	let found_the_esac_word = pop(0, 0, Some(b";; "));
+
 	sit_expect!(SitCaseArm{}, b"", &flush(0));
 	sit_expect!(SitCaseArm{}, b" ", &flush(1));
-	let found_command = WhatNow{
-		tri: Transition::Push(Box::new(SitCmd{end_trigger: 0x100})),
-		pre: 0, len: 0, alt: None
-	};
 	sit_expect!(SitCaseArm{}, b"esa", &flush(0), &found_command);
-	let found_the_esac_word = pop(0, 0, Some(b";; "));
 	sit_expect!(SitCaseArm{}, b"esac ", &found_the_esac_word);
 	sit_expect!(SitCaseArm{}, b"esac", &flush(0), &found_the_esac_word);
 	sit_expect!(SitCaseArm{}, b"esacs", &flush(0), &found_command);

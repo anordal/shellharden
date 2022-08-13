@@ -6,11 +6,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::if_needed;
 use crate::situation::pop;
+use crate::situation::push;
 use crate::situation::COLOR_HERE;
 use crate::situation::COLOR_KWD;
 use crate::situation::COLOR_SQ;
@@ -55,10 +55,7 @@ pub fn keyword_or_command(
 		return flush(i);
 	}
 	if found == Tri::Yes {
-		return WhatNow{
-			tri: Transition::Push(Box::new(SitRvalue{end_trigger})),
-			pre: i + len, len: 0, alt: None
-		};
+		return push((i + len, 0, None), Box::new(SitRvalue { end_trigger }));
 	}
 	let len = predlen(is_word, &horizon[i..]);
 	let len = if len != 0 { len } else { prefixlen(&horizon[i..], b"((") };
@@ -67,22 +64,18 @@ pub fn keyword_or_command(
 	}
 	let word = &horizon[i..i+len];
 	match word {
-		b"(" => WhatNow{
-			tri: Transition::Push(Box::new(SitNormal{
-				end_trigger: u16::from(b')'), end_replace: None
-			})), pre: i, len: 1, alt: None
-		},
+		b"(" => push(
+			(i, 1, None),
+			Box::new(SitNormal {
+				end_trigger: u16::from(b')'),
+				end_replace: None,
+			}),
+		),
 		b"((" => push_magic(i, 1, b')'),
 		b"[[" => push_magic(i, 1, b']'),
-		b"case" => WhatNow{
-			tri: Transition::Push(Box::new(SitCase{})),
-			pre: i, len, alt: None
-		},
+		b"case" => push((i, len, None), Box::new(SitCase {})),
 		b"for" |
-		b"select" => WhatNow{
-			tri: Transition::Push(Box::new(SitFor{})),
-			pre: i, len, alt: None
-		},
+		b"select" => push((i, len, None), Box::new(SitFor {})),
 		b"!" |
 		b"declare" |
 		b"do" |
@@ -101,14 +94,10 @@ pub fn keyword_or_command(
 		b"{" |
 		b"}" => push_extent(COLOR_KWD, i, len, None),
 		b"[" |
-		b"test" if predlen(|x| x == b' ', &horizon[i + len ..]) == 1 => WhatNow{
-			tri: Transition::Push(Box::new(SitTest{end_trigger})),
-			pre: i, len: len + 1, alt: None,
+		b"test" if predlen(|x| x == b' ', &horizon[i + len ..]) == 1 => {
+			push((i, len + 1, None), Box::new(SitTest { end_trigger }))
 		},
-		_ => WhatNow{
-			tri: Transition::Push(Box::new(SitCmd{end_trigger})),
-			pre: i, len: 0, alt: None
-		},
+		_ => push((i, 0, None), Box::new(SitCmd { end_trigger })),
 	}
 }
 
@@ -160,13 +149,12 @@ pub fn common_token(
 	match common_str_cmd(horizon, i, is_horizon_lengthenable, QuotingCtx::Need) {
 		CommonStrCmdResult::None => None,
 		CommonStrCmdResult::Some(x) => Some(x),
-		CommonStrCmdResult::OnlyWithQuotes(_) => {
-			Some(WhatNow{
-				tri: Transition::Push(Box::new(SitStrPhantom{
-					cmd_end_trigger: end_trigger,
-				})), pre: i, len: 0, alt: Some(b"\"")
-			})
-		}
+		CommonStrCmdResult::OnlyWithQuotes(_) => Some(push(
+			(i, 0, Some(b"\"")),
+			Box::new(SitStrPhantom {
+				cmd_end_trigger: end_trigger,
+			}),
+		)),
 	}
 }
 
@@ -211,11 +199,13 @@ pub fn common_token_quoting_unneeded(
 				if replacement.len() >= x.len {
 					#[allow(clippy::collapsible_if)] // Could be expanded.
 					if horizon[i] == b'`' {
-						return Some(WhatNow{
-							tri: Transition::Push(Box::new(SitNormal{
-								end_trigger: u16::from(b'`'), end_replace: None
-							})), pre: i, len: 1, alt: None
-						});
+						return Some(push(
+							(i, 1, None),
+							Box::new(SitNormal {
+								end_trigger: u16::from(b'`'),
+								end_replace: None,
+							}),
+						));
 					}
 				}
 			}
@@ -256,18 +246,16 @@ fn find_usual_suspects(
 		return Some(pop(i, 0, None));
 	}
 	if a == b'\'' {
-		return Some(WhatNow{
-			tri: Transition::Push(Box::new(SitUntilByte{
-				until: b'\'', color: COLOR_SQ,
-			})),
-			pre: i, len: 1, alt: None
-		});
+		return Some(push(
+			(i, 1, None),
+			Box::new(SitUntilByte {
+				until: b'\'',
+				color: COLOR_SQ,
+			}),
+		));
 	}
 	if a == b'\"' {
-		return Some(WhatNow{
-			tri: Transition::Push(Box::new(SitStrDq::new())),
-			pre: i, len: 1, alt: None
-		});
+		return Some(push((i, 1, None), Box::new(SitStrDq::new())));
 	}
 	if a == b'$' {
 		if i+1 >= horizon.len() {
@@ -278,10 +266,7 @@ fn find_usual_suspects(
 		}
 		let b = horizon[i+1];
 		if b == b'\'' {
-			return Some(WhatNow{
-				tri: Transition::Push(Box::new(SitStrSqEsc{})),
-				pre: i, len: 2, alt: None
-			});
+			return Some(push((i, 2, None), Box::new(SitStrSqEsc {})));
 		} else if b == b'*' {
 			// $* → "$@" but not "$*" → "$@"
 			return Some(push_extent(COLOR_VAR, i, 2, if_needed(quoting_needed, b"\"$@\"")));
@@ -293,12 +278,13 @@ fn find_usual_suspects(
 			return Some(flush(i));
 		}
 	} else if !delimiter.is_empty() {
-		return Some(WhatNow{
-			tri: Transition::Push(Box::new(
-				SitVec{terminator: delimiter, color: COLOR_HERE}
-			)),
-			pre: i, len: ate, alt: None
-		});
+		return Some(push(
+			(i, ate, None),
+			Box::new(SitVec {
+				terminator: delimiter,
+				color: COLOR_HERE,
+			}),
+		));
 	} else if ate > 0 {
 		return Some(flush(i + ate));
 	}
@@ -306,10 +292,7 @@ fn find_usual_suspects(
 }
 
 fn push_comment(pre: usize) -> WhatNow {
-	WhatNow{
-		tri: Transition::Push(Box::new(SitComment{})),
-		pre, len: 1, alt: None
-	}
+	push((pre, 1, None), Box::new(SitComment {}))
 }
 
 #[derive(PartialEq)]

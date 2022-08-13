@@ -11,6 +11,7 @@ use crate::situation::Transition;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::pop;
+use crate::situation::push;
 use crate::situation::COLOR_KWD;
 use crate::situation::COLOR_VAR;
 use crate::situation::COLOR_NORMAL;
@@ -116,17 +117,11 @@ impl Situation for SitForInAnythingElse {
 }
 
 fn push_forin(pre: usize, len: usize) -> WhatNow {
-	WhatNow{
-		tri: Transition::Push(Box::new(SitForIn{})),
-		pre, len, alt: None
-	}
+	push((pre, len, None), Box::new(SitForIn {}))
 }
 
 fn push_varident(pre: usize, len: usize) -> WhatNow {
-	WhatNow{
-		tri: Transition::Push(Box::new(SitVarIdent{end_insert: None})),
-		pre, len, alt: None
-	}
+	push((pre, len, None), Box::new(SitVarIdent { end_insert: None }))
 }
 
 fn become_for_in_necessarily_array(pre: usize) -> WhatNow {

@@ -109,21 +109,17 @@ use crate::sitvec::SitVec;
 use crate::situation::COLOR_KWD;
 #[cfg(test)]
 use crate::situation::COLOR_HERE;
+#[cfg(test)]
+use crate::situation::push;
 
 #[cfg(test)]
 fn mk_assignment(pre: usize) -> WhatNow {
-	WhatNow{
-		tri: Transition::Push(Box::new(SitRvalue{end_trigger: 0})),
-		pre, len: 0, alt: None
-	}
+	push((pre, 0, None), Box::new(SitRvalue { end_trigger: 0 }))
 }
 
 #[cfg(test)]
 fn mk_cmd(pre: usize) -> WhatNow {
-	WhatNow{
-		tri: Transition::Push(Box::new(SitCmd{end_trigger: 0})),
-		pre, len: 0, alt: None
-	}
+	push((pre, 0, None), Box::new(SitCmd { end_trigger: 0 }))
 }
 
 #[test]
@@ -150,12 +146,13 @@ fn test_sit_normal() {
 
 #[test]
 fn test_sit_arg() {
-	let found_heredoc = WhatNow{
-		tri: Transition::Push(Box::new(
-			SitVec{terminator: vec![b'\\'], color: COLOR_HERE}
-		)),
-		pre: 0, len: 8, alt: None
-	};
+	let found_heredoc = push(
+		(0, 8, None),
+		Box::new(SitVec {
+			terminator: vec![b'\\'],
+			color: COLOR_HERE,
+		}),
+	);
 	let subj = || {
 		SitArg{end_trigger: 0}
 	};

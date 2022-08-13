@@ -59,15 +59,17 @@ use crate::sitcmd::SitNormal;
 #[cfg(test)]
 use crate::sitmagic::push_magic;
 #[cfg(test)]
-use crate::situation::Transition;
+use crate::situation::push;
 
 #[test]
 fn test_sit_strdq() {
-	let found_cmdsub = WhatNow{
-		tri: Transition::Push(Box::new(SitNormal{
-			end_trigger: u16::from(b')'), end_replace: None,
-		})), pre: 0, len: 2, alt: None
-	};
+	let found_cmdsub = push(
+		(0, 2, None),
+		Box::new(SitNormal {
+			end_trigger: u16::from(b')'),
+			end_replace: None,
+		}),
+	);
 	sit_expect!(SitStrDq::new(), b"", &flush(0));
 	sit_expect!(SitStrDq::new(), b"$", &flush(0), &flush(1));
 	sit_expect!(SitStrDq::new(), b"$(", &flush(0), &found_cmdsub);
