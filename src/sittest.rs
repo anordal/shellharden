@@ -35,7 +35,7 @@ impl Situation for SitTest {
 			if is_emptystringtest || is_nonemptystringtest {
 				let suggest = common_token(self.end_trigger, horizon, 3, is_horizon_lengthenable);
 				if let Some(ref exciting) = suggest {
-					if let Transition::Push(_) = &exciting.tri {
+					if let Transition::Push(_) = &exciting.transition {
 						let end_replace: &'static [u8] = if is_emptystringtest {
 							b" = \"\""
 						} else {
@@ -48,10 +48,11 @@ impl Situation for SitTest {
 				}
 			} else if prefixlen(horizon, b"x") == 1 {
 				if let Some(mut suggest) = common_token(self.end_trigger, horizon, 1, is_horizon_lengthenable) {
-					if let Transition::Push(_) = &suggest.tri {
-						let transition = std::mem::replace(&mut suggest.tri, Transition::Flush);
+					if let Transition::Push(_) = &suggest.transition {
+						let transition = std::mem::replace(&mut suggest.transition, Transition::Flush);
 						if let Transition::Push(state) = transition {
-							let progress = suggest.pre + suggest.len;
+							let (pre, len, _) = suggest.transform;
+							let progress = pre + len;
 							if let Ok(found) = find_xyes_comparison(&horizon[progress ..], state) {
 								if found {
 									return push_xyes(self.end_trigger);
@@ -77,9 +78,9 @@ impl Situation for SitTest {
 }
 
 fn become_regular_args(end_trigger :u16) -> WhatNow {
-	WhatNow{
-		tri: Transition::Replace(Box::new(SitArg{end_trigger})),
-		pre: 0, len: 0, alt: None
+	WhatNow {
+		transform: (0, 0, None),
+		transition: Transition::Replace(Box::new(SitArg { end_trigger })),
 	}
 }
 
@@ -112,12 +113,14 @@ impl Situation for SitHiddenTest {
 	fn whatnow(&mut self, _horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
 		let initial_adventure = std::mem::replace(&mut self.inner, None);
 		if let Some(mut exciting) = initial_adventure {
-			exciting.pre = 0;
+			exciting.transform.0 = 0;
 			exciting
 		} else {
-			WhatNow{
-				tri: Transition::Replace(Box::new(SitArg{end_trigger: self.end_trigger})),
-				pre: 0, len: 0, alt: Some(self.end_replace)
+			WhatNow {
+				transform: (0, 0, Some(self.end_replace)),
+				transition: Transition::Replace(Box::new(SitArg {
+					end_trigger: self.end_trigger,
+				})),
 			}
 		}
 	}
@@ -142,10 +145,11 @@ impl Situation for SitXyes {
 				} else if i > 0 || is_horizon_lengthenable {
 					return flush(i);
 				}
-				return WhatNow{
-					tri: Transition::Replace(Box::new(SitArg{
+				return WhatNow {
+					transform: (i, 1, Some(replacement)),
+					transition: Transition::Replace(Box::new(SitArg {
 						end_trigger: self.end_trigger,
-					})), pre: i, len: 1, alt: Some(replacement)
+					})),
 				};
 			}
 			if let Some(res) = common_arg(self.end_trigger, horizon, i, is_horizon_lengthenable) {

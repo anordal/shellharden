@@ -42,9 +42,9 @@ impl Situation for SitCase {
 			}
 			let word = &horizon[i..i+len];
 			if word == b"in" {
-				return WhatNow{
-					tri: Transition::Replace(Box::new(SitCaseIn{})),
-					pre: i + len, len: 0, alt: None
+				return WhatNow {
+					transform: (i + len, 0, None),
+					transition: Transition::Replace(Box::new(SitCaseIn {})),
 				};
 			}
 			return flush(i + len);
@@ -124,9 +124,9 @@ impl Situation for SitCaseArm {
 }
 
 fn pop_kw(pre: usize, len: usize) -> WhatNow {
-	WhatNow{
-		tri: Transition::Replace(Box::new(SitExtent{color: COLOR_KWD})),
-		pre, len, alt: None,
+	WhatNow {
+		transform: (pre, len, None),
+		transition: Transition::Replace(Box::new(SitExtent { color: COLOR_KWD })),
 	}
 }
 
@@ -141,8 +141,8 @@ fn test_sit_case() {
 	sit_expect!(SitCase{}, b" ", &flush(1));
 	sit_expect!(SitCase{}, b"i", &flush(0), &flush(1));
 	let found_the_in_word = WhatNow{
-		tri: Transition::Replace(Box::new(SitCaseIn{})),
-		pre: 2, len: 0, alt: None
+		transform: (2, 0, None),
+		transition: Transition::Replace(Box::new(SitCaseIn {})),
 	};
 	sit_expect!(SitCase{}, b"in ", &found_the_in_word);
 	sit_expect!(SitCase{}, b"in", &flush(0), &found_the_in_word);

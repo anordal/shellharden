@@ -125,16 +125,16 @@ fn push_varident(pre: usize, len: usize) -> WhatNow {
 }
 
 fn become_for_in_necessarily_array(pre: usize) -> WhatNow {
-	WhatNow{
-		tri: Transition::Replace(Box::new(SitVarIdentNecessarilyArray{})),
-		pre, len: 1, alt: Some(b"\"${"),
+	WhatNow {
+		transform: (pre, 1, Some(b"\"${")),
+		transition: Transition::Replace(Box::new(SitVarIdentNecessarilyArray {})),
 	}
 }
 
 fn become_for_in_anything_else(pre: usize) -> WhatNow {
-	WhatNow{
-		tri: Transition::Replace(Box::new(SitForInAnythingElse{})),
-		pre, len: 0, alt: None,
+	WhatNow {
+		transform: (pre, 0, None),
+		transition: Transition::Replace(Box::new(SitForInAnythingElse {})),
 	}
 }
 

@@ -63,9 +63,11 @@ impl Situation for SitCmd {
 				return res;
 			}
 			if is_whitespace(a) {
-				return WhatNow{
-					tri: Transition::Replace(Box::new(SitArg{end_trigger: self.end_trigger})),
-					pre: i, len: 1, alt: None
+				return WhatNow {
+					transform: (i, 1, None),
+					transition: Transition::Replace(Box::new(SitArg {
+						end_trigger: self.end_trigger,
+					})),
 				};
 			}
 			if a == b'(' {

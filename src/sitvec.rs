@@ -6,10 +6,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use crate::situation::Situation;
-use crate::situation::Transition;
-use crate::situation::WhatNow;
 use crate::situation::flush;
+use crate::situation::pop;
+use crate::situation::Situation;
+use crate::situation::WhatNow;
 
 pub struct SitVec {
 	pub terminator :Vec<u8>,
@@ -26,7 +26,7 @@ impl Situation for SitVec {
 			}
 		}
 		else if horizon[0 .. self.terminator.len()] == self.terminator[..] {
-			WhatNow{tri: Transition::Pop, pre: 0, len: self.terminator.len(), alt: None}
+			pop(0, self.terminator.len(), None)
 		} else {
 			flush(1)
 		}

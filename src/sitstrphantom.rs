@@ -42,7 +42,7 @@ impl Situation for SitStrPhantom {
 						CommonStrCmdResult::None => {}
 						CommonStrCmdResult::Some(consult) |
 						CommonStrCmdResult::OnlyWithQuotes(consult) => {
-							match consult.tri {
+							match consult.transition {
 								Transition::Flush | Transition::FlushPopOnEof => {
 									if is_horizon_lengthenable {
 										return flush(0);
@@ -72,9 +72,9 @@ fn is_phantomstringfood(c: u8) -> bool {
 }
 
 fn become_real(pre: usize) -> WhatNow {
-	WhatNow{
-		tri: Transition::Replace(Box::new(SitStrDq::new())),
-		pre, len: 1, alt: Some(b"")
+	WhatNow {
+		transform: (pre, 1, Some(b"")),
+		transition: Transition::Replace(Box::new(SitStrDq::new())),
 	}
 }
 

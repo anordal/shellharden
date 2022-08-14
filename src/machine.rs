@@ -85,8 +85,9 @@ fn treatfile_fallible(
 	let mut fill :usize = 0;
 	let mut buf = [0; MAXHORIZON];
 
-	let mut state :Vec<Box<dyn Situation>> = vec!{Box::new(SitNormal{
-		end_trigger: 0x100, end_replace: None,
+	let mut state :Vec<Box<dyn Situation>> = vec!{Box::new(SitNormal {
+		end_trigger: 0x100,
+		end_replace: None,
 	})};
 
 	loop {
@@ -140,8 +141,9 @@ fn stackmachine(
 		let curstate = statebox.as_mut();
 		let color_pre = if sett.syntax { curstate.get_color() } else { COLOR_NORMAL };
 		let whatnow = curstate.whatnow(horizon, is_horizon_lengthenable);
+		let (pre, len, alt) = whatnow.transform;
 
-		if whatnow.alt.is_some() {
+		if alt.is_some() {
 			out.change = true;
 			if sett.osel == OutputSelector::Check {
 				return Err(Error::Check);
@@ -149,12 +151,12 @@ fn stackmachine(
 		}
 
 		write_colored_slice(
-			out, color_cur, color_pre, &horizon[.. whatnow.pre]
+			out, color_cur, color_pre, &horizon[.. pre]
 		).map_err(Error::Stdio)?;
-		let replaceable = &horizon[whatnow.pre .. whatnow.pre + whatnow.len];
-		let progress = whatnow.pre + whatnow.len;
+		let progress = pre + len;
+		let replaceable = &horizon[pre .. progress];
 
-		match (whatnow.tri, eof) {
+		match (whatnow.transition, eof) {
 			(Transition::Err(e), _) => {
 				return Err(Error::Syntax(e));
 			}
@@ -180,7 +182,7 @@ fn stackmachine(
 			state.last().unwrap().as_ref().get_color()
 		};
 		write_transition(
-			out, color_cur, color_trans, sett, replaceable, whatnow.alt
+			out, color_cur, color_trans, sett, replaceable, alt
 		).map_err(Error::Stdio)?;
 
 		pos += progress;

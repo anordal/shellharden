@@ -204,8 +204,9 @@ fn is_variable_of_numeric_content(c: u8) -> bool {
 }
 
 fn bail_doubledigit(context: &[u8], pos: usize) -> CommonStrCmdResult {
-	CommonStrCmdResult::Some(WhatNow{
-		tri: Transition::Err(UnsupportedSyntax{
+	CommonStrCmdResult::Some(WhatNow {
+		transform: (0, 0, None),
+		transition: Transition::Err(UnsupportedSyntax {
 			typ: "Unsupported syntax: Syntactic pitfall",
 			ctx: context.to_owned(),
 			pos,
@@ -223,6 +224,6 @@ fn bail_doubledigit(context: &[u8], pos: usize) -> CommonStrCmdResult {
 			* Fixing what it does would be 100% subtle \
 			and might slip through code review unnoticed.\n\
 			* Fixing its look would make a likely bug look intentional."
-		}), pre: 0, len: 0, alt: None
+		}),
 	})
 }

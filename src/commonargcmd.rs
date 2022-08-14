@@ -195,8 +195,9 @@ pub fn common_token_quoting_unneeded(
 		CommonStrCmdResult::None => None,
 		CommonStrCmdResult::Some(x) => Some(x),
 		CommonStrCmdResult::OnlyWithQuotes(x) => {
-			if let Some(replacement) = x.alt {
-				if replacement.len() >= x.len {
+			let (_, len, alt) = x.transform;
+			if let Some(replacement) = alt {
+				if replacement.len() >= len {
 					#[allow(clippy::collapsible_if)] // Could be expanded.
 					if horizon[i] == b'`' {
 						return Some(push(

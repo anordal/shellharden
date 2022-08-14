@@ -21,12 +21,13 @@ pub struct SitVarIdent {
 impl Situation for SitVarIdent {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
 		let len = predlen(is_identifiertail, horizon);
-		if len < horizon.len() {
-			return WhatNow{tri: Transition::Pop, pre: len, len: 0, alt: self.end_insert};
-		}
-		WhatNow{
-			tri: Transition::FlushPopOnEof,
-			pre: horizon.len(), len: 0, alt: self.end_insert
+		WhatNow {
+			transform: (len, 0, self.end_insert),
+			transition: if len < horizon.len() {
+				Transition::Pop
+			} else {
+				Transition::FlushPopOnEof
+			},
 		}
 	}
 	fn get_color(&self) -> u32 {

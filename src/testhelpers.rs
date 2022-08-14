@@ -9,17 +9,17 @@ use crate::situation::Transition::Push;
 use crate::situation::Transition::Pop;
 
 pub fn whatnow_eq(a: &WhatNow, b: &WhatNow) -> bool {
-	if a.pre != b.pre {
-		eprintln!("WhatNow.pre: {} != {}", a.pre, b.pre);
+	if a.transform.0 != b.transform.0 {
+		eprintln!("WhatNow.pre: {} != {}", a.transform.0, b.transform.0);
 		false
-	} else if a.len != b.len {
-		eprintln!("WhatNow.len: {} != {}", a.len, b.len);
+	} else if a.transform.1 != b.transform.1 {
+		eprintln!("WhatNow.len: {} != {}", a.transform.1, b.transform.1);
 		false
-	} else if a.alt != b.alt {
+	} else if a.transform.2 != b.transform.2 {
 		eprintln!("WhatNow.alt mismatch");
 		false
 	} else {
-		transition_eq(&a.tri, &b.tri)
+		transition_eq(&a.transition, &b.transition)
 	}
 }
 

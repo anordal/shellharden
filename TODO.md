@@ -14,7 +14,7 @@
 ## Code organisation
 * reduce perilous boilerplate
   * make flush an error for easier propagation
-* approach agreement with rust-fmt (struct grouping)
+* approach agreement with rust-fmt
 
 ## Write about:
 * errexit → errtrace ?

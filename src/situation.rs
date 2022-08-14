@@ -23,31 +23,35 @@ pub enum Transition {
 }
 
 pub struct WhatNow {
-	pub tri :Transition,
-	pub pre :usize,
-	pub len :usize,
-	pub alt :Option<&'static [u8]>,
+	pub transform: (usize, usize, Option<&'static [u8]>), // pre, len, alt
+	pub transition: Transition,
 }
 
 pub fn flush(pre: usize) -> WhatNow {
-	WhatNow{tri: Transition::Flush, pre, len: 0, alt: None}
+	WhatNow {
+		transform: (pre, 0, None),
+		transition: Transition::Flush,
+	}
 }
 
 pub fn flush_or_pop(pre: usize) -> WhatNow {
-	WhatNow{tri: Transition::FlushPopOnEof, pre, len: 0, alt: None}
+	WhatNow {
+		transform: (pre, 0, None),
+		transition: Transition::FlushPopOnEof,
+	}
 }
 
 pub fn pop(pre: usize, len: usize, alt: Option<&'static [u8]>) -> WhatNow {
-	WhatNow{tri: Transition::Pop, pre, len, alt}
+	WhatNow {
+		transform: (pre, len, alt),
+		transition: Transition::Pop,
+	}
 }
 
 pub fn push(transform: (usize, usize, Option<&'static [u8]>), sit: Box<dyn Situation>) -> WhatNow {
-	let (pre, len, alt) = transform;
-	WhatNow{
-		tri: Transition::Push(sit),
-		pre,
-		len,
-		alt,
+	WhatNow {
+		transform,
+		transition: Transition::Push(sit),
 	}
 }
 

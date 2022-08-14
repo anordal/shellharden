@@ -44,8 +44,8 @@ impl Situation for SitMagic {
 }
 
 pub fn push_magic(pre: usize, len: usize, end_trigger: u8) -> WhatNow {
-	WhatNow{
-		tri: Transition::Push(Box::new(SitMagic{end_trigger})),
-		pre, len, alt: None
+	WhatNow {
+		transform: (pre, len, None),
+		transition: Transition::Push(Box::new(SitMagic { end_trigger })),
 	}
 }

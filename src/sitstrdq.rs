@@ -37,7 +37,8 @@ impl Situation for SitStrDq {
 				}
 				CommonStrCmdResult::Some(x) |
 				CommonStrCmdResult::OnlyWithQuotes(x) => {
-					let progress = x.pre + x.len;
+					let (pre, len, _) = x.transform;
+					let progress = pre + len;
 					if progress != 0 {
 						self.interpolation_detection = QuotingCtx::Interpolation;
 					}
