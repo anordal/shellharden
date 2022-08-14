@@ -172,6 +172,9 @@ fn test_sit_casearm() {
 
 	sit_expect!(SitCaseArm{}, b"", &flush(0));
 	sit_expect!(SitCaseArm{}, b" ", &flush(1));
+	sit_expect!(SitCaseArm{}, b";", &flush(0), &flush(1));
+	sit_expect!(SitCaseArm{}, b"; ", &flush(2));
+	sit_expect!(SitCaseArm{}, b" ;", &flush(1));
 	sit_expect!(SitCaseArm{}, b"esa", &flush(0), &found_command);
 	sit_expect!(SitCaseArm{}, b"esac ", &found_the_esac_word);
 	sit_expect!(SitCaseArm{}, b"esac", &flush(0), &found_the_esac_word);

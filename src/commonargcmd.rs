@@ -407,6 +407,7 @@ fn test_find_lvalue() {
 	assert!(find_lvalue(b"[]") == (Tri::No, 0));
 	assert!(find_lvalue(b"esa") == (Tri::Maybe, 3));
 	assert!(find_lvalue(b"esa+") == (Tri::Maybe, 4));
+	assert!(find_lvalue(b"esa+  ") == (Tri::No, 5));
 	assert!(find_lvalue(b"esa[]") == (Tri::Maybe, 5));
 	assert!(find_lvalue(b"esa[]+") == (Tri::Maybe, 6));
 	assert!(find_lvalue(b"esa ") == (Tri::No, 4));

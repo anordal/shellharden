@@ -64,15 +64,22 @@ Build from source
 
     cargo build --release
 
+### Install
+
+    mv target/release/shellharden ~/.local/bin/
+
 ### Run tests
 
-    cargo test --release
+    cargo test
 
 (requires bash)
 
-### Install
+### Test coverage
 
-    cp target/release/shellharden /usr/local/bin/
+    env RUSTFLAGS="-C instrument-coverage" LLVM_PROFILE_FILE='run-%m.profraw' cargo test
+    grcov . --binary-path ./target/debug/ -s . -t html -o ./coverage/
+    rm run-*.profraw
+    open coverage/src/index.html
 
 ### Fuzz test
 

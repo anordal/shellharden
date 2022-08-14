@@ -70,16 +70,23 @@ impl Situation for SitTest {
 		} else if is_horizon_lengthenable {
 			return flush(0);
 		}
-		become_regular_args(self.end_trigger)
+		become_regular(self.end_trigger)
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_CMD
 	}
 }
 
-fn become_regular_args(end_trigger :u16) -> WhatNow {
+fn become_regular(end_trigger :u16) -> WhatNow {
+	become_regular_with((0, 0, None), end_trigger)
+}
+
+fn become_regular_with(
+	transform: (usize, usize, Option<&'static [u8]>),
+	end_trigger :u16,
+) -> WhatNow {
 	WhatNow {
-		transform: (0, 0, None),
+		transform,
 		transition: Transition::Replace(Box::new(SitArg { end_trigger })),
 	}
 }
@@ -116,12 +123,7 @@ impl Situation for SitHiddenTest {
 			exciting.transform.0 = 0;
 			exciting
 		} else {
-			WhatNow {
-				transform: (0, 0, Some(self.end_replace)),
-				transition: Transition::Replace(Box::new(SitArg {
-					end_trigger: self.end_trigger,
-				})),
-			}
+			become_regular_with((0, 0, Some(self.end_replace)), self.end_trigger)
 		}
 	}
 	fn get_color(&self) -> u32 {
@@ -145,12 +147,7 @@ impl Situation for SitXyes {
 				} else if i > 0 || is_horizon_lengthenable {
 					return flush(i);
 				}
-				return WhatNow {
-					transform: (i, 1, Some(replacement)),
-					transition: Transition::Replace(Box::new(SitArg {
-						end_trigger: self.end_trigger,
-					})),
-				};
+				return become_regular_with((i, 1, Some(replacement)), self.end_trigger);
 			}
 			if let Some(res) = common_arg(self.end_trigger, horizon, i, is_horizon_lengthenable) {
 				return res;
@@ -201,32 +198,49 @@ fn has_rhs_xyes(horizon: &[u8]) -> bool {
 
 #[cfg(test)]
 use crate::testhelpers::*;
+#[cfg(test)]
+use crate::situation::pop;
 
 #[test]
 fn test_sit_test() {
-	sit_expect!(SitTest{end_trigger: 0u16}, b"", &flush(0), &become_regular_args(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b" ", &flush(0), &become_regular_args(0u16));
+	let subj = || SitTest { end_trigger: 0u16 };
 
-	sit_expect!(SitTest{end_trigger: 0u16}, b"-", &flush(0), &become_regular_args(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"-z ", &flush(0), &become_regular_args(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"-n ", &flush(0), &become_regular_args(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"-z $", &flush(0), &become_regular_args(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"-n $", &flush(0), &become_regular_args(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"-z justkidding", &become_regular_args(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"-n justkidding", &become_regular_args(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"-z \"", &push_hiddentest(None, b"", 0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"-n \"", &push_hiddentest(None, b"", 0u16));
+	sit_expect!(subj(), b"", &flush(0), &become_regular(0u16));
 
-	sit_expect!(SitTest{end_trigger: 0u16}, b"x", &flush(0), &become_regular_args(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"x$", &flush(0), &become_regular_args(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"x`", &flush(0), &become_regular_args(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"x\"$(echo)\" = ", &flush(0), &become_regular_args(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"x\"$(echo)\" = x", &push_xyes(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"x$(echo) = x", &push_xyes(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"x`echo` == x", &push_xyes(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"x\"$yes\" != x", &push_xyes(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"x$yes = y", &flush(0), &become_regular_args(0u16));
-	sit_expect!(SitTest{end_trigger: 0u16}, b"$yes = x", &become_regular_args(0u16));
+	sit_expect!(subj(), b"-f $are ", &become_regular(0u16));
+	sit_expect!(subj(), b"-z $are ", &push_hiddentest(None, b"", 0u16));
+	sit_expect!(subj(), b"-n $are ", &push_hiddentest(None, b"", 0u16));
+	sit_expect!(subj(), b"-z justkidding ", &become_regular(0u16));
+	sit_expect!(subj(), b"-n justkidding ", &become_regular(0u16));
+	sit_expect!(subj(), b"-z \"", &push_hiddentest(None, b"", 0u16));
+	sit_expect!(subj(), b"-n \"", &push_hiddentest(None, b"", 0u16));
+	sit_expect!(subj(), b"-n \0", &flush(0), &become_regular(0u16));
+
+	sit_expect!(subj(), b"x   ", &become_regular(0u16));
+	sit_expect!(subj(), b"x\0 = x", &pop(1, 0, None));
+	sit_expect!(subj(), b"x$( ", &flush(0), &become_regular(0u16));
+	sit_expect!(subj(), b"x\"$(echo)\" = ", &flush(0), &become_regular(0u16));
+	sit_expect!(subj(), b"x\"$(echo)\" = x", &push_xyes(0u16));
+	sit_expect!(subj(), b"x$(echo) = x", &push_xyes(0u16));
+	sit_expect!(subj(), b"x`echo` == x", &push_xyes(0u16));
+	sit_expect!(subj(), b"x\"$yes\" != x", &push_xyes(0u16));
+	sit_expect!(subj(), b"x$yes = x",  &push_xyes(0x16));
+	sit_expect!(subj(), b"x$yes = y", &flush(0), &become_regular(0u16));
+	sit_expect!(subj(), b"$yes = x", &become_regular(0u16));
+	sit_expect!(subj(), b"x$yes = x$1", &push_xyes(0x16));
+	sit_expect!(subj(), b"x`$10` = x", &become_regular(0u16));
+}
+
+#[test]
+fn test_sit_xyes() {
+	let subj = || SitXyes { end_trigger: 0u16 };
+
+	sit_expect!(subj(), b" = ", &flush_or_pop(3));
+	sit_expect!(subj(), b" = x", &flush(3));
+	sit_expect!(subj(), b"x", &flush(0), &become_regular_with((0, 1, Some(b"\"\"")), 0u16));
+	sit_expect!(subj(), b" = x ", &become_regular_with((3, 1, Some(b"\"\"")), 0u16));
+	sit_expect!(subj(), b" = x;", &become_regular_with((3, 1, Some(b"\"\"")), 0u16));
+	sit_expect!(subj(), b" = xx", &become_regular_with((3, 1, Some(b"")), 0u16));
 }
 
 #[test]

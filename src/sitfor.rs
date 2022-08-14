@@ -173,8 +173,19 @@ fn test_sit_forin() {
 }
 
 #[test]
+fn test_sit_varidentnecessarilyarray() {
+	let subj = || SitVarIdentNecessarilyArray {};
+
+	sit_expect!(subj(), b"", &flush(0));
+	sit_expect!(subj(), b"x", &flush(1));
+	sit_expect!(subj(), b"x\n", &pop(1, 0, Some(b"[@]}\"")));
+}
+
+#[test]
 fn test_sit_forinanythingelse() {
-	sit_expect!(SitForInAnythingElse{}, b"", &flush(0));
-	sit_expect!(SitForInAnythingElse{}, b";", &pop(0, 0, None));
-	sit_expect!(SitForInAnythingElse{}, b"\n", &pop(0, 0, None));
+	let subj = || SitForInAnythingElse {};
+
+	sit_expect!(subj(), b"", &flush(0));
+	sit_expect!(subj(), b";", &pop(0, 0, None));
+	sit_expect!(subj(), b"\n", &pop(0, 0, None));
 }
