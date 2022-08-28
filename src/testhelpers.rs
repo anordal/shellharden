@@ -9,18 +9,20 @@ use crate::situation::Transition::Push;
 use crate::situation::Transition::Pop;
 
 pub fn whatnow_eq(a: &WhatNow, b: &WhatNow) -> bool {
+	let mut eq = true;
 	if a.transform.0 != b.transform.0 {
 		eprintln!("WhatNow.pre: {} != {}", a.transform.0, b.transform.0);
-		false
-	} else if a.transform.1 != b.transform.1 {
-		eprintln!("WhatNow.len: {} != {}", a.transform.1, b.transform.1);
-		false
-	} else if a.transform.2 != b.transform.2 {
-		eprintln!("WhatNow.alt mismatch");
-		false
-	} else {
-		transition_eq(&a.transition, &b.transition)
+		eq = false;
 	}
+	if a.transform.1 != b.transform.1 {
+		eprintln!("WhatNow.len: {} != {}", a.transform.1, b.transform.1);
+		eq = false;
+	}
+	if a.transform.2 != b.transform.2 {
+		eprintln!("WhatNow.alt mismatch");
+		eq = false;
+	}
+	transition_eq(&a.transition, &b.transition) && eq
 }
 
 fn transition_eq(a: &Transition, b: &Transition) -> bool {
