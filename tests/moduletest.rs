@@ -1,4 +1,5 @@
 use std::env;
+use std::process;
 use std::process::Command;
 
 #[test]
@@ -10,7 +11,12 @@ fn moduletest() {
 		.expect("moduletests/run: Command not found")
 	;
 	match &child.wait() {
-		&Ok(status) => assert!(status.success()),
+		&Ok(waitresult) => {
+			if let Some(status) = waitresult.code() {
+				process::exit(status);
+			}
+			assert!(false);
+		}
 		&Err(_) => assert!(false),
 	}
 }
