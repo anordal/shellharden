@@ -111,6 +111,7 @@ fn test_sit_strphantom() {
 	sit_expect!(subject(), b"", &flush(0), &cod);
 	sit_expect!(subject(), b"a", &flush(0), &cod);
 	sit_expect!(subject(), b" ", &cod);
+	sit_expect!(subject(), b"\\", &cod);
 	sit_expect!(subject(), b"\'", &cod);
 	sit_expect!(subject(), b"\"", &become_real(0));
 	sit_expect!(subject(), b"$", &flush(0), &cod);

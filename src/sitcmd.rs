@@ -130,6 +130,7 @@ fn test_sit_normal() {
 		SitNormal{end_trigger: 0, end_replace: None}
 	};
 
+	sit_expect!(subj(), b"\\", &push_extent(COLOR_ESC, 0, 2));
 	sit_expect!(subj(), b"fo", &flush(0), &mk_cmd(0));
 	sit_expect!(subj(), b"fo=", &mk_assignment(3));
 	sit_expect!(subj(), b"for", &flush(0), &push((0, 3, None), Box::new(SitFor {})));

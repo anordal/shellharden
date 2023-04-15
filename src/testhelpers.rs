@@ -8,21 +8,23 @@ use crate::situation::Transition::Replace;
 use crate::situation::Transition::Push;
 use crate::situation::Transition::Pop;
 
-pub fn whatnow_eq(a: &WhatNow, b: &WhatNow) -> bool {
+pub fn whatnow_eq(horizon_len: usize, actual: &WhatNow, expected: &WhatNow) -> bool {
+	assert!(actual.transform.0 + actual.transform.1 <= horizon_len);
+
 	let mut eq = true;
-	if a.transform.0 != b.transform.0 {
-		eprintln!("WhatNow.pre: {} != {}", a.transform.0, b.transform.0);
+	if actual.transform.0 != expected.transform.0 {
+		eprintln!("WhatNow.pre: {} != {}", actual.transform.0, expected.transform.0);
 		eq = false;
 	}
-	if a.transform.1 != b.transform.1 {
-		eprintln!("WhatNow.len: {} != {}", a.transform.1, b.transform.1);
+	if actual.transform.1 != expected.transform.1 {
+		eprintln!("WhatNow.len: {} != {}", actual.transform.1, expected.transform.1);
 		eq = false;
 	}
-	if a.transform.2 != b.transform.2 {
+	if actual.transform.2 != expected.transform.2 {
 		eprintln!("WhatNow.alt mismatch");
 		eq = false;
 	}
-	transition_eq(&a.transition, &b.transition) && eq
+	transition_eq(&actual.transition, &expected.transition) && eq
 }
 
 fn transition_eq(a: &Transition, b: &Transition) -> bool {
@@ -72,11 +74,11 @@ fn sit_eq(a: &dyn Situation, b: &dyn Situation) -> bool {
 
 macro_rules! sit_expect {
 	($sit:expr, $horizon:expr, $expect_mid:expr, $expect_eof:expr) => {
-		assert!(whatnow_eq(&$sit.whatnow($horizon, true), $expect_mid));
-		assert!(whatnow_eq(&$sit.whatnow($horizon, false), $expect_eof));
+		assert!(whatnow_eq($horizon.len(), &$sit.whatnow($horizon, true), $expect_mid));
+		assert!(whatnow_eq($horizon.len(), &$sit.whatnow($horizon, false), $expect_eof));
 	};
 	($sit:expr, $horizon:expr, $expect_same:expr) => {
-		assert!(whatnow_eq(&$sit.whatnow($horizon, true), $expect_same));
-		assert!(whatnow_eq(&$sit.whatnow($horizon, false), $expect_same));
+		assert!(whatnow_eq($horizon.len(), &$sit.whatnow($horizon, true), $expect_same));
+		assert!(whatnow_eq($horizon.len(), &$sit.whatnow($horizon, false), $expect_same));
 	};
 }

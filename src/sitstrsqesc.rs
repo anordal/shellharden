@@ -33,3 +33,14 @@ impl Situation for SitStrSqEsc {
 		COLOR_SQESC
 	}
 }
+
+#[cfg(test)]
+use crate::testhelpers::*;
+
+#[test]
+fn test_sit_strsqesc() {
+	sit_expect!(SitStrSqEsc{}, b"", &flush(0));
+	sit_expect!(SitStrSqEsc{}, b"$", &flush(1));
+	sit_expect!(SitStrSqEsc{}, b"\\", &push_extent(COLOR_ESC, 0, 2));
+	sit_expect!(SitStrSqEsc{}, b"\'", &pop(0, 1, None));
+}

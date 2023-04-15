@@ -58,9 +58,13 @@ use crate::testhelpers::*;
 #[cfg(test)]
 use crate::sitcmd::SitNormal;
 #[cfg(test)]
+use crate::sitextent::push_extent;
+#[cfg(test)]
 use crate::sitmagic::push_magic;
 #[cfg(test)]
 use crate::situation::push;
+#[cfg(test)]
+use crate::situation::COLOR_ESC;
 
 #[test]
 fn test_sit_strdq() {
@@ -76,4 +80,5 @@ fn test_sit_strdq() {
 	sit_expect!(SitStrDq::new(), b"$(", &flush(0), &found_cmdsub);
 	sit_expect!(SitStrDq::new(), b"$( ", &found_cmdsub);
 	sit_expect!(SitStrDq::new(), b"$((", &push_magic(0, 2, b')'));
+	sit_expect!(SitStrDq::new(), b"\\", &push_extent(COLOR_ESC, 0, 2));
 }
