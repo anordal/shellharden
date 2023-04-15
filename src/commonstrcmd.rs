@@ -23,6 +23,7 @@ use crate::syntaxerror::UnsupportedSyntax;
 
 use crate::sitcmd::SitNormal;
 use crate::sitextent::push_extent;
+use crate::sitextent::push_replaceable;
 use crate::sitmagic::push_magic;
 use crate::sitvarbrace::SitVarBrace;
 use crate::sitvarident::SitVarIdent;
@@ -69,7 +70,7 @@ pub fn common_str_cmd(
 		));
 	}
 	if horizon[i] == b'\\' {
-		return CommonStrCmdResult::Some(push_extent(COLOR_ESC, i, 2, None));
+		return CommonStrCmdResult::Some(push_extent(COLOR_ESC, i, 2));
 	}
 	if horizon[i] != b'$' {
 		return CommonStrCmdResult::None;
@@ -103,12 +104,12 @@ pub fn common_str_cmd(
 			}),
 		));
 	} else if is_variable_of_numeric_content(c) {
-		return CommonStrCmdResult::Some(push_extent(COLOR_VAR, i, 2, None));
+		return CommonStrCmdResult::Some(push_extent(COLOR_VAR, i, 2));
 	} else if c == b'@' || c == b'*' || c == b'-' || is_decimal(c) {
 		if predlen(is_decimal, &horizon[i+1 ..]) > 1 {
 			return bail_doubledigit(horizon, i+2);
 		}
-		return CommonStrCmdResult::OnlyWithQuotes(push_extent(COLOR_VAR, i, 2, None));
+		return CommonStrCmdResult::OnlyWithQuotes(push_extent(COLOR_VAR, i, 2));
 	} else if is_identifierhead(c) {
 		let tailhazard;
 		if need_quotes {
@@ -179,7 +180,7 @@ fn find_pwd(
 		} else {
 			b"$PWD"
 		};
-		let what = push_extent(COLOR_VAR, i, candidate_offset + idlen + 1, Some(replacement));
+		let what = push_replaceable(COLOR_VAR, i, candidate_offset + idlen + 1, Some(replacement));
 		return CommonStrCmdResult::OnlyWithQuotes(what);
 	}
 	CommonStrCmdResult::None

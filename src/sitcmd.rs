@@ -36,7 +36,7 @@ impl Situation for SitNormal {
 				continue;
 			}
 			if a == b'\\' {
-				return push_extent(COLOR_ESC, i, 2, None);
+				return push_extent(COLOR_ESC, i, 2);
 			}
 			if u16::from(a) == self.end_trigger {
 				return pop(i, 1, self.end_replace);
@@ -108,7 +108,7 @@ use crate::sitrvalue::SitRvalue;
 #[cfg(test)]
 use crate::sitvec::SitVec;
 #[cfg(test)]
-use crate::situation::COLOR_KWD;
+use crate::sitfor::SitFor;
 #[cfg(test)]
 use crate::situation::COLOR_HERE;
 #[cfg(test)]
@@ -132,7 +132,7 @@ fn test_sit_normal() {
 
 	sit_expect!(subj(), b"fo", &flush(0), &mk_cmd(0));
 	sit_expect!(subj(), b"fo=", &mk_assignment(3));
-	sit_expect!(subj(), b"for", &flush(0), &push_extent(COLOR_KWD, 0, 3, None));
+	sit_expect!(subj(), b"for", &flush(0), &push((0, 3, None), Box::new(SitFor {})));
 	sit_expect!(subj(), b"for=", &mk_assignment(4));
 	sit_expect!(subj(), b"fork", &flush(0), &mk_cmd(0));
 	sit_expect!(subj(), b"fork=", &mk_assignment(5));

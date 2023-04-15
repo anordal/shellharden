@@ -21,7 +21,7 @@ impl Situation for SitStrSqEsc {
 	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, &a) in horizon.iter().enumerate() {
 			if a == b'\\' {
-				return push_extent(COLOR_ESC, i, 2, None);
+				return push_extent(COLOR_ESC, i, 2);
 			}
 			if a == b'\'' {
 				return pop(i, 1, None);

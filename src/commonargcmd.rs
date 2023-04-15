@@ -32,6 +32,7 @@ use crate::sitcmd::SitNormal;
 use crate::sitcmd::SitCmd;
 use crate::sitcomment::SitComment;
 use crate::sitextent::push_extent;
+use crate::sitextent::push_replaceable;
 use crate::sitmagic::push_magic;
 use crate::sitrvalue::SitRvalue;
 use crate::sitstrdq::SitStrDq;
@@ -92,7 +93,7 @@ pub fn keyword_or_command(
 		b"until" |
 		b"while" |
 		b"{" |
-		b"}" => push_extent(COLOR_KWD, i, len, None),
+		b"}" => push_extent(COLOR_KWD, i, len),
 		b"[" |
 		b"test" if predlen(|x| x == b' ', &horizon[i + len ..]) == 1 => {
 			push((i, len + 1, None), Box::new(SitTest { end_trigger }))
@@ -270,7 +271,7 @@ fn find_usual_suspects(
 			return Some(push((i, 2, None), Box::new(SitStrSqEsc {})));
 		} else if b == b'*' {
 			// $* → "$@" but not "$*" → "$@"
-			return Some(push_extent(COLOR_VAR, i, 2, if_needed(quoting_needed, b"\"$@\"")));
+			return Some(push_replaceable(COLOR_VAR, i, 2, if_needed(quoting_needed, b"\"$@\"")));
 		}
 	}
 	let (ate, delimiter) = find_heredoc(&horizon[i ..]);

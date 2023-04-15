@@ -119,11 +119,11 @@ fn test_sit_strphantom() {
 	sit_expect!(subject(), b"a$(", &flush(0), &cod);
 	sit_expect!(subject(), b"$\'", &cod);
 	sit_expect!(subject(), b"$\"", &cod);
-	sit_expect!(subject(), b"$@", &push_extent(COLOR_VAR, 0, 2, None));
-	sit_expect!(subject(), b"$*", &push_extent(COLOR_VAR, 0, 2, None));
-	sit_expect!(subject(), b"$#", &push_extent(COLOR_VAR, 0, 2, None));
-	sit_expect!(subject(), b"$?", &push_extent(COLOR_VAR, 0, 2, None));
-	sit_expect!(subject(), b"$-", &push_extent(COLOR_VAR, 0, 2, None));
-	sit_expect!(subject(), b"$$", &push_extent(COLOR_VAR, 0, 2, None));
-	sit_expect!(subject(), b"$!", &push_extent(COLOR_VAR, 0, 2, None));
+	sit_expect!(subject(), b"$@", &push_extent(COLOR_VAR, 0, 2));
+	sit_expect!(subject(), b"$*", &push_extent(COLOR_VAR, 0, 2));
+	sit_expect!(subject(), b"$#", &push_extent(COLOR_VAR, 0, 2));
+	sit_expect!(subject(), b"$?", &push_extent(COLOR_VAR, 0, 2));
+	sit_expect!(subject(), b"$-", &push_extent(COLOR_VAR, 0, 2));
+	sit_expect!(subject(), b"$$", &push_extent(COLOR_VAR, 0, 2));
+	sit_expect!(subject(), b"$!", &push_extent(COLOR_VAR, 0, 2));
 }

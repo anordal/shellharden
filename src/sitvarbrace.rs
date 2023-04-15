@@ -13,7 +13,7 @@ use crate::situation::if_needed;
 use crate::situation::pop;
 use crate::situation::COLOR_VAR;
 
-use crate::sitextent::push_extent;
+use crate::sitextent::push_replaceable;
 
 #[derive(Clone)]
 #[derive(Copy)]
@@ -51,7 +51,7 @@ impl Situation for SitVarBrace {
 				(State::Name, b'[') => self.state = State::Index,
 				(State::Index, b'*') => {
 					self.state = State::Normal;
-					return push_extent(COLOR_VAR, i, 1, Some(b"@"));
+					return push_replaceable(COLOR_VAR, i, 1, Some(b"@"));
 				}
 				(State::Normal, b'{') => self.depth += 1,
 				(State::Name | State::Index | State::Normal, b'}') => {
