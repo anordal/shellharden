@@ -17,8 +17,8 @@ use crate::situation::COLOR_NORMAL;
 use crate::situation::COLOR_KWD;
 
 use crate::microparsers::predlen;
+use crate::microparsers::is_lowercase;
 use crate::microparsers::is_whitespace;
-use crate::microparsers::is_word;
 
 use crate::commonargcmd::keyword_or_command;
 use crate::commonargcmd::common_expr_quoting_unneeded;
@@ -28,13 +28,13 @@ pub struct SitCase {}
 impl Situation for SitCase {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, _) in horizon.iter().enumerate() {
-			if let Some(res) = common_expr_quoting_unneeded(
-				0x100, horizon, i, is_horizon_lengthenable
-			) {
-				return res;
-			}
-			let len = predlen(is_word, &horizon[i..]);
+			let len = predlen(is_lowercase, &horizon[i..]);
 			if len == 0 {
+				if let Some(res) = common_expr_quoting_unneeded(
+					0x100, horizon, i, is_horizon_lengthenable
+				) {
+					return res;
+				}
 				continue;
 			}
 			if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
@@ -42,10 +42,7 @@ impl Situation for SitCase {
 			}
 			let word = &horizon[i..i+len];
 			if word == b"in" {
-				return WhatNow {
-					transform: (i + len, 0, None),
-					transition: Transition::Replace(Box::new(SitCaseIn {})),
-				};
+				return become_case_in(i + len);
 			}
 			return flush(i + len);
 		}
@@ -61,10 +58,15 @@ struct SitCaseIn {}
 impl Situation for SitCaseIn {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
 		for (i, &a) in horizon.iter().enumerate() {
-			let len = predlen(is_word, &horizon[i..]);
+			let len = predlen(is_lowercase, &horizon[i..]);
 			if len == 0 {
 				if a == b')' {
 					return push((i, 1, None), Box::new(SitCaseArm {}));
+				}
+				if let Some(res) = common_expr_quoting_unneeded(
+					0x100, horizon, i, is_horizon_lengthenable
+				) {
+					return res;
 				}
 				continue;
 			}
@@ -74,11 +76,6 @@ impl Situation for SitCaseIn {
 			let word = &horizon[i..i+len];
 			if word == b"esac" {
 				return pop_kw(i, len);
-			}
-			if let Some(res) = common_expr_quoting_unneeded(
-				0x100, horizon, i, is_horizon_lengthenable
-			) {
-				return res;
 			}
 			return flush(i + len);
 		}
@@ -107,7 +104,7 @@ impl Situation for SitCaseArm {
 				continue;
 			}
 			// Premature esac: Survive and rewrite.
-			let len = predlen(is_word, &horizon[i..]);
+			let len = predlen(is_lowercase, &horizon[i..]);
 			if i + len != horizon.len() || (i == 0 && !is_horizon_lengthenable) {
 				let word = &horizon[i..i+len];
 				if word == b"esac" {
@@ -120,6 +117,13 @@ impl Situation for SitCaseArm {
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_NORMAL
+	}
+}
+
+fn become_case_in(pre: usize) -> WhatNow {
+	WhatNow{
+		transform: (pre, 0, None),
+		transition: Transition::Replace(Box::new(SitCaseIn {})),
 	}
 }
 
@@ -139,13 +143,10 @@ use crate::sitcmd::SitCmd;
 fn test_sit_case() {
 	sit_expect!(SitCase{}, b"", &flush(0));
 	sit_expect!(SitCase{}, b" ", &flush(1));
+	sit_expect!(SitCase{}, b"i\"", &flush(1));
 	sit_expect!(SitCase{}, b"i", &flush(0), &flush(1));
-	let found_the_in_word = WhatNow{
-		transform: (2, 0, None),
-		transition: Transition::Replace(Box::new(SitCaseIn {})),
-	};
-	sit_expect!(SitCase{}, b"in ", &found_the_in_word);
-	sit_expect!(SitCase{}, b"in", &flush(0), &found_the_in_word);
+	sit_expect!(SitCase{}, b"in ", &become_case_in(2));
+	sit_expect!(SitCase{}, b"in", &flush(0), &become_case_in(2));
 	sit_expect!(SitCase{}, b"inn", &flush(0), &flush(3));
 	sit_expect!(SitCase{}, b" in", &flush(1));
 	sit_expect!(SitCase{}, b"fin", &flush(0), &flush(3));
@@ -156,6 +157,7 @@ fn test_sit_case() {
 fn test_sit_casein() {
 	sit_expect!(SitCaseIn{}, b"", &flush(0));
 	sit_expect!(SitCaseIn{}, b" ", &flush(1));
+	sit_expect!(SitCaseIn{}, b"esa\"", &flush(3));
 	sit_expect!(SitCaseIn{}, b"esa", &flush(0), &flush(3));
 	sit_expect!(SitCaseIn{}, b"esac ", &pop_kw(0, 4));
 	sit_expect!(SitCaseIn{}, b"esac", &flush(0), &pop_kw(0, 4));

@@ -42,6 +42,10 @@ pub fn is_whitespace(c: u8) -> bool {
 	c <= b' '
 }
 
+pub fn is_lowercase(c: u8) -> bool {
+	matches!(c, b'a' ..= b'z')
+}
+
 pub fn is_word(byte: u8) -> bool {
 	!matches!(byte, 0 ..= b' ' | b'&' | b'(' | b')' | b';' | b'<' | b'>' | b'`' | b'|')
 }

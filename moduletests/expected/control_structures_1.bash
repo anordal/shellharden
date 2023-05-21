@@ -54,9 +54,9 @@ f(){ [[ $ivar ]] }
 function f(){ [[ $ivar ]] }
 
 oddvar="$(
-	case true in
+	case [[ in
 		# comment
-		true) # comment
+		[[) # comment
 			# comment
 			[[ $ivar ]] # comment
 			# comment
@@ -64,3 +64,10 @@ oddvar="$(
 		# comment
 	esac
 )here is where the string continues"
+
+case true$(true)true in
+	true$(true)true)([[ $ivar ]]);;
+esac
+case true"$(true)"true in
+	true"$(true)"true)([[ $ivar ]]);;
+esac
