@@ -43,7 +43,7 @@ pub fn is_whitespace(c: u8) -> bool {
 }
 
 pub fn is_lowercase(c: u8) -> bool {
-	matches!(c, b'a' ..= b'z')
+	c.is_ascii_lowercase()
 }
 
 pub fn is_word(byte: u8) -> bool {

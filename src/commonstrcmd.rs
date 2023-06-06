@@ -197,7 +197,7 @@ fn pos_tailhazard(horizon: &[u8], end: u8) -> (usize, usize) {
 }
 
 fn is_decimal(byte: u8) -> bool {
-	matches!(byte, b'0' ..= b'9')
+	byte.is_ascii_digit()
 }
 
 fn is_variable_of_numeric_content(c: u8) -> bool {

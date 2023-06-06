@@ -118,7 +118,7 @@ struct SitHiddenTest {
 
 impl Situation for SitHiddenTest {
 	fn whatnow(&mut self, _horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
-		let initial_adventure = std::mem::replace(&mut self.inner, None);
+		let initial_adventure = self.inner.take();
 		if let Some(mut exciting) = initial_adventure {
 			exciting.transform.0 = 0;
 			exciting
