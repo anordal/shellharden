@@ -518,22 +518,17 @@ This makes bash with errexit practically incomposable – it is *possible* to wr
 How to write conditions
 -----------------------
 
-### Should I use double brackets?
+### Should I use double bracket conditions?
 
-What for? It does not matter.
+That is unimportant, but let's dispel some myths. We are talking about these forms of conditions:
 
-Issue: `test`, `[` and `[[` are largely interchangeable.
+```
+test …
+[ … ]
+[[ … ]]
+```
 
-If you are following this guide, the usual arguments don't apply:
-
-* Inside double brackets `[[ ]]`, unquoted variables and command substitutions are safe (from word splitting and indirect pathname expansion). That's a partial solution to a problem we don't have – following this guide implies not doing that anywhere to begin with. If you are, you aren't after shellhardening your scripts.
-* The usual counterargument is POSIX compatibility. We sacrificed that for arrays.
-
-Other concerns:
-
-*—LOL, is /bin/test an external command?*
-
-Let's get that myth out of the way. When in doubt, ask the `type` command:
+When in doubt, ask your shell:
 
     > type test
     test is a shell builtin
@@ -542,41 +537,18 @@ Let's get that myth out of the way. When in doubt, ask the `type` command:
     > type [[
     [[ is a shell keyword
 
-*—What if I have n00b contributors?*
+* None of them are external commands (in Bash).
+* The two first are commands; the third is magic syntax.
+* If you are quoting variable expansions and command substitutions – following this guide at all, double bracket conditions solve a problem you don't have – with more syntax.
+* Double brackets are not POSIX. Busybox `ash` supports them, but the wrong way.
 
-This argument goes both ways: `[[` has a more forgiving syntax because it *is* syntax, not a command. **Quoting is required everywhere else.** The fewer exceptions, the lesser confusion. If you want to be pedagogical, use the `test` command – it is honest about being a command, not syntax.
+For pedagogical purposes, the `test` command is the most honest about being a command. Issues like whitespace sensitivity and how to combine them (unambiguously) become self-evident when looked at the right way.
 
-*—What if `[[` has a feature I need?*
-
-Chances are that you don't know the substitute.
+Double bracket conditions also have more features. But they have good POSIX substitutes for the most part:
 
 * Pattern matching (`[[ $path == *.png || $path == *.gif ]]`): This is what `case` is for.
 * Logical operators: The usual suspects `&&` and `||` work just fine – outside commands – and can be grouped with group commands: `if { true || false; } && true; then echo 1; else echo 0; fi`.
 * Checking if a variable exists (`[[ -v varname ]]`): Yes, this is possibly a killer argument, but consider the programming style of always setting variables, so you don't need to check if they exist.
-
-### How to check if a variable exists
-
-A correct way to do this is not a feature of idiomatic POSIX/Bash scripting. Consider avoiding the problem when possible by always setting variables, so you don't need to check if they exist.
-
-You can get a long way by giving variables default values. This works even in busybox:
-
-    : "${var:=defaultvalue}"
-
-    # Or more generally
-    var="${var:-defaultvalue}"
-
-But if you must know, the correct way to check if a variable exists came with Bash 4.2 (also verified for zsh 5.6.2):
-
-    [[ -v var ]]
-
-If using this and there is any chance someone might try to run your script with an earlier Bash version, remember to fail early. The feature test approach would be to test, in the beginning of the script, for a variable that we know exists, and terminate if the result is wrong. In this case, we get a syntax error in earlier versions, and termination for free, so it suffices to add this to the beginning section:
-
-    [[ -v PWD ]]
-
-Lastly, don't ever use constructs like `[ -n $var ]` or `[ -z $var ]`. They are fundamentally string comparisons against the empty string, only less readable. However, what matters in this section, is their functional critique:
-
-* A string comparison can't distinguish an unset variable from an empty one. Let alone distinguish the ways it can be empty: Environment variables are just strings, so they may be empty strings, but normal shell variables are really arrays – they can be empty arrays or arrays of empty strings (what you think of as the empty string is indistinguishable from a one-element array).
-* Expanding a potentially unset variable obviously precludes the use of `set -u`.
 
 ### Are empty string comparisons any special?
 
@@ -605,11 +577,47 @@ Plain wrong (always true):
     test -n $s
     [ -n $s ]
 
-### Conditions with AND, OR, NOT and parentheses
+Shellharden replaces the `-z/-n` flags with their equivalent string comparisons.
 
-The shell syntax for conjunction `&&`, disjunction `||`, negation `!` and grouping `{}` is unproblematic and works with any command.
-Use it.
-Also for conditions.
+### How to check if a variable exists
+
+The correct way to check if a variable exists came with Bash 4.2 (also verified for zsh 5.6.2) and is not a feature of POSIX.
+Consider therefore to avoid the problem by always setting variables, so you don't need to check if they exist.
+
+Alternative (POSIX blessed):
+
+    "${var-val}" # default value if unset
+    "${var:-val}" # default value if unset or empty
+
+POSIX allows expanding a possibly unset variable (even with `set -u`) by giving a default value.
+
+Good (if you must):
+
+```
+# Feature check to fail early on Mac OS with Bash 3.9:
+[[ -v PWD ]]
+
+[[ -v var ]]
+```
+
+If using this and there is any chance someone might try to run your script with an earlier Bash version, it is best to fail early. The feature check above tests for a variable that we know exists and results in a syntax error and termination in earlier versions.
+
+Bad:
+
+    test -n "$var"
+    [ -n "$var" ]
+    [[ -n $var ]]
+    [[ -n "$var" ]]
+
+These don't distinguish being unset with being empty (as a string or array) and obviously precludes the use of `set -u`.
+
+Recall that the `-z/-n` flags are effectively string comparisons in disguise. As such, they are even less suitable as variable existence checks. Other than to distinguish intent – a fair but not good argument.
+
+### How to combine conditions (unambiguously)
+
+This problem evaporates when realizing that conditions are commands – POSIX already defines this:
+The shell syntax for conjunction `&&`, disjunction `||`, negation `!` and grouping `{}` of commands applies to all commands,
+and the arguments to those commands can contain shell syntax all they want.
 
 The confusing part is that the `test` or `[` command has operators for the same:
 POSIX (man 1p test) defines these as `-a`, `-o`, `!`, and parentheses.
