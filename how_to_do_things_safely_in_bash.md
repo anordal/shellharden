@@ -81,6 +81,15 @@ The exceptions only matter in discussions of style – feel welcome to ignore th
 * the magical case command: `case $var in … esac`
 * the magical context between double-brackets (`[[` and `]]`) – this is a language of its own.
 
+### What quoting is not about
+
+Shellscript is not a macro (read: injection prone) language. This is not scary:
+
+```
+input="\"; rm -rf /"
+echo "$input"
+```
+
 ### Should I use backticks?
 
 Command substitutions also come in this form:
@@ -88,9 +97,23 @@ Command substitutions also come in this form:
 * Correct: `` "`cmd`" ``
 * Bad: `` `cmd` ``
 
-While it is possible to use this style correctly, it is harder: [Backticks require escaping when nested, and examples in the wild are improperly quoted more often than not](http://wiki.bash-hackers.org/scripting/obsolete).
+While it is possible to use this style correctly, it is harder: [Backticks require escaping when nested, and examples in the wild are improperly quoted more often than not](http://mywiki.wooledge.org/BashFAQ/082).
 
-Shellharden rewrites these into the dollar-parenthesis form.
+Not to mention this insidious trick:
+
+```
+> x=`echo "This is a doublequote: \""`; echo "$x"
+This is a doublequote: "
+> x="`echo "This is a doublequote: \""`"; echo "$x"
+bash: command substitution: line 1: unexpected EOF while looking for matching `"'
+```
+
+The [Bash documentation](https://www.gnu.org/software/bash/manual/html_node/Command-Substitution.html)
+describes the escaping rules as is correct of an unquoted backtick command substitution,
+but does not say that a quoted one is different.
+Which is perplexing enough, understandably, to be a documentation bug.
+
+Shellharden accepts unquoted backticks in contexts that don't require quotes, but otherwise rewrites them into the dollar-parenthesis form.
 
 ### Should I use curly braces?
 
@@ -518,9 +541,9 @@ This makes bash with errexit practically incomposable – it is *possible* to wr
 How to write conditions
 -----------------------
 
-### Should I use double bracket conditions?
+### Should I use double-bracket conditions?
 
-That is unimportant, but let's dispel some myths. We are talking about these forms of conditions:
+That is unimportant, but let's dispel some myths about these largely interchangeable forms of conditions:
 
 ```
 test …
@@ -537,14 +560,21 @@ When in doubt, ask your shell:
     > type [[
     [[ is a shell keyword
 
-* None of them are external commands (in Bash).
-* The two first are commands; the third is magic syntax.
-* If you are quoting variable expansions and command substitutions – following this guide at all, double bracket conditions solve a problem you don't have – with more syntax.
+* None of them are external commands (even in Fish).
+* The two first are mere commands; the third has syntactic superpowers.
 * Double brackets are not POSIX. Busybox `ash` supports them, but the wrong way.
+
+The thing about double-bracket conditions is that, being magic syntax,
+it has access to its arguments before expansion, unlike any command.
+What it does is make many unsafe habits safe, such as not quoting variable expansions.
+Is that a good thing?
+
+Understanding and exploiting its improved safety aspects requires more of your readers,
+and the problems it solves are problems you don't have if you are following this guide.
 
 For pedagogical purposes, the `test` command is the most honest about being a command. Issues like whitespace sensitivity and how to combine them (unambiguously) become self-evident when looked at the right way.
 
-Double bracket conditions also have more features. But they have good POSIX substitutes for the most part:
+Double-bracket conditions also have more features. But they have good POSIX substitutes for the most part:
 
 * Pattern matching (`[[ $path == *.png || $path == *.gif ]]`): This is what `case` is for.
 * Logical operators: The usual suspects `&&` and `||` work just fine – outside commands – and can be grouped with group commands: `if { true || false; } && true; then echo 1; else echo 0; fi`.
@@ -651,6 +681,8 @@ Is this idiom of any use?
 1. Not to preserve empty strings: Use quoting.
 2. Not to prevent ambiguity in case the variable contains a valid operator: The number of arguments has highter precedence.
 3. When used with the AND/OR operators (`-a/-o`), it can prevent ambiguity. However, this use is unnecessary (see above).
+
+Shellharden simplifies "xyes" conditions when the "x" part is unquoted.
 
 Commands with better alternatives
 ---------------------------------
