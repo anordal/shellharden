@@ -19,7 +19,6 @@ use crate::machine::OutputSelector;
 mod errfmt;
 mod filestream;
 mod situation;
-mod syntaxerror;
 
 fn help() {
 	println!(

@@ -9,7 +9,7 @@
 use std::io;
 use std::io::Write;
 
-use crate::syntaxerror::UnsupportedSyntax;
+use crate::errfmt::ContextualError;
 
 use crate::filestream::InputSource;
 use crate::filestream::FileOut;
@@ -39,7 +39,7 @@ pub struct Settings {
 
 pub enum Error {
 	Stdio(std::io::Error),
-	Syntax(UnsupportedSyntax),
+	Syntax(ContextualError),
 	Check,
 }
 
@@ -109,10 +109,11 @@ fn treatfile_fallible(
 		fill = remain;
 	}
 	if state.len() != 1 {
-		return Err(Error::Syntax(UnsupportedSyntax{
+		return Err(Error::Syntax(ContextualError{
 			typ: "Unexpected end of file",
 			ctx: buf[0 .. fill].to_owned(),
 			pos: fill,
+			len: 1,
 			msg: "The file's end was reached without closing all sytactic scopes.\n\
 			Either, the parser got lost, or the file is truncated or malformed.",
 		}));
@@ -157,9 +158,6 @@ fn stackmachine(
 		let replaceable = &horizon[pre .. progress];
 
 		match (whatnow.transition, eof) {
-			(Transition::Err(e), _) => {
-				return Err(Error::Syntax(e));
-			}
 			(Transition::Flush, _) | (Transition::FlushPopOnEof, false) => {
 				if progress == 0 {
 					break;
@@ -173,6 +171,15 @@ fn stackmachine(
 			}
 			(Transition::Pop, _) | (Transition::FlushPopOnEof, true) => {
 				state.pop();
+			}
+			(Transition::Err(e), _) => {
+				return Err(Error::Syntax(ContextualError{
+					typ: e.typ,
+					ctx: buf.to_owned(),
+					pos: pos + whatnow.transform.0,
+					len: whatnow.transform.1,
+					msg: e.msg,
+				}));
 			}
 		}
 

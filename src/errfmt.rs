@@ -8,7 +8,13 @@
 
 use std::io::Write;
 
-use crate::syntaxerror::UnsupportedSyntax;
+pub struct ContextualError{
+	pub typ: &'static str,
+	pub ctx: Vec<u8>,
+	pub pos: usize,
+	pub len: usize,
+	pub msg: &'static str,
+}
 
 fn stderr_write_or_panic(lock: &mut std::io::StderrLock, bytes: &[u8]) {
 	if let Err(e) = lock.write_all(bytes) {
@@ -26,7 +32,7 @@ pub fn blame_path_io(path: &std::ffi::OsString, e: &std::io::Error) {
 	eprintln!("{}: {}", printable, e);
 }
 
-pub fn blame_syntax(path: &std::ffi::OsString, fail: &UnsupportedSyntax) {
+pub fn blame_syntax(path: &std::ffi::OsString, fail: &ContextualError) {
 	blame_path(path, fail.typ);
 	if fail.pos < fail.ctx.len() {
 		let mut i = fail.pos;
@@ -41,7 +47,8 @@ pub fn blame_syntax(path: &std::ffi::OsString, fail: &UnsupportedSyntax) {
 		while i < fail.ctx.len() && fail.ctx[i] != b'\n' {
 			i += 1;
 		}
-		let failing_line_end = i;
+		let failing_line = &fail.ctx[failing_line_begin .. i];
+
 		// FIXME: This counts codepoints, not displayed width.
 		let mut width = 0;
 		for c in &fail.ctx[failing_line_begin .. fail.pos] {
@@ -53,12 +60,15 @@ pub fn blame_syntax(path: &std::ffi::OsString, fail: &UnsupportedSyntax) {
 
 		let stderr = std::io::stderr();
 		let mut stderr_lock = stderr.lock();
-		stderr_write_or_panic(&mut stderr_lock, &fail.ctx[.. failing_line_end]);
+		stderr_write_or_panic(&mut stderr_lock, failing_line);
 		stderr_write_or_panic(&mut stderr_lock, b"\n");
 		for _ in 0 .. width {
 			stderr_write_or_panic(&mut stderr_lock, b" ");
 		}
-		stderr_write_or_panic(&mut stderr_lock, b"^\n");
+		for _ in 0 .. fail.len {
+			stderr_write_or_panic(&mut stderr_lock, b"^");
+		}
+		stderr_write_or_panic(&mut stderr_lock, b"\n");
 	}
 	eprintln!("{}", fail.msg);
 }

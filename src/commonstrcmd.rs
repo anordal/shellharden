@@ -7,6 +7,7 @@
  */
 
 use crate::situation::Transition;
+use crate::situation::UnsupportedSyntax;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::push;
@@ -19,7 +20,6 @@ use crate::microparsers::is_identifierhead;
 use crate::microparsers::is_identifiertail;
 use crate::microparsers::identifierlen;
 
-use crate::syntaxerror::UnsupportedSyntax;
 
 use crate::sitcmd::SitNormal;
 use crate::sitextent::push_extent;
@@ -106,8 +106,9 @@ pub fn common_str_cmd(
 	} else if is_variable_of_numeric_content(c) {
 		return CommonStrCmdResult::Some(push_extent(COLOR_VAR, i, 2));
 	} else if c == b'@' || c == b'*' || c == b'-' || is_decimal(c) {
-		if predlen(is_decimal, &horizon[i+1 ..]) > 1 {
-			return bail_doubledigit(horizon, i+2);
+		let digitlen = predlen(is_decimal, &horizon[i+1 ..]);
+		if digitlen > 1 {
+			return bail_doubledigit(i, 1 + digitlen);
 		}
 		return CommonStrCmdResult::OnlyWithQuotes(push_extent(COLOR_VAR, i, 2));
 	} else if is_identifierhead(c) {
@@ -204,13 +205,11 @@ fn is_variable_of_numeric_content(c: u8) -> bool {
 	matches!(c, b'#' | b'?' | b'$' | b'!')
 }
 
-fn bail_doubledigit(context: &[u8], pos: usize) -> CommonStrCmdResult {
+fn bail_doubledigit(pos: usize, len: usize) -> CommonStrCmdResult {
 	CommonStrCmdResult::Some(WhatNow {
-		transform: (0, 0, None),
+		transform: (pos, len, None),
 		transition: Transition::Err(UnsupportedSyntax {
 			typ: "Unsupported syntax: Syntactic pitfall",
-			ctx: context.to_owned(),
-			pos,
 			msg: "This does not mean what it looks like. You may be forgiven to think that the full string of \
 			numerals is the variable name. Only the fist is.\n\
 			\n\

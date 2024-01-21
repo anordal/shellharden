@@ -6,7 +6,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-use crate::syntaxerror::UnsupportedSyntax;
+pub struct UnsupportedSyntax {
+	pub typ: &'static str,
+	pub msg: &'static str,
+}
 
 pub trait Situation {
 	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow;
