@@ -83,9 +83,9 @@ Build from source
 
 ### Fuzz test
 
-    cargo install afl
+    cargo install cargo-afl
     cargo afl build --release
-    cargo afl fuzz -i moduletests/original -o /tmp/fuzz-shellharden target/release/shellharden '@@'
+    cargo afl fuzz -i moduletests/original -o /tmp/fuzz-shellharden target/release/shellharden ''
 
 Usage advice
 ------------
