@@ -1,8 +1,10 @@
 # Changelog
 
-## Next
+## 4.3.1
 
 * Fix misdetection of line continuation as a command
+* Fix undetected opening quote in word
+* Give more context on syntax error
 
 ## 4.3.0
 
