@@ -52,6 +52,6 @@ FROM scratch
 
   ENTRYPOINT [ "/bin/shellharden" ]
 
-  CMD [ "-h" ]
+  CMD [ "shellharden", "-h" ]
 
 # vi: nospell
