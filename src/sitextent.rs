@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::WhatNow;
 use crate::situation::flush;
@@ -18,12 +19,12 @@ pub struct SitExtent{
 }
 
 impl Situation for SitExtent {
-	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
-		if horizon.len() >= self.len {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		if horizon.input.len() >= self.len {
 			return pop(self.len, 0, None);
 		}
-		self.len -= horizon.len();
-		flush(horizon.len())
+		self.len -= horizon.input.len();
+		flush(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		self.color

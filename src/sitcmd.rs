@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::Transition;
 use crate::situation::WhatNow;
@@ -30,8 +31,8 @@ pub struct SitNormal {
 }
 
 impl Situation for SitNormal {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, &a) in horizon.iter().enumerate() {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, &a) in horizon.input.iter().enumerate() {
 			if is_whitespace(a) || a == b';' || a == b'|' || a == b'&' || a == b'<' || a == b'>' {
 				continue;
 			}
@@ -41,11 +42,9 @@ impl Situation for SitNormal {
 			if u16::from(a) == self.end_trigger {
 				return pop(i, 1, self.end_replace);
 			}
-			return keyword_or_command(
-				self.end_trigger, horizon, i, is_horizon_lengthenable
-			);
+			return keyword_or_command(self.end_trigger, horizon, i);
 		}
-		flush(horizon.len())
+		flush(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_NORMAL
@@ -57,9 +56,9 @@ pub struct SitCmd {
 }
 
 impl Situation for SitCmd {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, &a) in horizon.iter().enumerate() {
-			if let Some(res) = common_cmd(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, &a) in horizon.input.iter().enumerate() {
+			if let Some(res) = common_cmd(self.end_trigger, horizon, i) {
 				return res;
 			}
 			if is_whitespace(a) {
@@ -74,7 +73,7 @@ impl Situation for SitCmd {
 				return pop(i, 0, None);
 			}
 		}
-		flush_or_pop(horizon.len())
+		flush_or_pop(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_CMD
@@ -86,13 +85,13 @@ pub struct SitArg {
 }
 
 impl Situation for SitArg {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, _) in horizon.iter().enumerate() {
-			if let Some(res) = common_arg(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, _) in horizon.input.iter().enumerate() {
+			if let Some(res) = common_arg(self.end_trigger, horizon, i) {
 				return res;
 			}
 		}
-		flush_or_pop(horizon.len())
+		flush_or_pop(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_NORMAL

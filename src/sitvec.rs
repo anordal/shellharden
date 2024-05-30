@@ -8,6 +8,7 @@
 
 use crate::situation::flush;
 use crate::situation::pop;
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::WhatNow;
 
@@ -17,15 +18,15 @@ pub struct SitVec {
 }
 
 impl Situation for SitVec {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		if horizon.len() < self.terminator.len() {
-			if is_horizon_lengthenable {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		if horizon.input.len() < self.terminator.len() {
+			if horizon.is_lengthenable {
 				flush(0)
 			} else {
-				flush(horizon.len())
+				flush(horizon.input.len())
 			}
 		}
-		else if horizon[0 .. self.terminator.len()] == self.terminator[..] {
+		else if horizon.input[0 .. self.terminator.len()] == self.terminator[..] {
 			pop(0, self.terminator.len(), None)
 		} else {
 			flush(1)

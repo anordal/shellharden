@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use crate::situation::Horizon;
 use crate::situation::Transition;
 use crate::situation::UnsupportedSyntax;
 use crate::situation::WhatNow;
@@ -44,16 +45,15 @@ pub enum CommonStrCmdResult {
 }
 
 pub fn common_str_cmd(
-	horizon: &[u8],
+	horizon: Horizon,
 	i: usize,
-	is_horizon_lengthenable: bool,
 	ctx: QuotingCtx,
 ) -> CommonStrCmdResult {
 	let need_quotes = ctx == QuotingCtx::Need;
 	let is_interpolation = ctx == QuotingCtx::Interpolation;
 
-	if horizon[i] == b'`' {
-		let found_pwd = find_pwd(horizon, i, 1, b'`', is_horizon_lengthenable);
+	if horizon.input[i] == b'`' {
+		let found_pwd = find_pwd(horizon, i, 1, b'`');
 		match found_pwd {
 			CommonStrCmdResult::None => {}
 			CommonStrCmdResult::Some(_) |
@@ -69,21 +69,21 @@ pub fn common_str_cmd(
 			}),
 		));
 	}
-	if horizon[i] == b'\\' {
+	if horizon.input[i] == b'\\' {
 		return CommonStrCmdResult::Some(push_extent(COLOR_ESC, i, 2));
 	}
-	if horizon[i] != b'$' {
+	if horizon.input[i] != b'$' {
 		return CommonStrCmdResult::None;
 	}
-	if i+1 >= horizon.len() {
-		if i > 0 || is_horizon_lengthenable {
+	if i+1 >= horizon.input.len() {
+		if i > 0 || horizon.is_lengthenable {
 			return CommonStrCmdResult::Some(flush(i));
 		}
 		return CommonStrCmdResult::None;
 	}
-	let c = horizon[i+1];
+	let c = horizon.input[i+1];
 	if c == b'(' {
-		let found_pwd = find_pwd(horizon, i, 2, b')', is_horizon_lengthenable);
+		let found_pwd = find_pwd(horizon, i, 2, b')');
 		match found_pwd {
 			CommonStrCmdResult::None => {}
 			CommonStrCmdResult::Some(_) |
@@ -91,9 +91,9 @@ pub fn common_str_cmd(
 				return found_pwd;
 			}
 		}
-		if i+2 >= horizon.len() {
+		if i+2 >= horizon.input.len() {
 			// Reachable, but already handled by find_pwd.
-		} else if horizon[i+2] == b'(' {
+		} else if horizon.input[i+2] == b'(' {
 			return CommonStrCmdResult::Some(push_magic(i, 2, b')'));
 		}
 		return CommonStrCmdResult::OnlyWithQuotes(push(
@@ -106,7 +106,7 @@ pub fn common_str_cmd(
 	} else if is_variable_of_numeric_content(c) {
 		return CommonStrCmdResult::Some(push_extent(COLOR_VAR, i, 2));
 	} else if c == b'@' || c == b'*' || c == b'-' || is_decimal(c) {
-		let digitlen = predlen(is_decimal, &horizon[i+1 ..]);
+		let digitlen = predlen(is_decimal, &horizon.input[i+1 ..]);
 		if digitlen > 1 {
 			return bail_doubledigit(i, 1 + digitlen);
 		}
@@ -114,10 +114,10 @@ pub fn common_str_cmd(
 	} else if is_identifierhead(c) {
 		let tailhazard;
 		if need_quotes {
-			let cand: &[u8] = &horizon[i+1 ..];
+			let cand: &[u8] = &horizon.input[i+1 ..];
 			let (_, pos_hazard) = pos_tailhazard(cand, b'\"');
 			if pos_hazard == cand.len() {
-				if i > 0 || is_horizon_lengthenable {
+				if i > 0 || horizon.is_lengthenable {
 					return CommonStrCmdResult::Some(flush(i));
 				}
 				tailhazard = true;
@@ -134,12 +134,12 @@ pub fn common_str_cmd(
 			}),
 		));
 	} else if c == b'{' {
-		let cand: &[u8] = &horizon[i+2 ..];
+		let cand: &[u8] = &horizon.input[i+2 ..];
 		let (idlen, pos_hazard) = pos_tailhazard(cand, b'}');
 		let mut rm_braces = false;
 		let mut is_number = false;
 		if pos_hazard == cand.len() {
-			if i > 0 || is_horizon_lengthenable {
+			if i > 0 || horizon.is_lengthenable {
 				return CommonStrCmdResult::Some(flush(i));
 			}
 		} else if idlen == 0 {
@@ -162,16 +162,15 @@ pub fn common_str_cmd(
 }
 
 fn find_pwd(
-	horizon: &[u8],
+	horizon: Horizon,
 	i: usize,
 	candidate_offset: usize,
 	end: u8,
-	is_horizon_lengthenable: bool,
 ) -> CommonStrCmdResult {
-	let cand: &[u8] = &horizon[i + candidate_offset ..];
+	let cand: &[u8] = &horizon.input[i + candidate_offset ..];
 	let (idlen, pos_hazard) = pos_tailhazard(cand, end);
 	if pos_hazard == cand.len() {
-		if i > 0 || is_horizon_lengthenable {
+		if i > 0 || horizon.is_lengthenable {
 			return CommonStrCmdResult::Some(flush(i));
 		}
 	} else if idlen == 3 && pos_hazard >= 4 && cand[.. 3].eq(b"pwd") {

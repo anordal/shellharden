@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::Transition;
 use crate::situation::WhatNow;
@@ -29,13 +30,13 @@ use crate::commonargcmd::common_arg;
 pub struct SitFor {}
 
 impl Situation for SitFor {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, &a) in horizon.iter().enumerate() {
-			let len = predlen(is_lowercase, &horizon[i..]);
-			if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, &a) in horizon.input.iter().enumerate() {
+			let len = predlen(is_lowercase, &horizon.input[i..]);
+			if i + len == horizon.input.len() && (i > 0 || horizon.is_lengthenable) {
 				return flush(i);
 			}
-			let word = &horizon[i..i+len];
+			let word = &horizon.input[i..i+len];
 			if word == b"in" {
 				return push_forin(i);
 			}
@@ -46,7 +47,7 @@ impl Situation for SitFor {
 				return pop(i, 0, None);
 			}
 		}
-		flush(horizon.len())
+		flush(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_KWD
@@ -56,10 +57,10 @@ impl Situation for SitFor {
 pub struct SitForIn {}
 
 impl Situation for SitForIn {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, &a) in horizon.iter().enumerate() {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, &a) in horizon.input.iter().enumerate() {
 			if a == b'$' {
-				let candidate = &horizon[i+1 ..];
+				let candidate = &horizon.input[i+1 ..];
 				let idlen = identifierlen(candidate);
 				let candidate = &candidate[idlen ..];
 				let spacelen = predlen(|x| x == b' ', candidate);
@@ -68,7 +69,7 @@ impl Situation for SitForIn {
 					if idlen >= 1 && matches!(end, b';' | b'\n') {
 						return become_for_in_necessarily_array(i);
 					}
-				} else if i > 0 || is_horizon_lengthenable {
+				} else if i > 0 || horizon.is_lengthenable {
 					return flush(i);
 				}
 			}
@@ -76,7 +77,7 @@ impl Situation for SitForIn {
 				return become_for_in_anything_else(i);
 			}
 		}
-		flush(horizon.len())
+		flush(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_NORMAL
@@ -86,14 +87,14 @@ impl Situation for SitForIn {
 struct SitVarIdentNecessarilyArray {}
 
 impl Situation for SitVarIdentNecessarilyArray {
-	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, &a) in horizon.iter().enumerate() {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, &a) in horizon.input.iter().enumerate() {
 			// An identifierhead is also an identifiertail.
 			if !is_identifiertail(a) {
 				return pop(i, 0, Some(b"[@]}\""));
 			}
 		}
-		flush(horizon.len())
+		flush(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_VAR
@@ -103,13 +104,13 @@ impl Situation for SitVarIdentNecessarilyArray {
 pub struct SitForInAnythingElse {}
 
 impl Situation for SitForInAnythingElse {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, _) in horizon.iter().enumerate() {
-			if let Some(res) = common_arg(u16::from(b';'), horizon, i, is_horizon_lengthenable) {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, _) in horizon.input.iter().enumerate() {
+			if let Some(res) = common_arg(u16::from(b';'), horizon, i) {
 				return res;
 			}
 		}
-		flush(horizon.len())
+		flush(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_NORMAL

@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::Transition;
 use crate::situation::WhatNow;
@@ -21,8 +22,8 @@ pub struct SitMagic {
 }
 
 impl Situation for SitMagic {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, &a) in horizon.iter().enumerate() {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, &a) in horizon.input.iter().enumerate() {
 			if a == b'(' {
 				return push_magic(i, 1, b')');
 			}
@@ -32,11 +33,11 @@ impl Situation for SitMagic {
 			if a == self.end_trigger {
 				return pop(i, 1, None);
 			}
-			if let Some(res) = common_token_quoting_unneeded(0x100, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_token_quoting_unneeded(0x100, horizon, i) {
 				return res;
 			}
 		}
-		flush(horizon.len())
+		flush(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_MAGIC

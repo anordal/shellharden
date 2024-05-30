@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::WhatNow;
 use crate::situation::pop;
@@ -24,19 +25,19 @@ pub struct SitRvalue {
 }
 
 impl Situation for SitRvalue {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, &a) in horizon.iter().enumerate() {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, &a) in horizon.input.iter().enumerate() {
 			if a == b'(' {
 				return push((i, 1, None), Box::new(SitArray {}));
 			}
-			if let Some(res) = common_cmd_quoting_unneeded(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_cmd_quoting_unneeded(self.end_trigger, horizon, i) {
 				return res;
 			}
 			if is_whitespace(a) {
 				return pop(i, 1, None);
 			}
 		}
-		flush_or_pop(horizon.len())
+		flush_or_pop(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_NORMAL
@@ -46,13 +47,13 @@ impl Situation for SitRvalue {
 struct SitArray {}
 
 impl Situation for SitArray {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, _) in horizon.iter().enumerate() {
-			if let Some(res) = common_expr(u16::from(b')'), horizon, i, is_horizon_lengthenable) {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, _) in horizon.input.iter().enumerate() {
+			if let Some(res) = common_expr(u16::from(b')'), horizon, i) {
 				return res;
 			}
 		}
-		flush(horizon.len())
+		flush(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_NORMAL

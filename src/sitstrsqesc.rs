@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::WhatNow;
 use crate::situation::flush;
@@ -18,8 +19,8 @@ use crate::sitextent::push_extent;
 pub struct SitStrSqEsc {}
 
 impl Situation for SitStrSqEsc {
-	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, &a) in horizon.iter().enumerate() {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, &a) in horizon.input.iter().enumerate() {
 			if a == b'\\' {
 				return push_extent(COLOR_ESC, i, 2);
 			}
@@ -27,7 +28,7 @@ impl Situation for SitStrSqEsc {
 				return pop(i, 1, None);
 			}
 		}
-		flush(horizon.len())
+		flush(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_SQESC

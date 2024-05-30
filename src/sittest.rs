@@ -7,6 +7,7 @@
  */
 
 use crate::situation::COLOR_NORMAL;
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::Transition;
 use crate::situation::WhatNow;
@@ -28,12 +29,12 @@ pub struct SitTest {
 }
 
 impl Situation for SitTest {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		if horizon.len() >= 4 {
-			let is_emptystringtest = prefixlen(horizon, b"-z ") == 3;
-			let is_nonemptystringtest = prefixlen(horizon, b"-n ") == 3;
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		if horizon.input.len() >= 4 {
+			let is_emptystringtest = prefixlen(horizon.input, b"-z ") == 3;
+			let is_nonemptystringtest = prefixlen(horizon.input, b"-n ") == 3;
 			if is_emptystringtest || is_nonemptystringtest {
-				let suggest = common_token(self.end_trigger, horizon, 3, is_horizon_lengthenable);
+				let suggest = common_token(self.end_trigger, horizon, 3);
 				if let Some(ref exciting) = suggest {
 					if let Transition::Push(_) = &exciting.transition {
 						let end_replace: &'static [u8] = if is_emptystringtest {
@@ -42,22 +43,22 @@ impl Situation for SitTest {
 							b" != \"\""
 						};
 						return push_hiddentest(suggest, end_replace, self.end_trigger);
-					} else if is_horizon_lengthenable {
+					} else if horizon.is_lengthenable {
 						return flush(0);
 					}
 				}
-			} else if prefixlen(horizon, b"x") == 1 {
-				if let Some(mut suggest) = common_token(self.end_trigger, horizon, 1, is_horizon_lengthenable) {
+			} else if prefixlen(horizon.input, b"x") == 1 {
+				if let Some(mut suggest) = common_token(self.end_trigger, horizon, 1) {
 					if let Transition::Push(_) = &suggest.transition {
 						let transition = std::mem::replace(&mut suggest.transition, Transition::Flush);
 						if let Transition::Push(state) = transition {
 							let (pre, len, _) = suggest.transform;
 							let progress = pre + len;
-							if let Ok(found) = find_xyes_comparison(&horizon[progress ..], state) {
+							if let Ok(found) = find_xyes_comparison(&horizon.input[progress ..], state) {
 								if found {
 									return push_xyes(self.end_trigger);
 								}
-								if is_horizon_lengthenable {
+								if horizon.is_lengthenable {
 									return flush(0);
 								}
 							}
@@ -67,7 +68,7 @@ impl Situation for SitTest {
 					}
 				}
 			}
-		} else if is_horizon_lengthenable {
+		} else if horizon.is_lengthenable {
 			return flush(0);
 		}
 		become_regular(self.end_trigger)
@@ -117,7 +118,7 @@ struct SitHiddenTest {
 }
 
 impl Situation for SitHiddenTest {
-	fn whatnow(&mut self, _horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
+	fn whatnow(&mut self, _horizon: Horizon) -> WhatNow {
 		let initial_adventure = self.inner.take();
 		if let Some(mut exciting) = initial_adventure {
 			exciting.transform.0 = 0;
@@ -136,24 +137,24 @@ struct SitXyes {
 }
 
 impl Situation for SitXyes {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, &a) in horizon.iter().enumerate() {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, &a) in horizon.input.iter().enumerate() {
 			if a == b'x' {
 				let mut replacement: &'static [u8] = b"\"\"";
-				if i+1 < horizon.len() {
-					if is_word(horizon[i+1]) {
+				if i+1 < horizon.input.len() {
+					if is_word(horizon.input[i+1]) {
 						replacement = b"";
 					}
-				} else if i > 0 || is_horizon_lengthenable {
+				} else if i > 0 || horizon.is_lengthenable {
 					return flush(i);
 				}
 				return become_regular_with((i, 1, Some(replacement)), self.end_trigger);
 			}
-			if let Some(res) = common_arg(self.end_trigger, horizon, i, is_horizon_lengthenable) {
+			if let Some(res) = common_arg(self.end_trigger, horizon, i) {
 				return res;
 			}
 		}
-		flush_or_pop(horizon.len())
+		flush_or_pop(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_NORMAL

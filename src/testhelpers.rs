@@ -73,12 +73,12 @@ fn sit_eq(a: &dyn Situation, b: &dyn Situation) -> bool {
 }
 
 macro_rules! sit_expect {
-	($sit:expr, $horizon:expr, $expect_mid:expr, $expect_eof:expr) => {
-		assert!(whatnow_eq($horizon.len(), &$sit.whatnow($horizon, true), $expect_mid));
-		assert!(whatnow_eq($horizon.len(), &$sit.whatnow($horizon, false), $expect_eof));
+	($sit:expr, $inputhorizon:expr, $expect_mid:expr, $expect_eof:expr) => {
+		assert!(whatnow_eq($inputhorizon.len(), &$sit.whatnow(Horizon{input: $inputhorizon, is_lengthenable: true}), $expect_mid));
+		assert!(whatnow_eq($inputhorizon.len(), &$sit.whatnow(Horizon{input: $inputhorizon, is_lengthenable: false}), $expect_eof));
 	};
-	($sit:expr, $horizon:expr, $expect_same:expr) => {
-		assert!(whatnow_eq($horizon.len(), &$sit.whatnow($horizon, true), $expect_same));
-		assert!(whatnow_eq($horizon.len(), &$sit.whatnow($horizon, false), $expect_same));
+	($sit:expr, $inputhorizon:expr, $expect_same:expr) => {
+		assert!(whatnow_eq($inputhorizon.len(), &$sit.whatnow(Horizon{input: $inputhorizon, is_lengthenable: true}), $expect_same));
+		assert!(whatnow_eq($inputhorizon.len(), &$sit.whatnow(Horizon{input: $inputhorizon, is_lengthenable: false}), $expect_same));
 	};
 }

@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use crate::situation::Horizon;
 use crate::situation::WhatNow;
 use crate::situation::flush;
 use crate::situation::if_needed;
@@ -44,26 +45,25 @@ use crate::sitvec::SitVec;
 
 pub fn keyword_or_command(
 	end_trigger :u16,
-	horizon: &[u8],
+	horizon: Horizon,
 	i: usize,
-	is_horizon_lengthenable: bool,
 ) -> WhatNow {
-	if horizon[i] == b'#' {
+	if horizon.input[i] == b'#' {
 		return push_comment(i);
 	}
-	let (found, len) = find_lvalue(&horizon[i..]);
-	if found == Tri::Maybe && (i > 0 || is_horizon_lengthenable) {
+	let (found, len) = find_lvalue(&horizon.input[i..]);
+	if found == Tri::Maybe && (i > 0 || horizon.is_lengthenable) {
 		return flush(i);
 	}
 	if found == Tri::Yes {
 		return push((i + len, 0, None), Box::new(SitRvalue { end_trigger }));
 	}
-	let len = predlen(is_word, &horizon[i..]);
-	let len = if len != 0 { len } else { prefixlen(&horizon[i..], b"((") };
-	if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
+	let len = predlen(is_word, &horizon.input[i..]);
+	let len = if len != 0 { len } else { prefixlen(&horizon.input[i..], b"((") };
+	if i + len == horizon.input.len() && (i > 0 || horizon.is_lengthenable) {
 		return flush(i);
 	}
-	let word = &horizon[i..i+len];
+	let word = &horizon.input[i..i+len];
 	match word {
 		b"(" => push(
 			(i, 1, None),
@@ -95,7 +95,7 @@ pub fn keyword_or_command(
 		b"{" |
 		b"}" => push_extent(COLOR_KWD, i, len),
 		b"[" |
-		b"test" if predlen(|x| x == b' ', &horizon[i + len ..]) == 1 => {
+		b"test" if predlen(|x| x == b' ', &horizon.input[i + len ..]) == 1 => {
 			push((i, len + 1, None), Box::new(SitTest { end_trigger }))
 		},
 		_ => push((i, 0, None), Box::new(SitCmd { end_trigger })),
@@ -104,50 +104,46 @@ pub fn keyword_or_command(
 
 pub fn common_arg(
 	end_trigger :u16,
-	horizon :&[u8],
+	horizon :Horizon,
 	i :usize,
-	is_horizon_lengthenable :bool,
 ) -> Option<WhatNow> {
-	if let Some(res) = find_command_enders(horizon, i, is_horizon_lengthenable) {
+	if let Some(res) = find_command_enders(horizon, i) {
 		return Some(res);
 	}
-	common_expr(end_trigger, horizon, i, is_horizon_lengthenable)
+	common_expr(end_trigger, horizon, i)
 }
 
 pub fn common_cmd(
 	end_trigger :u16,
-	horizon :&[u8],
+	horizon :Horizon,
 	i :usize,
-	is_horizon_lengthenable :bool,
 ) -> Option<WhatNow> {
-	if let Some(res) = find_command_enders(horizon, i, is_horizon_lengthenable) {
+	if let Some(res) = find_command_enders(horizon, i) {
 		return Some(res);
 	}
-	common_token(end_trigger, horizon, i, is_horizon_lengthenable)
+	common_token(end_trigger, horizon, i)
 }
 
 pub fn common_expr(
 	end_trigger :u16,
-	horizon :&[u8],
+	horizon :Horizon,
 	i :usize,
-	is_horizon_lengthenable :bool,
 ) -> Option<WhatNow> {
-	if horizon[i] == b'#' {
+	if horizon.input[i] == b'#' {
 		return Some(push_comment(i));
 	}
-	common_token(end_trigger, horizon, i, is_horizon_lengthenable)
+	common_token(end_trigger, horizon, i)
 }
 
 pub fn common_token(
 	end_trigger :u16,
-	horizon :&[u8],
+	horizon :Horizon,
 	i :usize,
-	is_horizon_lengthenable :bool,
 ) -> Option<WhatNow> {
-	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable, true) {
+	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, true) {
 		return Some(res);
 	}
-	match common_str_cmd(horizon, i, is_horizon_lengthenable, QuotingCtx::Need) {
+	match common_str_cmd(horizon, i, QuotingCtx::Need) {
 		CommonStrCmdResult::None => None,
 		CommonStrCmdResult::Some(x) => Some(x),
 		CommonStrCmdResult::OnlyWithQuotes(_) => Some(push(
@@ -161,38 +157,35 @@ pub fn common_token(
 
 pub fn common_cmd_quoting_unneeded(
 	end_trigger :u16,
-	horizon :&[u8],
+	horizon :Horizon,
 	i :usize,
-	is_horizon_lengthenable :bool,
 ) -> Option<WhatNow> {
-	if let Some(res) = find_command_enders(horizon, i, is_horizon_lengthenable) {
+	if let Some(res) = find_command_enders(horizon, i) {
 		return Some(res);
 	}
-	common_token_quoting_unneeded(end_trigger, horizon, i, is_horizon_lengthenable)
+	common_token_quoting_unneeded(end_trigger, horizon, i)
 }
 
 pub fn common_expr_quoting_unneeded(
 	end_trigger :u16,
-	horizon :&[u8],
+	horizon :Horizon,
 	i :usize,
-	is_horizon_lengthenable :bool,
 ) -> Option<WhatNow> {
-	if horizon[i] == b'#' {
+	if horizon.input[i] == b'#' {
 		return Some(push_comment(i));
 	}
-	common_token_quoting_unneeded(end_trigger, horizon, i, is_horizon_lengthenable)
+	common_token_quoting_unneeded(end_trigger, horizon, i)
 }
 
 pub fn common_token_quoting_unneeded(
 	end_trigger :u16,
-	horizon :&[u8],
+	horizon :Horizon,
 	i :usize,
-	is_horizon_lengthenable :bool,
 ) -> Option<WhatNow> {
-	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, is_horizon_lengthenable, false) {
+	if let Some(res) = find_usual_suspects(end_trigger, horizon, i, false) {
 		return Some(res);
 	}
-	match common_str_cmd(horizon, i, is_horizon_lengthenable, QuotingCtx::Dontneed) {
+	match common_str_cmd(horizon, i, QuotingCtx::Dontneed) {
 		CommonStrCmdResult::None => None,
 		CommonStrCmdResult::Some(x) => Some(x),
 		CommonStrCmdResult::OnlyWithQuotes(x) => {
@@ -200,7 +193,7 @@ pub fn common_token_quoting_unneeded(
 			if let Some(replacement) = alt {
 				if replacement.len() >= len {
 					#[allow(clippy::collapsible_if)] // Could be expanded.
-					if horizon[i] == b'`' {
+					if horizon.input[i] == b'`' {
 						return Some(push(
 							(i, 1, None),
 							Box::new(SitNormal {
@@ -218,18 +211,17 @@ pub fn common_token_quoting_unneeded(
 
 // Does not pop on eof → Callers must use flush_or_pop
 fn find_command_enders(
-	horizon :&[u8],
+	horizon :Horizon,
 	i :usize,
-	is_horizon_lengthenable :bool,
 ) -> Option<WhatNow> {
-	let plen = prefixlen(&horizon[i..], b">&");
+	let plen = prefixlen(&horizon.input[i..], b">&");
 	if plen == 2 {
 		return Some(flush(i + 2));
 	}
-	if i + plen == horizon.len() && (i > 0 || is_horizon_lengthenable) {
+	if i + plen == horizon.input.len() && (i > 0 || horizon.is_lengthenable) {
 		return Some(flush(i));
 	}
-	let a = horizon[i];
+	let a = horizon.input[i];
 	if a == b'\n' || a == b';' || a == b'|' || a == b'&' {
 		return Some(pop(i, 0, None));
 	}
@@ -238,12 +230,11 @@ fn find_command_enders(
 
 fn find_usual_suspects(
 	end_trigger :u16,
-	horizon :&[u8],
+	horizon :Horizon,
 	i :usize,
-	is_horizon_lengthenable :bool,
 	quoting_needed : bool,
 ) -> Option<WhatNow> {
-	let a = horizon[i];
+	let a = horizon.input[i];
 	if u16::from(a) == end_trigger {
 		return Some(pop(i, 0, None));
 	}
@@ -260,13 +251,13 @@ fn find_usual_suspects(
 		return Some(push((i, 1, None), Box::new(SitStrDq::new())));
 	}
 	if a == b'$' {
-		if i+1 >= horizon.len() {
-			if i > 0 || is_horizon_lengthenable {
+		if i+1 >= horizon.input.len() {
+			if i > 0 || horizon.is_lengthenable {
 				return Some(flush(i));
 			}
 			return None;
 		}
-		let b = horizon[i+1];
+		let b = horizon.input[i+1];
 		if b == b'\'' {
 			return Some(push((i, 2, None), Box::new(SitStrSqEsc {})));
 		} else if b == b'*' {
@@ -274,9 +265,9 @@ fn find_usual_suspects(
 			return Some(push_replaceable(COLOR_VAR, i, 2, if_needed(quoting_needed, b"\"$@\"")));
 		}
 	}
-	let (ate, delimiter) = find_heredoc(&horizon[i ..]);
-	if i + ate == horizon.len() {
-		if i > 0 || is_horizon_lengthenable {
+	let (ate, delimiter) = find_heredoc(&horizon.input[i ..]);
+	if i + ate == horizon.input.len() {
+		if i > 0 || horizon.is_lengthenable {
 			return Some(flush(i));
 		}
 	} else if !delimiter.is_empty() {

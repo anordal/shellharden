@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::WhatNow;
 use crate::situation::flush;
@@ -41,8 +42,8 @@ impl SitVarBrace {
 }
 
 impl Situation for SitVarBrace {
-	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, c) in horizon.iter().enumerate() {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, c) in horizon.input.iter().enumerate() {
 			match (self.state, c) {
 				(State::Name, b'a' ..= b'z') |
 				(State::Name, b'A' ..= b'Z') |
@@ -67,7 +68,7 @@ impl Situation for SitVarBrace {
 				(State::Escape, _) => self.state = State::Normal,
 			}
 		}
-		flush(horizon.len())
+		flush(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_VAR

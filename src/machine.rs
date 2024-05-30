@@ -15,6 +15,7 @@ use crate::filestream::InputSource;
 use crate::filestream::FileOut;
 use crate::filestream::OutputSink;
 
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::Transition;
 use crate::situation::COLOR_NORMAL;
@@ -131,8 +132,11 @@ fn stackmachine(
 ) -> Result<usize, Error> {
 	let mut pos :usize = 0;
 	loop {
-		let horizon :&[u8] = &buf[pos ..];
-		let is_horizon_lengthenable = horizon.len() < MAXHORIZON && !eof;
+		let inputhorizon = &buf[pos ..];
+		let horizon = Horizon {
+			input: inputhorizon,
+			is_lengthenable: inputhorizon.len() < MAXHORIZON && !eof,
+		};
 		let stacksize_pre = state.len();
 		let statebox: &mut Box<dyn Situation> = if let Some(innerstate) = state.last_mut() {
 			innerstate
@@ -141,7 +145,7 @@ fn stackmachine(
 		};
 		let curstate = statebox.as_mut();
 		let color_pre = if sett.syntax { curstate.get_color() } else { COLOR_NORMAL };
-		let whatnow = curstate.whatnow(horizon, is_horizon_lengthenable);
+		let whatnow = curstate.whatnow(horizon);
 		let (pre, len, alt) = whatnow.transform;
 
 		if alt.is_some() {
@@ -152,10 +156,10 @@ fn stackmachine(
 		}
 
 		write_colored_slice(
-			out, color_cur, color_pre, &horizon[.. pre]
+			out, color_cur, color_pre, &horizon.input[.. pre]
 		).map_err(Error::Stdio)?;
 		let progress = pre + len;
-		let replaceable = &horizon[pre .. progress];
+		let replaceable = &horizon.input[pre .. progress];
 
 		match (whatnow.transition, eof) {
 			(Transition::Flush, _) | (Transition::FlushPopOnEof, false) => {

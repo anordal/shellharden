@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::WhatNow;
 use crate::situation::flush;
@@ -19,9 +20,9 @@ pub struct SitUntilByte {
 }
 
 impl Situation for SitUntilByte {
-	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
-		let len = predlen(|x| x != self.until, horizon);
-		if len < horizon.len() {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		let len = predlen(|x| x != self.until, horizon.input);
+		if len < horizon.input.len() {
 			pop(len, 1, None)
 		} else {
 			flush(len)

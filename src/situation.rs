@@ -1,19 +1,26 @@
 /*
- * Copyright 2016 - 2019 Andreas Nordal
+ * Copyright 2016 - 2024 Andreas Nordal
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-pub struct UnsupportedSyntax {
-	pub typ: &'static str,
-	pub msg: &'static str,
+#[derive(Copy)]
+#[derive(Clone)]
+pub struct Horizon<'a>{
+	pub input: &'a [u8],
+	pub is_lengthenable: bool,
 }
 
 pub trait Situation {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow;
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow;
 	fn get_color(&self) -> u32;
+}
+
+pub struct UnsupportedSyntax {
+	pub typ: &'static str,
+	pub msg: &'static str,
 }
 
 pub enum Transition {

@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::Transition;
 use crate::sitextent::SitExtent;
@@ -26,27 +27,25 @@ use crate::commonargcmd::common_expr_quoting_unneeded;
 pub struct SitCase {}
 
 impl Situation for SitCase {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, _) in horizon.iter().enumerate() {
-			let len = predlen(is_lowercase, &horizon[i..]);
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, _) in horizon.input.iter().enumerate() {
+			let len = predlen(is_lowercase, &horizon.input[i..]);
 			if len == 0 {
-				if let Some(res) = common_expr_quoting_unneeded(
-					0x100, horizon, i, is_horizon_lengthenable
-				) {
+				if let Some(res) = common_expr_quoting_unneeded(0x100, horizon, i) {
 					return res;
 				}
 				continue;
 			}
-			if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
+			if i + len == horizon.input.len() && (i > 0 || horizon.is_lengthenable) {
 				return flush(i);
 			}
-			let word = &horizon[i..i+len];
+			let word = &horizon.input[i..i+len];
 			if word == b"in" {
 				return become_case_in(i + len);
 			}
 			return flush(i + len);
 		}
-		flush(horizon.len())
+		flush(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_KWD
@@ -56,30 +55,28 @@ impl Situation for SitCase {
 struct SitCaseIn {}
 
 impl Situation for SitCaseIn {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, &a) in horizon.iter().enumerate() {
-			let len = predlen(is_lowercase, &horizon[i..]);
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, &a) in horizon.input.iter().enumerate() {
+			let len = predlen(is_lowercase, &horizon.input[i..]);
 			if len == 0 {
 				if a == b')' {
 					return push((i, 1, None), Box::new(SitCaseArm {}));
 				}
-				if let Some(res) = common_expr_quoting_unneeded(
-					0x100, horizon, i, is_horizon_lengthenable
-				) {
+				if let Some(res) = common_expr_quoting_unneeded(0x100, horizon, i) {
 					return res;
 				}
 				continue;
 			}
-			if i + len == horizon.len() && (i > 0 || is_horizon_lengthenable) {
+			if i + len == horizon.input.len() && (i > 0 || horizon.is_lengthenable) {
 				return flush(i);
 			}
-			let word = &horizon[i..i+len];
+			let word = &horizon.input[i..i+len];
 			if word == b"esac" {
 				return pop_kw(i, len);
 			}
 			return flush(i + len);
 		}
-		flush(horizon.len())
+		flush(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_NORMAL
@@ -89,14 +86,14 @@ impl Situation for SitCaseIn {
 struct SitCaseArm {}
 
 impl Situation for SitCaseArm {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		for (i, &a) in horizon.iter().enumerate() {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		for (i, &a) in horizon.input.iter().enumerate() {
 			if a == b';' {
-				if i + 1 < horizon.len() {
-					if horizon[i + 1] == b';' {
+				if i + 1 < horizon.input.len() {
+					if horizon.input[i + 1] == b';' {
 						return pop(i, 0, None);
 					}
-				} else if i > 0 || is_horizon_lengthenable {
+				} else if i > 0 || horizon.is_lengthenable {
 					return flush(i);
 				}
 			}
@@ -104,16 +101,16 @@ impl Situation for SitCaseArm {
 				continue;
 			}
 			// Premature esac: Survive and rewrite.
-			let len = predlen(is_lowercase, &horizon[i..]);
-			if i + len != horizon.len() || (i == 0 && !is_horizon_lengthenable) {
-				let word = &horizon[i..i+len];
+			let len = predlen(is_lowercase, &horizon.input[i..]);
+			if i + len != horizon.input.len() || (i == 0 && !horizon.is_lengthenable) {
+				let word = &horizon.input[i..i+len];
 				if word == b"esac" {
 					return pop(i, 0, Some(b";; "));
 				}
 			}
-			return keyword_or_command(0x100, horizon, i, is_horizon_lengthenable);
+			return keyword_or_command(0x100, horizon, i);
 		}
-		flush(horizon.len())
+		flush(horizon.input.len())
 	}
 	fn get_color(&self) -> u32 {
 		COLOR_NORMAL

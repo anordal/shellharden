@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::Transition;
 use crate::situation::WhatNow;
@@ -19,11 +20,11 @@ pub struct SitVarIdent {
 }
 
 impl Situation for SitVarIdent {
-	fn whatnow(&mut self, horizon: &[u8], _is_horizon_lengthenable: bool) -> WhatNow {
-		let len = predlen(is_identifiertail, horizon);
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		let len = predlen(is_identifiertail, horizon.input);
 		WhatNow {
 			transform: (len, 0, self.end_insert),
-			transition: if len < horizon.len() {
+			transition: if len < horizon.input.len() {
 				Transition::Pop
 			} else {
 				Transition::FlushPopOnEof

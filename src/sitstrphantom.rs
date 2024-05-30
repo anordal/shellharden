@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use crate::situation::Horizon;
 use crate::situation::Situation;
 use crate::situation::Transition;
 use crate::situation::WhatNow;
@@ -26,25 +27,25 @@ pub struct SitStrPhantom {
 }
 
 impl Situation for SitStrPhantom {
-	fn whatnow(&mut self, horizon: &[u8], is_horizon_lengthenable: bool) -> WhatNow {
-		let mouthful = predlen(is_phantomstringfood, horizon);
-		if mouthful == horizon.len() {
-			if is_horizon_lengthenable {
+	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
+		let mouthful = predlen(is_phantomstringfood, horizon.input);
+		if mouthful == horizon.input.len() {
+			if horizon.is_lengthenable {
 				return flush(0);
 			}
-		} else if u16::from(horizon[mouthful]) != self.cmd_end_trigger {
-			match horizon[mouthful] {
+		} else if u16::from(horizon.input[mouthful]) != self.cmd_end_trigger {
+			match horizon.input[mouthful] {
 				b'\"' => {
 					return become_real(mouthful);
 				}
 				b'$' | b'`' => {
-					match common_str_cmd(horizon, mouthful, is_horizon_lengthenable, QuotingCtx::Need) {
+					match common_str_cmd(horizon, mouthful, QuotingCtx::Need) {
 						CommonStrCmdResult::None => {}
 						CommonStrCmdResult::Some(consult) |
 						CommonStrCmdResult::OnlyWithQuotes(consult) => {
 							match consult.transition {
 								Transition::Flush | Transition::FlushPopOnEof => {
-									if is_horizon_lengthenable {
+									if horizon.is_lengthenable {
 										return flush(0);
 									}
 								}
