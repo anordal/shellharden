@@ -35,7 +35,15 @@ do
 done
 
 \
+oddvar=$ivar a b && \
 [[ $ivar ]]
+case $ivar in
+	*)
+		\
+		oddvar=$ivar a b && \
+		[[ $ivar ]]
+	;;
+esac
 
 true \
 # Comments don't have line continuations. \

@@ -135,6 +135,10 @@ fn pop_kw(pre: usize, len: usize) -> WhatNow {
 use crate::testhelpers::*;
 #[cfg(test)]
 use crate::sitcmd::SitCmd;
+#[cfg(test)]
+use crate::situation::COLOR_ESC;
+#[cfg(test)]
+use crate::sitextent::push_extent;
 
 #[test]
 fn test_sit_case() {
@@ -171,6 +175,7 @@ fn test_sit_casearm() {
 
 	sit_expect!(SitCaseArm{}, b"", &flush(0));
 	sit_expect!(SitCaseArm{}, b" ", &flush(1));
+	sit_expect!(SitCaseArm{}, b"\\", &push_extent(COLOR_ESC, 0, 2));
 	sit_expect!(SitCaseArm{}, b";", &flush(0), &flush(1));
 	sit_expect!(SitCaseArm{}, b"; ", &flush(2));
 	sit_expect!(SitCaseArm{}, b" ;", &flush(1));

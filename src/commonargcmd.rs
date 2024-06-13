@@ -16,6 +16,7 @@ use crate::situation::COLOR_HERE;
 use crate::situation::COLOR_KWD;
 use crate::situation::COLOR_SQ;
 use crate::situation::COLOR_VAR;
+use crate::situation::COLOR_ESC;
 
 use crate::microparsers::prefixlen;
 use crate::microparsers::predlen;
@@ -50,6 +51,9 @@ pub fn keyword_or_command(
 ) -> WhatNow {
 	if horizon.input[i] == b'#' {
 		return push_comment(i);
+	}
+	if horizon.input[i] == b'\\' {
+		return push_extent(COLOR_ESC, i, 2);
 	}
 	let (found, len) = find_lvalue(&horizon.input[i..]);
 	if found == Tri::Maybe && (i > 0 || horizon.is_lengthenable) {
