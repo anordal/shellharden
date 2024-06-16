@@ -32,6 +32,9 @@ pub struct SitFor {}
 impl Situation for SitFor {
 	fn whatnow(&mut self, horizon: Horizon) -> WhatNow {
 		for (i, &a) in horizon.input.iter().enumerate() {
+			if is_whitespace(a) && a != b'\n' {
+				continue;
+			}
 			let len = predlen(is_lowercase, &horizon.input[i..]);
 			if i + len == horizon.input.len() && (i > 0 || horizon.is_lengthenable) {
 				return flush(i);
@@ -43,9 +46,7 @@ impl Situation for SitFor {
 			if is_identifierhead(a) {
 				return push_varident(i, 1);
 			}
-			if !is_whitespace(a) || a == b'\n' {
-				return pop(i, 0, None);
-			}
+			return pop(i, 0, None);
 		}
 		flush(horizon.input.len())
 	}
