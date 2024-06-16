@@ -15,16 +15,15 @@ use crate::situation::pop;
 use crate::situation::push;
 use crate::situation::COLOR_KWD;
 use crate::situation::COLOR_VAR;
+use crate::situation::COLOR_LVAL;
 use crate::situation::COLOR_NORMAL;
 
 use crate::microparsers::identifierlen;
-use crate::microparsers::is_lowercase;
-use crate::microparsers::is_identifierhead;
 use crate::microparsers::is_identifiertail;
 use crate::microparsers::is_whitespace;
 use crate::microparsers::predlen;
 
-use crate::sitvarident::SitVarIdent;
+use crate::sitextent::push_extent;
 use crate::commonargcmd::common_arg;
 
 pub struct SitFor {}
@@ -35,16 +34,16 @@ impl Situation for SitFor {
 			if is_whitespace(a) && a != b'\n' {
 				continue;
 			}
-			let len = predlen(is_lowercase, &horizon.input[i..]);
+			let len = identifierlen(&horizon.input[i..]);
 			if i + len == horizon.input.len() && (i > 0 || horizon.is_lengthenable) {
 				return flush(i);
 			}
-			let word = &horizon.input[i..i+len];
-			if word == b"in" {
-				return push_forin(i);
-			}
-			if is_identifierhead(a) {
-				return push_varident(i, 1);
+			if len > 0 {
+				let word = &horizon.input[i..i+len];
+				if word == b"in" {
+					return push_forin(i);
+				}
+				return push_extent(COLOR_LVAL, i, len);
 			}
 			return pop(i, 0, None);
 		}
@@ -122,10 +121,6 @@ fn push_forin(pre: usize) -> WhatNow {
 	push((pre, 2, None), Box::new(SitForIn {}))
 }
 
-fn push_varident(pre: usize, len: usize) -> WhatNow {
-	push((pre, len, None), Box::new(SitVarIdent { end_insert: None }))
-}
-
 fn become_for_in_necessarily_array(pre: usize) -> WhatNow {
 	WhatNow {
 		transform: (pre, 1, Some(b"\"${")),
@@ -149,10 +144,10 @@ fn test_sit_for() {
 	sit_expect!(SitFor{}, b" ", &flush(1));
 	sit_expect!(SitFor{}, b"\n", &pop(0, 0, None));
 	sit_expect!(SitFor{}, b";", &pop(0, 0, None));
-	sit_expect!(SitFor{}, b"_azAZ09\n", &push_varident(0, 1));
-	sit_expect!(SitFor{}, b"_azAZ09;", &push_varident(0, 1));
-	sit_expect!(SitFor{}, b"inn\n", &push_varident(0, 1));
-	sit_expect!(SitFor{}, b"inn;", &push_varident(0, 1));
+	sit_expect!(SitFor{}, b"_azAZ09\n", &push_extent(COLOR_LVAL, 0, 7));
+	sit_expect!(SitFor{}, b"_azAZ09;", &push_extent(COLOR_LVAL, 0, 7));
+	sit_expect!(SitFor{}, b"inn\n", &push_extent(COLOR_LVAL, 0, 3));
+	sit_expect!(SitFor{}, b"inn;", &push_extent(COLOR_LVAL, 0, 3));
 	sit_expect!(SitFor{}, b"in\n", &push_forin(0));
 	sit_expect!(SitFor{}, b"in;", &push_forin(0));
 	sit_expect!(SitFor{}, b"in ", &push_forin(0));

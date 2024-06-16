@@ -36,7 +36,7 @@ use crate::sitcomment::SitComment;
 use crate::sitextent::push_extent;
 use crate::sitextent::push_replaceable;
 use crate::sitmagic::push_magic;
-use crate::sitrvalue::SitRvalue;
+use crate::sitrvalue::SitLvalue;
 use crate::sitstrdq::SitStrDq;
 use crate::sitstrphantom::SitStrPhantom;
 use crate::sitstrsqesc::SitStrSqEsc;
@@ -60,7 +60,7 @@ pub fn keyword_or_command(
 		return flush(i);
 	}
 	if found == Tri::Yes {
-		return push((i + len, 0, None), Box::new(SitRvalue { end_trigger }));
+		return push((i, 0, None), Box::new(SitLvalue { len, end_trigger }));
 	}
 	let len = predlen(is_word, &horizon.input[i..]);
 	let len = if len != 0 { len } else { prefixlen(&horizon.input[i..], b"((") };
@@ -321,7 +321,6 @@ pub fn find_lvalue(horizon: &[u8]) -> (Tri, usize) {
 			return (Tri::Maybe, ate);
 		}
 		let byte :u8 = horizon[ate];
-		ate += 1;
 
 		// Recursion: There is now an expression_tracker() if needed.
 		match (state, byte) {
@@ -334,6 +333,7 @@ pub fn find_lvalue(horizon: &[u8]) -> (Tri, usize) {
 			(Lex::Pluss, _) => return (Tri::No, ate),
 			(Lex::Brack, _) => {}
 		}
+		ate += 1;
 	}
 }
 
@@ -403,13 +403,13 @@ fn test_find_lvalue() {
 	assert!(find_lvalue(b"[]") == (Tri::No, 0));
 	assert!(find_lvalue(b"esa") == (Tri::Maybe, 3));
 	assert!(find_lvalue(b"esa+") == (Tri::Maybe, 4));
-	assert!(find_lvalue(b"esa+  ") == (Tri::No, 5));
+	assert!(find_lvalue(b"esa+  ") == (Tri::No, 4));
 	assert!(find_lvalue(b"esa[]") == (Tri::Maybe, 5));
 	assert!(find_lvalue(b"esa[]+") == (Tri::Maybe, 6));
-	assert!(find_lvalue(b"esa ") == (Tri::No, 4));
-	assert!(find_lvalue(b"esa]") == (Tri::No, 4));
-	assert!(find_lvalue(b"esa=") == (Tri::Yes, 4));
-	assert!(find_lvalue(b"esa+=") == (Tri::Yes, 5));
-	assert!(find_lvalue(b"esa[]=") == (Tri::Yes, 6));
-	assert!(find_lvalue(b"esa[]+=") == (Tri::Yes, 7));
+	assert!(find_lvalue(b"esa ") == (Tri::No, 3));
+	assert!(find_lvalue(b"esa]") == (Tri::No, 3));
+	assert!(find_lvalue(b"esa=") == (Tri::Yes, 3));
+	assert!(find_lvalue(b"esa+=") == (Tri::Yes, 4));
+	assert!(find_lvalue(b"esa[]=") == (Tri::Yes, 5));
+	assert!(find_lvalue(b"esa[]+=") == (Tri::Yes, 6));
 }
