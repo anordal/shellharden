@@ -1,22 +1,23 @@
-# Not done
 
-## Nice haves:
+# Features
 * -c 'check this'
 * Things that never work: $10 and [ -n $var ]:
   Fail by default, add --unbreak/--fix-neverworking
+* --keep-varbraces
 
-# Language features
+# Rewriting
+* sort | uniq → sort -u (man 1p sort approves)
 * alias → function
 * eval is evil: Color blinking red?
 * for i in seq → for ((i…))
 * for i in … → while read < <(…)
 
-## Code organisation
+# Code organisation
 * reduce perilous boilerplate
   * make flush an error for easier propagation
 * approach agreement with rust-fmt
 
-## Write about:
+# Write about:
 * errexit → errtrace ?
 * Gotcha: Command substitution "$()" trims whitespace
 * Useless uses of find
