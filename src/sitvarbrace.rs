@@ -22,6 +22,7 @@ enum State{
 	Name,
 	Index,
 	Normal,
+	Dollar,
 	Escape,
 }
 
@@ -54,8 +55,9 @@ impl Situation for SitVarBrace {
 					self.state = State::Normal;
 					return push_replaceable(COLOR_VAR, i, 1, Some(b"@"));
 				}
-				(State::Normal, b'{') => self.depth += 1,
-				(State::Name | State::Index | State::Normal, b'}') => {
+				(State::Normal, b'$') => self.state = State::Dollar,
+				(State::Dollar, b'{') => self.depth += 1,
+				(State::Name | State::Index | State::Normal | State::Dollar, b'}') => {
 					self.depth -= 1;
 					if self.depth == 0 {
 						return pop(i, 1, if_needed(self.end_rm, b""));
@@ -65,6 +67,7 @@ impl Situation for SitVarBrace {
 				(State::Index, _) => self.state = State::Normal,
 				(State::Normal, b'\\') => self.state = State::Escape,
 				(State::Normal, _) => {}
+				(State::Dollar, _) |
 				(State::Escape, _) => self.state = State::Normal,
 			}
 		}

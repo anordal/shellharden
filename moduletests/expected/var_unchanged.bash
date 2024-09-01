@@ -67,3 +67,13 @@ echo "${subst##*/}"
 echo "${subst#*/}"
 echo "${subst%/*}"
 echo "${subst%%/*}"
+
+option2='abc[<{().[]def[<{().[]ghi'
+option2=${option2%%[<{().[]*}
+test "$option2" = abc && echo yes || echo no
+
+option2='abc[<{().[]def[<{().[]ghi'
+rm='[<{().[]'
+option2=${option2%%${rm}*}
+test "$option2" = abc && echo yes || echo no
+
