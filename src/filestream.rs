@@ -15,10 +15,10 @@ pub enum InputSource<'a> {
 }
 
 impl<'a> InputSource<'a> {
-	pub fn open_file(path: &std::ffi::OsString) -> Result<InputSource, std::io::Error> {
+	pub fn open_file(path: &std::ffi::OsString) -> Result<InputSource<'a>, std::io::Error> {
 		Ok(InputSource::File(std::fs::File::open(path)?))
 	}
-	pub fn open_stdin(stdin: &std::io::Stdin) -> InputSource {
+	pub fn open_stdin(stdin: &std::io::Stdin) -> InputSource<'a> {
 		InputSource::Stdin(stdin.lock())
 	}
 	pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error> {
@@ -51,7 +51,7 @@ pub struct FileOut<'a> {
 }
 
 impl<'a> FileOut<'a> {
-	pub fn open_stdout(stdout: &std::io::Stdout) -> FileOut {
+	pub fn open_stdout(stdout: &std::io::Stdout) -> FileOut<'a> {
 		FileOut{sink: OutputSink::Stdout(stdout.lock()), change: false}
 	}
 	pub fn open_soak(reserve: u64) -> FileOut<'a> {
