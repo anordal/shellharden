@@ -115,6 +115,18 @@ Which is perplexing enough, understandably, to be a documentation bug.
 
 Shellharden accepts unquoted backticks in contexts that don't require quotes, but otherwise rewrites them into the dollar-parenthesis form.
 
+### Gotcha: Command substitution trims trailing newlines
+
+Command substitution strips all trailing newlines from the captured output, even when quoted:
+
+```bash
+printf '<%s>\n' "$(printf 'a\n\n')"
+```
+
+This prints `<a>` because the trailing newlines are lost. Other whitespace (spaces, tabs, embedded newlines) is preserved when quoted; only trailing newlines are stripped regardless of quoting.
+
+If you need exact output, avoid command substitution: redirect to a file, or read output with `while IFS= read -r` / `mapfile` and handle newlines explicitly.
+
 ### Should I use curly braces?
 
 Variable substitution: This is not the controversy, but just to get it out of the way: These braces are of course needed:
