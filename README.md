@@ -1,6 +1,6 @@
 <img src="img/logo.png" align="right"/>
 
-[![Build and test status](https://github.com/anordal/shellharden/workflows/build-and-tests/badge.svg?branch=master)](https://github.com/anordal/shellharden/actions)
+[![Build and test status](https://github.com/anordal/shellharden/actions/workflows/build-and-tests.yml/badge.svg?branch=master)](https://github.com/anordal/shellharden/actions/workflows/build-and-tests.yml)
 
 Shellharden
 ===========
