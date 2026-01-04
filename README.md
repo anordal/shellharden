@@ -57,35 +57,47 @@ Distro packages:
 
 [Official rust package](https://crates.io/crates/shellharden):
 
-    cargo install shellharden
+```bash
+cargo install shellharden
+```
 
 Build from source
 -----------------
 
-    cargo build --release
+```bash
+cargo build --release
+```
 
 ### Install
 
-    mv target/release/shellharden ~/.local/bin/
+```bash
+mv target/release/shellharden ~/.local/bin/
+```
 
 ### Run tests
 
-    cargo test
+```bash
+cargo test
+```
 
 (requires bash)
 
 ### Test coverage
 
-    env RUSTFLAGS="-C instrument-coverage" LLVM_PROFILE_FILE='run-%m.profraw' cargo test
-    grcov . --binary-path ./target/debug/ -s . -t html -o ./coverage/
-    rm run-*.profraw
-    open coverage/src/index.html
+```bash
+env RUSTFLAGS="-C instrument-coverage" LLVM_PROFILE_FILE='run-%m.profraw' cargo test
+grcov . --binary-path ./target/debug/ -s . -t html -o ./coverage/
+rm run-*.profraw
+open coverage/src/index.html
+```
 
 ### Fuzz test
 
-    cargo install cargo-afl
-    cargo afl build --release
-    cargo afl fuzz -i moduletests/original -o /tmp/fuzz-shellharden target/release/shellharden ''
+```bash
+cargo install cargo-afl
+cargo afl build --release
+cargo afl fuzz -i moduletests/original -o /tmp/fuzz-shellharden target/release/shellharden ''
+```
 
 Usage advice
 ------------
