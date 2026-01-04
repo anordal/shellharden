@@ -39,7 +39,7 @@ fn help() {
 		\t--syntax          Output syntax highlighting with ANSI colors.\n\
 		\t--syntax-suggest  Diff with syntax highlighting (default mode).\n\
 		\t--transform       Output suggested changes.\n\
-		\t--check           No output; exit with 2 if changes are suggested.\n\
+		\t-c|--check        No output; exit with 2 if changes are suggested.\n\
 		\t--replace         Replace file contents with suggested changes.\n\
 		\t--                Don't treat further arguments as options.\n\
 		\t-h|--help         Show help text.\n\
@@ -93,7 +93,7 @@ fn main() {
 					sett.syntax = false;
 					sett.replace = false;
 				}
-				"--check" => {
+				"--check" | "-c" => {
 					sett.osel = OutputSelector::Check;
 					sett.syntax = false;
 					sett.replace = false;

@@ -1,6 +1,5 @@
 
 # Features
-* -c 'check this'
 * Things that never work: $10 and [ -n $var ]:
   Fail by default, add --unbreak/--fix-neverworking
 * --keep-varbraces
