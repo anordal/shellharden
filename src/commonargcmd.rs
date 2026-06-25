@@ -60,7 +60,7 @@ pub fn keyword_or_command(
 		return flush(i);
 	}
 	if found == Tri::Yes {
-		return push((i, 0, None), Box::new(SitLvalue { len, end_trigger }));
+		return push((i, len, None), Box::new(SitLvalue { end_trigger }));
 	}
 	let len = predlen(is_word, &horizon.input[i..]);
 	let len = if len != 0 { len } else { prefixlen(&horizon.input[i..], b"((") };

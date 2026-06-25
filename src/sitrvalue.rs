@@ -23,14 +23,13 @@ use crate::commonargcmd::common_cmd_quoting_unneeded;
 use crate::commonargcmd::common_expr;
 
 pub struct SitLvalue {
-	pub len :usize,
 	pub end_trigger :u16,
 }
 
 impl Situation for SitLvalue {
 	fn whatnow(&mut self, _: Horizon) -> WhatNow {
 		WhatNow {
-			transform: (self.len, 1, None),
+			transform: (0, 1, None),
 			transition: Transition::Replace(Box::new(SitRvalue{ end_trigger: self.end_trigger })),
 		}
 	}

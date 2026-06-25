@@ -112,8 +112,8 @@ use crate::situation::COLOR_ESC;
 use crate::sitextent::push_extent;
 
 #[cfg(test)]
-fn mk_assignment(pre: usize) -> WhatNow {
-	push((pre, 0, None), Box::new(SitLvalue { len: 0, end_trigger: 0 }))
+fn mk_assignment(pre: usize, len: usize) -> WhatNow {
+	push((pre, len, None), Box::new(SitLvalue { end_trigger: 0 }))
 }
 
 #[cfg(test)]
@@ -131,17 +131,17 @@ fn test_sit_normal() {
 	sit_expect!(subj(), b" ", &flush(1));
 	sit_expect!(subj(), b"\\", &push_extent(COLOR_ESC, 0, 2));
 	sit_expect!(subj(), b"fo", &flush(0), &mk_cmd(0));
-	sit_expect!(subj(), b"fo=", &mk_assignment(0));
+	sit_expect!(subj(), b"fo=", &mk_assignment(0, 2));
 	sit_expect!(subj(), b"for", &flush(0), &push((0, 3, None), Box::new(SitFor {})));
-	sit_expect!(subj(), b"for=", &mk_assignment(0));
+	sit_expect!(subj(), b"for=", &mk_assignment(0, 3));
 	sit_expect!(subj(), b"fork", &flush(0), &mk_cmd(0));
-	sit_expect!(subj(), b"fork=", &mk_assignment(0));
+	sit_expect!(subj(), b"fork=", &mk_assignment(0, 4));
 	sit_expect!(subj(), b";fo", &flush(1));
-	sit_expect!(subj(), b";fo=", &mk_assignment(1));
+	sit_expect!(subj(), b";fo=", &mk_assignment(1, 2));
 	sit_expect!(subj(), b";for", &flush(1));
-	sit_expect!(subj(), b";for=", &mk_assignment(1));
+	sit_expect!(subj(), b";for=", &mk_assignment(1, 3));
 	sit_expect!(subj(), b";fork", &flush(1));
-	sit_expect!(subj(), b";fork=", &mk_assignment(1));
+	sit_expect!(subj(), b";fork=", &mk_assignment(1, 4));
 	sit_expect!(subj(), b"((", &flush(0), &push_magic(0, 1, b')'));
 	sit_expect!(subj(), b"[[", &flush(0), &push_magic(0, 1, b']'));
 }
