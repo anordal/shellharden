@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.3.2
+
+* Highlight assigned variables; subtler blue for expansions to distinguish.
+* Fix misdetection of line continuation as a command also in case arms.
+* Grok variable assignment keywords local, declare and readonly:
+  Assigned variables are highlighted here as well and keyword-named variables
+  such as `local case` no longer leads the parser astray (#67).
+
 ## 4.3.1
 
 * Fix misdetection of line continuation as a command

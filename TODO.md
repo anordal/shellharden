@@ -1,8 +1,14 @@
 
+# Badly handled
+* `type=${type}`: Not supposed to be except from cury removal.
+* `for type in ${UBOOT_CONFIG}`: Should become an array expansion.
+
 # Features
-* -c 'check this'
-* Things that never work: $10 and [ -n $var ]:
-  Fail by default, add --unbreak/--fix-neverworking
+* -c 'check this' (like bash -c '')
+* Perhaps not silently fix definite bugs
+  like `[ -n $var ]` and `$10`
+  but add an explicit option: --fix-definite-bugs
+
 * --keep-varbraces
 
 # Rewriting
