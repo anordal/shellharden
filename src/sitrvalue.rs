@@ -29,7 +29,7 @@ pub struct SitLvalue {
 impl Situation for SitLvalue {
 	fn whatnow(&mut self, _: Horizon) -> WhatNow {
 		WhatNow {
-			transform: (0, 1, None),
+			transform: (0, 0, None),
 			transition: Transition::Replace(Box::new(SitRvalue{ end_trigger: self.end_trigger })),
 		}
 	}
@@ -52,7 +52,7 @@ impl Situation for SitRvalue {
 				return res;
 			}
 			if is_whitespace(a) {
-				return pop(i, 1, None);
+				return pop(i, 0, None);
 			}
 		}
 		flush_or_pop(horizon.input.len())

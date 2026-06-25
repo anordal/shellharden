@@ -161,6 +161,7 @@ mod sitcmd;
 mod sitcomment;
 mod sitextent;
 mod sitfor;
+mod sitdeclare;
 mod sitmagic;
 mod sitrvalue;
 mod sitstrdq;

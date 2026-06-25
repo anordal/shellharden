@@ -29,6 +29,7 @@ use crate::commonstrcmd::CommonStrCmdResult;
 use crate::commonstrcmd::common_str_cmd;
 
 use crate::sitcase::SitCase;
+use crate::sitdeclare::SitDeclare;
 use crate::sitfor::SitFor;
 use crate::sitcmd::SitNormal;
 use crate::sitcmd::SitCmd;
@@ -82,7 +83,6 @@ pub fn keyword_or_command(
 		b"for" |
 		b"select" => push((i, len, None), Box::new(SitFor {})),
 		b"!" |
-		b"declare" |
 		b"do" |
 		b"done" |
 		b"elif" |
@@ -91,13 +91,14 @@ pub fn keyword_or_command(
 		b"fi" |
 		b"function" |
 		b"if" |
-		b"local" |
-		b"readonly" |
 		b"then" |
 		b"until" |
 		b"while" |
 		b"{" |
 		b"}" => push_extent(COLOR_KWD, i, len),
+		b"declare" |
+		b"local" |
+		b"readonly" => push((i, len, None), Box::new(SitDeclare { end_trigger })),
 		b"[" |
 		b"test" if predlen(|x| x == b' ', &horizon.input[i + len ..]) == 1 => {
 			push((i, len + 1, None), Box::new(SitTest { end_trigger }))
